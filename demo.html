@@ -3,109 +3,224 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101a2a">
-  <title>TROPOS · 模拟银行工作台</title>
-  <style>
-    :root{--bg:#f3f6fa;--paper:#fff;--ink:#172437;--muted:#718096;--line:#e3e9f0;--nav:#101a2a;--blue:#4274d8;--blue-soft:#edf3ff;--green:#178b72;--green-soft:#e9f7f2;--gold:#ba8126;--gold-soft:#fff6e6;--red:#b54848;--red-soft:#fff0ef;--shadow:0 12px 35px #192b4210}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}button,input{font:inherit}button{cursor:pointer}.shell{min-height:100vh;display:grid;grid-template-columns:232px minmax(0,1fr)}
-    aside{background:var(--nav);color:#e8eef8;padding:25px 16px;display:flex;flex-direction:column}.brand{font-size:18px;font-weight:800;letter-spacing:.13em;padding:0 12px 26px}.brand span{color:#70d2b9}.brand small{display:block;font-size:10px;color:#93a3ba;letter-spacing:.06em;font-weight:500;margin-top:4px}.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#71829a;padding:16px 12px 8px}.nav button{display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;color:#aebbd0;text-align:left;padding:11px 12px;border-radius:9px;margin:2px 0}.nav button.active,.nav button:hover{background:#24334a;color:white}.nav .icon{width:19px;text-align:center;font-size:16px}.side-bottom{margin-top:auto;border-top:1px solid #ffffff1a;padding:16px 10px 0;color:#8fa0b7;font-size:12px}.safe{display:flex;gap:8px;align-items:flex-start}.dot{width:8px;height:8px;border-radius:50%;background:#63c8a8;margin-top:5px;flex:none}
-    main{min-width:0}.topbar{height:72px;background:#ffffffd9;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,4vw,48px);position:sticky;top:0;z-index:4;backdrop-filter:blur(12px)}.crumb{font-size:13px;color:var(--muted)}.crumb b{color:var(--ink)}.profile{display:flex;align-items:center;gap:10px;font-size:13px}.avatar{width:34px;height:34px;border-radius:50%;background:#dbe7ff;color:#345fae;display:grid;place-items:center;font-weight:700}.content{max-width:1320px;margin:auto;padding:32px clamp(18px,4vw,48px) 60px}.page{display:none}.page.active{display:block}.eyebrow{color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.title-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin:5px 0 22px}.title-row h1{font-size:29px;margin:2px 0 3px;letter-spacing:-.03em}.sub{color:var(--muted);font-size:13px}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:30px;padding:5px 10px;background:#eef2f7;color:#627187;font-size:11px;font-weight:700}.pill.green{background:var(--green-soft);color:var(--green)}.pill.gold{background:var(--gold-soft);color:var(--gold)}.pill.red{background:var(--red-soft);color:var(--red)}.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.grid{display:grid;gap:16px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}.stat{padding:18px 20px}.stat-label{font-size:12px;color:var(--muted)}.stat-value{font-weight:750;font-size:25px;letter-spacing:-.03em;margin:7px 0 1px}.stat-foot{font-size:11px;color:var(--muted)}.dashboard{grid-template-columns:minmax(0,1.42fr) minmax(280px,.8fr)}.panel{padding:20px}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px}.panel-head h2{font-size:16px;margin:0}.panel-head p{font-size:12px;color:var(--muted);margin:4px 0 0}.personas{display:flex;gap:8px;flex-wrap:wrap}.persona{border:1px solid var(--line);background:white;border-radius:30px;padding:8px 13px;color:#637187;font-size:12px}.persona.active{background:var(--blue-soft);color:#315fb7;border-color:#b9cbf6;font-weight:700}.story{padding:17px;border-radius:12px;background:#f8faff;border:1px solid #e4eaff}.story-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.story h3{margin:9px 0 4px;font-size:17px}.story p{margin:0;color:#637187;font-size:13px}.story .why{margin-top:14px;padding-top:12px;border-top:1px solid #e4eaf3;font-size:12px;color:#506078}.plan-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.plan-row:last-child{border-bottom:0}.plan-icon{width:36px;height:36px;border-radius:10px;background:var(--blue-soft);display:grid;place-items:center;color:#416bc2;flex:none}.plan-body{flex:1;min-width:0}.plan-body b{display:block;font-size:13px}.plan-body small{color:var(--muted);font-size:11px}.plan-amount{font-weight:700;font-size:13px;white-space:nowrap}.btn{border:0;border-radius:8px;padding:10px 14px;font-weight:700;font-size:12px;background:var(--blue);color:white}.btn:hover{filter:brightness(.96)}.btn.secondary{background:#edf1f6;color:#43536b}.btn.ghost{background:transparent;border:1px solid var(--line);color:#4d5d73}.btn.danger{background:var(--red-soft);color:var(--red)}.btn.small{padding:7px 10px;font-size:11px}.btn:disabled{opacity:.5;cursor:not-allowed}.event-box{padding:18px;background:linear-gradient(135deg,#192b43,#243a58);color:white;border-radius:13px;margin-top:16px}.event-box .eyebrow{color:#87dfca}.event-box h3{font-size:17px;margin:7px 0}.event-box p{font-size:12px;color:#c3d1e2;margin:0 0 13px}.event-box button{background:#dff9f1;color:#155d4d}.timeline{margin-top:18px}.timeline-item{display:flex;gap:12px;padding:10px 0}.timeline-mark{width:9px;height:9px;margin-top:5px;background:#79b1f0;border-radius:50%;box-shadow:0 0 0 4px #eef4ff;flex:none}.timeline-copy{font-size:12px}.timeline-copy small{display:block;color:var(--muted);font-size:10px}.notice{padding:12px 14px;border-radius:10px;font-size:12px;margin:14px 0}.notice.info{background:var(--blue-soft);color:#3c5f9b}.notice.warn{background:var(--gold-soft);color:#88621f}.notice.success{background:var(--green-soft);color:#24745f}.table{width:100%;border-collapse:collapse;font-size:12px}.table th{text-align:left;color:var(--muted);font-weight:600;padding:10px 8px;border-bottom:1px solid var(--line)}.table td{padding:13px 8px;border-bottom:1px solid #edf0f4}.merchant{font-weight:650}.muted{color:var(--muted)}.amount{font-weight:700;text-align:right;white-space:nowrap}.tag{display:inline-block;background:#f0f3f7;border-radius:20px;padding:3px 8px;color:#607086;font-size:10px}.subscription{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:14px;padding:15px 2px;border-bottom:1px solid var(--line)}.subscription:last-child{border-bottom:0}.sub-name{font-weight:700;font-size:13px}.sub-date{font-size:11px;color:var(--muted)}.toggle{border:0;border-radius:20px;background:#edf1f5;color:#5b6b7f;font-size:10px;padding:7px 10px}.toggle.on{background:var(--green-soft);color:var(--green)}.transfer-layout{grid-template-columns:minmax(0,1.2fr) minmax(270px,.8fr)}.field{display:grid;gap:6px;margin:14px 0}.field label{font-size:12px;font-weight:650;color:#526176}.field input{border:1px solid #dce3ec;border-radius:8px;padding:11px 12px;background:white;color:var(--ink);outline:none}.field input:focus{border-color:#86a8eb;box-shadow:0 0 0 3px #4274d81c}.approval{background:#f8faff;border:1px solid #e3eafa;border-radius:12px;padding:17px;margin-top:18px}.approval h3{margin:5px 0;font-size:15px}.approval p{color:#627187;font-size:12px;margin:4px 0 14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.empty{color:var(--muted);font-size:12px;padding:20px 0}.footer-note{text-align:center;color:#8a97a9;font-size:10px;margin-top:24px}.receipt{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;background:#f6f8fb;border:1px dashed #cdd6e2;padding:12px;border-radius:9px;color:#526176;margin-top:10px;word-break:break-all}
-    @media(max-width:980px){.shell{grid-template-columns:72px minmax(0,1fr)}aside{padding:20px 10px}.brand{padding:0 8px 24px;font-size:0}.brand:first-letter{font-size:17px}.brand small,.nav-label,.nav button .label,.side-bottom .safe span:last-child{display:none}.nav button{justify-content:center;padding:12px}.stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.shell{grid-template-columns:1fr}aside{position:fixed;bottom:0;left:0;right:0;height:62px;z-index:8;padding:5px 8px;display:block}.brand,.nav-label,.side-bottom{display:none}.nav{display:flex;justify-content:space-around}.nav button{width:auto;min-width:52px;padding:9px}.nav button .label{display:none}.topbar{height:58px}.content{padding-top:22px;padding-bottom:90px}.title-row{align-items:flex-start;flex-direction:column}.stats{gap:9px}.stat{padding:13px}.stat-value{font-size:20px}.dashboard,.transfer-layout{grid-template-columns:1fr}.table th:nth-child(3),.table td:nth-child(3){display:none}.profile .who{display:none}}
-  </style>
+  <title>TROPOS · 三扇窗</title>
+  <!-- 霞鹜文楷 / 思源宋体：开源字体，经 jsdelivr 加载；离线时回落到系统楷体与宋体 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/400.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/600.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/700.css">
+  <link rel="stylesheet" href="assets/demo.css">
 </head>
-<body>
-<div class="shell">
-  <aside>
-    <div class="brand">TROPOS<span>.</span><small>ADAPTIVE BANKING INTELLIGENCE</small></div>
-    <div class="nav-label">工作台</div>
-    <nav class="nav" aria-label="主导航">
-      <button class="active" data-page="overview"><span class="icon">⌂</span><span class="label">财务总览</span></button>
-      <button data-page="bills"><span class="icon">▤</span><span class="label">账单与订阅</span></button>
-      <button data-page="transfer"><span class="icon">↗</span><span class="label">智能转账</span></button>
-      <button data-page="activity"><span class="icon">◷</span><span class="label">执行记录</span></button>
-    </nav>
-    <div class="side-bottom"><div class="safe"><i class="dot"></i><span>演示沙箱已启用<br>所有账户与交易均为模拟数据</span></div></div>
-  </aside>
-  <main>
-    <header class="topbar"><div class="crumb">TROPOS <span class="muted">/</span> <b id="crumb">财务总览</b></div><div class="profile"><span class="pill green"><i class="dot" style="margin:0"></i> 模拟环境</span><span class="avatar">林</span><span class="who">林同学 · 示例用户</span></div></header>
-    <div class="content">
-      <section class="page active" id="overview">
-        <div class="title-row"><div><div class="eyebrow">PERSONAL FINANCE / TODAY</div><h1>早上好，林同学</h1><div class="sub">先看清现金流，再决定下一步。当前展示均为合成示例数据。</div></div><span class="pill">更新于刚刚</span></div>
-        <div class="grid stats">
-          <article class="card stat"><div class="stat-label">模拟可用余额</div><div class="stat-value" id="balance">¥20,000</div><div class="stat-foot">模拟账户 · 尾号 0826</div></article>
-          <article class="card stat"><div class="stat-label">未来 30 天必要支出</div><div class="stat-value" id="obligations">¥13,600</div><div class="stat-foot">房租、账单与还款</div></article>
-          <article class="card stat"><div class="stat-label">最低现金预留</div><div class="stat-value" id="reserve">¥8,000</div><div class="stat-foot">示例用户设定</div></article>
-          <article class="card stat"><div class="stat-label">可灵活安排</div><div class="stat-value" id="available">¥0</div><div class="stat-foot" id="availableNote">扣除必要支出与预留后</div></article>
-        </div>
-        <div class="grid dashboard">
-          <article class="card panel">
-            <div class="panel-head"><div><h2>同一句话，不同策略</h2><p>切换模拟画像，查看同一笔资金如何改变计划</p></div><span class="pill">ETHOS → METIS</span></div>
-            <div class="personas"><button class="persona active" data-persona="protect">现金流守护型</button><button class="persona" data-persona="grow">储备充足型</button></div>
-            <div class="notice info" style="margin-top:15px">用户请求：「帮我打理这 2 万元，最近能省一点最好，别影响之后的大笔开支。」</div>
-            <div class="story" id="recommendation"></div>
-            <div class="panel-head" style="margin:20px 0 4px"><div><h2>近期安排</h2><p>每项计划都可查看依据与执行状态</p></div><button class="btn ghost small" data-go="bills">查看账单</button></div>
-            <div id="planList"></div>
-          </article>
-          <div>
-            <article class="card panel">
-              <div class="panel-head"><div><h2>状态与授权</h2><p>画像只决定策略，不代替操作授权</p></div><span class="pill green">ARGOS 在线</span></div>
-              <div class="plan-row"><div class="plan-icon">⌖</div><div class="plan-body"><b>当前管理侧重</b><small id="modeText">先保障近期支付与现金缓冲</small></div><span class="pill gold" id="modePill">守护</span></div>
-              <div class="plan-row"><div class="plan-icon">✓</div><div class="plan-body"><b>转账权限</b><small>仅在用户逐笔确认后执行</small></div><span class="pill">需确认</span></div>
-              <div class="plan-row"><div class="plan-icon">◉</div><div class="plan-body"><b>账户数据</b><small>合成交易记录 · 不含真实个人信息</small></div><span class="pill green">已模拟</span></div>
-            </article>
-            <article class="event-box"><div class="eyebrow">KAIROS / EVENT SIMULATOR</div><h3>如果工资晚 15 天到账？</h3><p>模拟外部收入冲击，观察系统如何暂停旧计划并重新核对现金流。</p><button class="btn" id="shockButton">触发收入延期</button><div id="shockResult"></div></article>
-          </div>
-        </div>
-        <div class="footer-note">TROPOS 产品概念原型 · 不连接银行账户、不产生真实交易、不构成金融建议</div>
-      </section>
+<body data-persona="A" data-view="console">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18M4 12h16"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 22h12M6 2h12"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-diary" viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6Z"/><path d="M6 3v18M10 8h5M10 12h5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+  <symbol id="i-forward" viewBox="0 0 24 24"><path d="m13 19 9-7-9-7v14ZM2 19l9-7-9-7v14Z"/></symbol>
+</svg>
 
-      <section class="page" id="bills">
-        <div class="title-row"><div><div class="eyebrow">BILLS / SUBSCRIPTIONS</div><h1>账单与订阅</h1><div class="sub">分类依据可追溯到示例交易；取消动作只改变本地模拟状态。</div></div><span class="pill">模拟账期 · 2026 年 10 月</span></div>
-        <div class="grid stats"><article class="card stat"><div class="stat-label">本月支出</div><div class="stat-value">¥8,420</div><div class="stat-foot">来自 24 笔模拟交易</div></article><article class="card stat"><div class="stat-label">必要支出</div><div class="stat-value">¥6,980</div><div class="stat-foot">房租、交通、还款与水电</div></article><article class="card stat"><div class="stat-label">订阅服务</div><div class="stat-value" id="subscriptionCount">3 项</div><div class="stat-foot">下次续费日期已标注</div></article><article class="card stat"><div class="stat-label">可检查的月度订阅</div><div class="stat-value">¥118</div><div class="stat-foot">仅为当前模拟订阅总额</div></article></div>
-        <div class="grid dashboard">
-          <article class="card panel"><div class="panel-head"><div><h2>近期交易</h2><p>商户分类 · 日期 · 金额</p></div><span class="pill">可追溯</span></div><table class="table"><thead><tr><th>交易</th><th>分类</th><th>日期</th><th class="amount">金额</th></tr></thead><tbody>
-            <tr><td class="merchant">城市公寓租金</td><td><span class="tag">住房</span></td><td class="muted">10 月 18 日</td><td class="amount">−¥4,800</td></tr><tr><td class="merchant">云音乐会员</td><td><span class="tag">订阅</span></td><td class="muted">10 月 16 日</td><td class="amount">−¥18</td></tr><tr><td class="merchant">校园便利店</td><td><span class="tag">日常</span></td><td class="muted">10 月 15 日</td><td class="amount">−¥42</td></tr><tr><td class="merchant">信用卡还款</td><td><span class="tag">还款</span></td><td class="muted">10 月 12 日</td><td class="amount">−¥1,260</td></tr><tr><td class="merchant">公交出行</td><td><span class="tag">交通</span></td><td class="muted">10 月 11 日</td><td class="amount">−¥76</td></tr>
-          </tbody></table><div class="notice info">每笔金额和分类均来自此原型内置的合成样例，不读取外部账户。</div></article>
-          <article class="card panel"><div class="panel-head"><div><h2>订阅与代扣</h2><p>先识别，再由用户决定是否取消</p></div><span class="pill">3 项模拟</span></div><div id="subscriptions"></div><div class="notice warn">“已取消”仅代表本地模拟状态已变更；现实订阅需要服务商确认。</div></article>
-        </div>
-      </section>
+<header class="top">
+  <a class="brand" href="index.html" title="回到项目介绍">TROPOS</a>
+  <nav class="tabs" aria-label="页面">
+    <button class="active" data-view="console"><svg class="ic"><use href="#i-window"/></svg>窗</button>
+    <button data-view="cool"><svg class="ic"><use href="#i-hourglass"/></svg>先别买<em>双十一</em></button>
+    <button data-view="bills"><svg class="ic"><use href="#i-book"/></svg>账本</button>
+    <button data-view="transfer"><svg class="ic"><use href="#i-mail"/></svg>转账</button>
+    <button data-view="audit"><svg class="ic"><use href="#i-diary"/></svg>日记<em class="count" id="auditCount">0</em></button>
+  </nav>
+  <div class="windows"><span>看谁的窗</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
+</header>
 
-      <section class="page" id="transfer">
-        <div class="title-row"><div><div class="eyebrow">TRANSFER / USER AUTHORIZATION</div><h1>智能转账</h1><div class="sub">METIS 先检查余额约束；ARGOS 通过后仍需你逐笔确认。</div></div><span class="pill gold">沙箱模拟</span></div>
-        <div class="grid transfer-layout">
-          <article class="card panel"><div class="panel-head"><div><h2>创建转账计划</h2><p>只会在本页面更新模拟账本</p></div><span class="pill">不可连接真实账户</span></div>
-            <div class="field"><label for="recipient">收款人</label><input id="recipient" value="房租储备账户" autocomplete="off"></div>
-            <div class="field"><label for="amount">转账金额</label><input id="amount" type="number" min="1" step="100" value="2000"></div>
-            <div class="field"><label for="memo">用途备注</label><input id="memo" value="为下月必要支出预留" autocomplete="off"></div>
-            <button class="btn" id="reviewTransfer">检查计划</button><div id="approvalArea"></div>
-          </article>
-          <article class="card panel"><div class="panel-head"><div><h2>执行边界</h2><p>四引擎分工在这里变成可见规则</p></div></div><div class="plan-row"><div class="plan-icon">1</div><div class="plan-body"><b>ETHOS · 识别状态</b><small>当前画像与近期必要支出</small></div></div><div class="plan-row"><div class="plan-icon">2</div><div class="plan-body"><b>METIS · 生成计划</b><small>计算转账后的预计余额与预留</small></div></div><div class="plan-row"><div class="plan-icon">3</div><div class="plan-body"><b>KAIROS · 复核时点</b><small>收入或账单变化后重算计划</small></div></div><div class="plan-row"><div class="plan-icon">4</div><div class="plan-body"><b>ARGOS · 守住授权</b><small>余额不够、对象不明或未确认则拒绝</small></div></div><div class="notice warn">画像建议不是转账授权。任何模拟转账都要点击确认；无可靠回执时不得显示成功。</div></article>
-        </div>
-      </section>
-
-      <section class="page" id="activity">
-        <div class="title-row"><div><div class="eyebrow">AUDIT / EXECUTION RECEIPTS</div><h1>执行记录</h1><div class="sub">记录计划、用户确认、阻止原因与模拟回执。</div></div><button class="btn ghost small" id="clearActivity">清空本次演示记录</button></div>
-        <article class="card panel"><div class="panel-head"><div><h2>操作时间线</h2><p>状态来自本地原型，不代表银行系统记录</p></div><span class="pill green">可追溯</span></div><div class="timeline" id="activityList"></div></article>
-      </section>
-      <div class="footer-note">TROPOS · 知己其人，善谋其策；择时而动，守诺而行。</div>
+<main class="content">
+  <!-- ============ 窗 ============ -->
+  <section class="view active" id="view-console">
+    <div class="window" id="window">
+      <div id="scene"></div>
+      <div class="mullion"></div>
+      <div class="sky-text"><div class="when" id="when"></div><h1 id="greet"></h1><p id="status"></p></div>
+      <button class="weather" id="shockBtn"></button>
     </div>
-  </main>
+    <div class="legend" id="legend"></div>
+    <div class="sill" id="sill"></div>
+    <div id="consoleNudge"></div>
+
+    <div class="desk">
+      <article class="panel chat">
+        <div class="block-head"><div><h2>跟 TROPOS 说</h2><p id="chatHint"></p></div></div>
+        <div class="chat-log" id="chatLog" aria-live="polite"></div>
+        <div class="suggest" id="suggest"></div>
+        <form class="composer" id="composer">
+          <input id="chatInput" autocomplete="off" aria-label="想做的事">
+          <button type="submit" aria-label="发送"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
+        </form>
+      </article>
+      <div class="desk-side">
+        <article class="panel">
+          <div class="block-head"><div><h2>接下来 30 天</h2><p>依赖工资的事，会等工资到了再做</p></div></div>
+          <div class="days" id="queue"></div>
+        </article>
+        <article class="panel portrait" id="portrait"></article>
+      </div>
+    </div>
+
+    <section class="compare" id="compare" hidden></section>
+    <p class="foot">TROPOS 参赛原型。账户与交易均为合成数据，不连接真实银行，不构成金融建议。</p>
+  </section>
+
+  <!-- ============ 先别买 ============ -->
+  <section class="view" id="view-cool">
+    <div class="cool-hero">
+      <div>
+        <h1>先别买。</h1>
+        <p class="sub-voice">想清楚，再付款。</p>
+        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再请几千个陌生人看一眼。不是不让买，是不被推着买。</p>
+        <div class="mini">
+          <div>距双十一<b><span class="d11"></span> 天</b></div>
+          <div>冷静期省下<b class="ok-t" id="savedTotal">¥0</b></div>
+          <div>冷静中 / 已放下<b id="coolCount">0 / 0</b></div>
+        </div>
+      </div>
+      <div class="panel you" id="riskCard"></div>
+    </div>
+
+    <div class="form-sheet">
+      <div class="form-title"><h2>购物申请单</h2><span id="formNo"></span></div>
+      <div class="form-grid">
+        <form id="applyForm">
+          <div class="presets" id="presets"></div>
+          <label class="f"><span>想买什么</span><input id="pItem" required maxlength="30"></label>
+          <div class="f2">
+            <label class="f"><span>价格（元）</span><input id="pPrice" type="number" min="1" step="1" required></label>
+            <label class="f"><span>怎么付</span>
+              <select id="pPay">
+                <option value="balance">账户余额</option>
+                <option value="credit">信用卡（全额）</option>
+                <option value="inst6">分期 6 期</option>
+                <option value="inst12">分期 12 期</option>
+              </select>
+            </label>
+          </div>
+          <label class="f"><span>为什么想买<small>写得越具体越好</small></span><textarea id="pReason" rows="3" maxlength="140"></textarea></label>
+          <div class="f2">
+            <label class="f"><span>更便宜的替代品</span><input id="pAlt" placeholder="没有就留空" maxlength="30"></label>
+            <label class="f"><span>替代品价格</span><input id="pAltPrice" type="number" min="0" step="1"></label>
+          </div>
+          <label class="f"><span>每周大概用几次</span>
+            <div class="range"><input id="pUse" type="range" min="0" max="35" value="5"><output id="pUseOut">5 次/周</output></div>
+          </label>
+          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陌生人只看得到商品、价格、理由和替代品。余额和身份不会离开这里。</span></div>
+          <button class="btn solid" type="submit" style="width:100%"><svg class="ic"><use href="#i-hourglass"/></svg>递交审批</button>
+        </form>
+        <div class="approvals" id="flow"></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+
+    <div class="cool-bottom">
+      <section>
+        <div class="block-head"><div><h2>冷静抽屉</h2><p>时间到了，再问你一次还想不想要</p></div></div>
+        <div class="notes" id="coolList"></div>
+      </section>
+      <article class="panel">
+        <div class="block-head"><div><h2>为什么由银行来做</h2><p>待验证的业务假设，评测口径见策划书第 22 节</p></div></div>
+        <ol class="why-list">
+          <li><span><b>银行看得见付款以后的日子</b>小程序只能听你说理由；银行能算出这笔钱会不会挤到房租和还款。</span></li>
+          <li><span><b>冷静期放在付款这一步</b>分期和信用付款最容易失控。经你授权，守诺会在付款前多问一句。</span></li>
+          <li><span><b>先照顾人，再谈长期信任</b>减少过度负债和逾期，与消费者权益保护同向；只看行为，不给人贴身份标签。</span></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 账本 ============ -->
+  <section class="view" id="view-bills">
+    <div class="page-title">
+      <h1>这个月的账本</h1>
+      <p class="lead">每个分类都能追到具体的交易。交易备注是别人写的字，只能看，不能指挥 TROPOS 做任何事。</p>
+    </div>
+    <div class="figures" id="billKpis"></div>
+    <div class="ledger-grid">
+      <article class="panel">
+        <div class="block-head"><div><h2>近 30 天流水</h2></div></div>
+        <div class="ribbon" id="catbar"></div>
+        <div class="ribbon-legend" id="catlegend"></div>
+        <div style="overflow-x:auto"><table class="table"><thead><tr><th>交易</th><th>分类</th><th>时间</th><th class="amt">金额</th></tr></thead><tbody id="txBody"></tbody></table></div>
+      </article>
+      <article class="panel">
+        <div class="block-head"><div><h2>自动续费</h2><p>商家回执到了，才算真的取消</p></div></div>
+        <div id="subs"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 转账 ============ -->
+  <section class="view" id="view-transfer">
+    <div class="page-title">
+      <h1>转一笔钱</h1>
+      <p class="lead">像寄一封信：守诺逐项盖邮戳，确认收款人、金额、转完后的日子和这是不是你本人的意思，最后由你封口。同一封信只寄一次。</p>
+    </div>
+    <div class="envelope-grid">
+      <div class="envelope">
+        <div class="block-head"><div><h2>信封</h2><p>只改动这个页面里的沙箱账本</p></div></div>
+        <form id="tfForm">
+          <label class="f"><span>转给谁<small>名字、备注或关系都行</small></span><input id="tfTo" value="王磊" autocomplete="off"></label>
+          <div class="payees" id="payees"></div>
+          <div class="f2">
+            <label class="f"><span>金额（元）</span><input id="tfAmt" type="number" min="1" step="1" value="500"></label>
+            <label class="f"><span>什么时候转</span>
+              <select id="tfWhen"><option value="now">现在</option><option value="salary">工资到账后</option></select>
+            </label>
+          </div>
+          <label class="f"><span>附言</span><input id="tfMemo" value="聚餐 AA" autocomplete="off" maxlength="60"></label>
+          <label class="checkbox"><input type="checkbox" id="tfTimeout">演示：银行接口超时，看会不会重复扣款</label>
+          <button class="btn solid" type="submit"><svg class="ic"><use href="#i-shield"/></svg>请守诺检查</button>
+        </form>
+      </div>
+      <article class="panel">
+        <div class="block-head"><div><h2>邮戳</h2><p>少盖一枚，钱都不会动</p></div></div>
+        <div class="marks" id="checks"></div>
+        <div id="tfConfirm"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 日记 ============ -->
+  <section class="view" id="view-audit">
+    <div class="diary">
+      <div class="page-title"><h1>TROPOS 的日记</h1><p class="lead">每一次判断、暂停、拦截和确认，都记在这里。</p></div>
+      <article class="panel">
+        <div class="block-head"><div class="filters" id="logFilters"></div><button class="btn sm quiet" id="clearLog">清空这次演示</button></div>
+        <div id="log"></div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="dialog"><h3 id="modalTitle"></h3><div class="mb" id="modalBody"></div><div class="actions" id="modalActions"></div></div>
 </div>
-<script>
-  const state={persona:'protect',balance:20000,delayed:false,subscriptions:[{name:'云音乐会员',fee:18,next:'10 月 26 日',active:true},{name:'视频平台会员',fee:25,next:'10 月 28 日',active:true},{name:'云存储空间',fee:75,next:'11 月 02 日',active:true}],activity:[{title:'沙箱已就绪',detail:'已加载匿名合成用户与示例账单。',time:'刚刚',kind:'info'}],transferCount:0};
-  const profiles={protect:{obligations:13600,reserve:8000,mode:'现金流守护',pill:'守护',pillClass:'gold',title:'先留足必要支出，不急着转出',text:'未来 30 天有房租、还款和必要账单。扣除这些支出与 ¥8,000 现金预留后，目前没有可自由安排的余额。',why:'METIS 判断：¥20,000 − ¥13,600 − ¥8,000 = −¥1,600。建议先检查账单并保留流动性。',plans:[['▤','房租与账单预留','10 月 28 日 · 必要支出','¥8,600'],['↻','信用卡还款提醒','11 月 03 日 · 等待用户确认','¥2,400'],['◌','订阅续费检查','识别到 3 项周期扣款','¥118/月']]},grow:{obligations:3600,reserve:8000,mode:'目标储蓄与期限匹配',pill:'规划',pillClass:'green',title:'满足储备后，可安排一部分资金',text:'近期必要支出较少，且示例用户已有独立应急金。建议先为三个月后的旅行预留，再讨论剩余资金安排。',why:'METIS 判断：¥20,000 − ¥3,600 − ¥8,000 = ¥8,400 可灵活安排。任何资金操作仍需单独授权。',plans:[['✧','旅行目标储蓄','目标日期 · 3 个月后','¥3,000'],['↗','定期转入计划','发薪后 · 逐笔确认','¥2,000'],['◌','订阅续费检查','识别到 3 项周期扣款','¥118/月']]}};
-  const money=n=>'¥'+Math.max(0,n).toLocaleString('zh-CN');
-  function addActivity(title,detail,kind='info'){state.activity.unshift({title,detail,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),kind});renderActivity()}
-  function renderPersona(){const p=profiles[state.persona],free=state.balance-p.obligations-p.reserve;document.querySelectorAll('.persona').forEach(b=>b.classList.toggle('active',b.dataset.persona===state.persona));document.getElementById('balance').textContent=money(state.balance);document.getElementById('obligations').textContent=money(p.obligations);document.getElementById('reserve').textContent=money(p.reserve);document.getElementById('available').textContent=(free<0?'−':'')+money(Math.abs(free));document.getElementById('available').style.color=free<0?'var(--red)':'var(--green)';document.getElementById('availableNote').textContent=free<0?'当前现金流存在缺口，暂不建议转出':'扣除必要支出与预留后';document.getElementById('modeText').textContent=p.mode;const badge=document.getElementById('modePill');badge.textContent=p.pill;badge.className='pill '+p.pillClass;document.getElementById('recommendation').innerHTML=`<div class="story-top"><span class="pill ${p.pillClass}">${state.persona==='protect'?'ETHOS · 现金流守护':'ETHOS · 储备充足'}</span><span class="muted" style="font-size:11px">示例画像</span></div><h3>${p.title}</h3><p>${p.text}</p><div class="why">${p.why}</div>`;document.getElementById('planList').innerHTML=p.plans.map(x=>`<div class="plan-row"><div class="plan-icon">${x[0]}</div><div class="plan-body"><b>${x[1]}</b><small>${x[2]}</small></div><span class="plan-amount">${x[3]}</span></div>`).join('');document.getElementById('shockResult').innerHTML=state.delayed?'<div class="notice warn" style="margin-bottom:0">已暂停发薪后 ¥2,000 定期转入；等待工资实际到账后重新核验。</div>':'';document.getElementById('shockButton').textContent=state.delayed?'重置收入情景':'触发收入延期';}
-  function renderSubscriptions(){document.getElementById('subscriptions').innerHTML=state.subscriptions.map((s,i)=>`<div class="subscription"><div><div class="sub-name">${s.name}</div><div class="sub-date">${s.next}续费 · ¥${s.fee}/月</div></div><span class="pill ${s.active?'gold':'green'}">${s.active?'待续费':'模拟已取消'}</span><button class="toggle ${s.active?'on':''}" data-sub="${i}" ${s.active?'':'disabled'}>${s.active?'申请取消':'已处理'}</button></div>`).join('');document.getElementById('subscriptionCount').textContent=state.subscriptions.filter(s=>s.active).length+' 项';document.querySelectorAll('[data-sub]').forEach(b=>b.addEventListener('click',()=>{const s=state.subscriptions[Number(b.dataset.sub)];if(!s.active)return;if(confirm(`确认在模拟环境中取消「${s.name}」？这不会影响任何真实订阅。`)){s.active=false;renderSubscriptions();addActivity('订阅模拟取消',`「${s.name}」已在本地演示状态中变更；没有调用服务商接口。`,'success')}}))}
-  function renderActivity(){const el=document.getElementById('activityList');el.innerHTML=state.activity.length?state.activity.map(a=>`<div class="timeline-item"><i class="timeline-mark" style="background:${a.kind==='success'?'#45aa8c':a.kind==='warn'?'#d7a54f':'#79b1f0'}"></i><div class="timeline-copy"><b>${a.title}</b><div>${a.detail}</div><small>${a.time} · ${a.kind==='success'?'沙箱回执':a.kind==='warn'?'守护规则':'系统记录'}</small></div></div>`).join(''):'<div class="empty">暂无记录。</div>'}
-  document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.getElementById('crumb').textContent=({overview:'财务总览',bills:'账单与订阅',transfer:'智能转账',activity:'执行记录'})[id];window.scrollTo({top:0,behavior:'smooth'})}
-  document.querySelectorAll('.persona').forEach(b=>b.addEventListener('click',()=>{state.persona=b.dataset.persona;state.delayed=false;renderPersona();document.getElementById('approvalArea').innerHTML='';addActivity('切换模拟画像',`当前策略视角：${profiles[state.persona].mode}。`)}));
-  document.getElementById('shockButton').addEventListener('click',()=>{state.delayed=!state.delayed;renderPersona();document.getElementById('approvalArea').innerHTML='';if(state.delayed){addActivity('KAIROS 检测到收入延期','已暂停发薪后待执行的 ¥2,000 转入；METIS 将在工资实际到账后重新计算。','warn');document.getElementById('shockResult').scrollIntoView({block:'nearest',behavior:'smooth'})}else addActivity('重置模拟收入情景','恢复正常预计到账状态。')});
-  document.getElementById('reviewTransfer').addEventListener('click',()=>{const recipient=document.getElementById('recipient').value.trim(),amount=Number(document.getElementById('amount').value),memo=document.getElementById('memo').value.trim(),p=profiles[state.persona],free=state.balance-p.obligations-p.reserve,area=document.getElementById('approvalArea');if(!recipient||!Number.isFinite(amount)||amount<=0){area.innerHTML='<div class="notice warn">请填写有效的收款人和金额。</div>';return}const blocked=amount>free||state.delayed;if(blocked){const reason=state.delayed?'工资到账时间变化，原计划需要重新核验。':`转账后预计仅剩 ${money(state.balance-amount-p.obligations)}，低于 ${money(p.reserve)} 的现金预留。`;area.innerHTML=`<div class="approval"><span class="pill red">ARGOS · 暂不执行</span><h3>这笔转账没有通过约束检查</h3><p>${reason} 没有发生资金变动。</p><div class="actions"><button class="btn secondary" id="ackBlock">我知道了</button></div></div>`;addActivity('ARGOS 阻止模拟转账',reason,'warn');document.getElementById('ackBlock').addEventListener('click',()=>area.innerHTML='');return}area.innerHTML=`<div class="approval"><span class="pill gold">等待用户确认</span><h3>确认向 ${escapeHTML(recipient)} 转账 ${money(amount)}？</h3><p>${escapeHTML(memo||'未填写用途')} · 预计转账后可用余额 ${money(state.balance-amount)}。该动作仅变更本地模拟账本。</p><div class="actions"><button class="btn" id="confirmTransfer">确认模拟转账</button><button class="btn secondary" id="cancelTransfer">取消</button></div></div>`;addActivity('生成转账计划',`${recipient} · ${money(amount)} · 尚未执行，等待用户确认。`);document.getElementById('confirmTransfer').addEventListener('click',()=>{state.balance-=amount;state.transferCount++;const tx='TRP-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14)+'-'+String(state.transferCount).padStart(2,'0');renderPersona();area.innerHTML=`<div class="approval"><span class="pill green">模拟回执已核验</span><h3>模拟转账完成</h3><p>本地演示状态已更新，未向任何银行发送请求。</p><div class="receipt">交易编号：${tx}<br>收款人：${escapeHTML(recipient)}<br>金额：${money(amount)}<br>状态：SIMULATED_SUCCESS</div></div>`;addActivity('模拟转账已完成',`${money(amount)} · 交易编号 ${tx} · 本地模拟回执。`,'success')});document.getElementById('cancelTransfer').addEventListener('click',()=>{area.innerHTML='';addActivity('用户取消转账计划','尚未发生模拟资金变动。')})});
-  function escapeHTML(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  document.getElementById('clearActivity').addEventListener('click',()=>{if(confirm('清空当前浏览器会话中的演示记录？')){state.activity=[];renderActivity()}});
-  renderPersona();renderSubscriptions();renderActivity();
-</script>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/demo.js"></script>
 </body>
 </html>

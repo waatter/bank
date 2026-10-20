@@ -1,12 +1,255 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d18"><title>TROPOS — 千人千策，随境而变</title><style>
-:root{--bg:#080d18;--panel:#101a2c;--line:#273348;--white:#f4f7ff;--muted:#9aaac1;--blue:#83b5ff;--violet:#bd9dff;--green:#71dcc0;--amber:#f0c47c}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;line-height:1.75}a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}::selection{background:#6489d0;color:white}.container{max-width:1180px;margin:auto;padding:0 28px}.nav{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff17}.logo{font-size:20px;font-weight:800;letter-spacing:.24em}.navlinks{display:flex;gap:28px;font-size:13px;color:#b2bed1}.tag{font-size:11px;letter-spacing:.18em;color:var(--green);text-transform:uppercase;font-weight:700}.hero{position:relative;overflow:hidden;padding:118px 0 110px;background:radial-gradient(ellipse 650px 550px at 80% 27%,#24447659,transparent),radial-gradient(ellipse 460px 450px at 5% 75%,#45305d44,transparent)}.hero h1{font-size:clamp(66px,12vw,155px);letter-spacing:.12em;font-weight:800;line-height:1.05;margin:17px 0 15px}.hero h2{font-size:clamp(24px,4.3vw,52px);font-weight:600;letter-spacing:.14em;margin:0 0 28px}.lead{font-size:20px;color:#c3cee0;max-width:690px;line-height:1.9}.small{font-size:13px;color:var(--muted)}.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:35px}.btn{background:var(--white);color:#10182b;border:1px solid var(--white);border-radius:9px;padding:11px 20px;font-weight:700}.btn.secondary{background:transparent;color:var(--white);border-color:#617089}.orbit{position:absolute;right:-80px;top:35px;width:530px;height:530px;border-radius:50%;border:1px solid #8db4ff32;box-shadow:0 0 0 70px #719df009,0 0 0 140px #719df007;pointer-events:none}.orbit:after{content:'✦';position:absolute;top:38px;left:96px;font-size:40px;color:#a6d7f8}.section{padding:92px 0;border-top:1px solid #ffffff13}.kicker{color:var(--green);font-size:12px;letter-spacing:.19em;font-weight:700}.section h2{font-size:clamp(31px,4.5vw,50px);margin:12px 0 18px;line-height:1.3}.sectionlead{max-width:750px;color:var(--muted);margin-bottom:34px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.card{border:1px solid var(--line);background:linear-gradient(145deg,#132038,#0d1526);border-radius:16px;padding:30px;min-height:230px}.card .greek{font-size:31px;font-weight:800;letter-spacing:.09em;line-height:1.3}.card h3{font-size:24px;margin:12px 0 5px}.card p{color:#aebdd0;margin:8px 0}.card .en{font-size:12px;color:#9daac2}.card.blue{border-top:3px solid var(--blue)}.card.violet{border-top:3px solid var(--violet)}.card.green{border-top:3px solid var(--green)}.card.amber{border-top:3px solid var(--amber)}.pill{border:1px solid #43536b;color:#c7d5ea;border-radius:30px;padding:4px 11px;font-size:12px;display:inline-block}.principle{padding:25px;border-left:3px solid var(--green);background:#132135;font-size:clamp(19px,3vw,28px);font-weight:700;margin:25px 0}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.step{background:#121d2f;border:1px solid var(--line);border-radius:12px;padding:22px}.step small{color:var(--green);font-weight:700}.step strong{display:block;margin-top:12px;font-size:18px}.step p{font-size:13px;color:var(--muted);margin-bottom:0}.modebar{display:flex;gap:9px;flex-wrap:wrap;margin:24px 0}.modebtn{border:1px solid #465570;background:transparent;color:#b7c5db;padding:9px 16px;border-radius:30px}.modebtn.active{background:#d9e9ff;color:#0b1628;border-color:#d9e9ff;font-weight:700}.demo{display:grid;grid-template-columns:1fr 1fr;gap:24px}.demo .card{min-height:250px}.metric{font-size:33px;font-weight:800;margin:8px 0;color:#d9ebff}.event{border:1px solid #567393;background:#182943;border-radius:12px;padding:22px}.event button{background:#d9e9ff;color:#101a2c;border:0;border-radius:7px;padding:10px 14px;font-weight:700}.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.check{border:1px solid var(--line);border-radius:11px;padding:18px;color:#e1ecf8}.check span{display:block;color:var(--muted);font-size:12px}.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.roles div{background:#111c2d;border:1px solid var(--line);padding:20px;border-radius:12px}.roles p{color:var(--muted);font-size:13px}.footer{padding:65px 0 90px;text-align:center;border-top:1px solid var(--line)}.footer h2{font-size:40px;margin:8px}.muted{color:var(--muted)}.note{margin-top:25px;font-size:12px;color:#7f8faa}.fade{animation:enter .3s ease}@keyframes enter{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}@media(max-width:850px){.steps,.roles{grid-template-columns:repeat(2,1fr)}.orbit{opacity:.4}.navlinks{gap:12px}}@media(max-width:640px){.navlinks{display:none}.hero{padding:90px 0 78px}.hero h1{letter-spacing:.06em}.lead{font-size:16px}.section{padding:68px 0}.grid,.demo,.checks{grid-template-columns:1fr}.card{min-height:auto;padding:24px}.container{padding:0 20px}.roles,.steps{grid-template-columns:1fr 1fr}.step{padding:15px}}
-</style></head><body><div class="container"><header class="nav"><a class="logo" href="#top">TROPOS<span style="color:var(--green)">.</span></a><nav class="navlinks"><a href="#engines">四大引擎</a><a href="#modes">管理模式</a><a href="#scenario">情景演示</a><a href="#roadmap">协作规划</a></nav><span class="pill">2026 FINTECHATHON · CONCEPT</span></header></div>
-<section class="hero" id="top"><div class="orbit"></div><div class="container" style="position:relative"><div class="tag">Adaptive Banking Intelligence / 项目概念方案</div><h1>TROPOS<span style="color:var(--green)">.</span></h1><h2>千人千策，随境而变</h2><p class="lead">不是为所有人提供相同的银行助手。<br>而是让同一套银行能力，理解不同的人、不同的金融目标，以及不断变化的处境。</p><p class="small">One Banking Agent. Personalized Financial Intelligence.</p><div class="cta"><a class="btn" href="demo.html">打开模拟银行工作台 ↗</a><a class="btn secondary" href="#engines">了解四大引擎 →</a><a class="btn secondary" href="#scenario">查看情景演示</a></div></div></section>
-<section class="section"><div class="container"><div class="kicker">01 / THE PROBLEM</div><h2>银行懂交易，但未必懂你。</h2><p class="sectionlead">传统银行 APP 擅长执行指令；普通 AI 助手擅长理解语言。TROPOS 希望进一步理解每个用户的金融目标、约束与状态，在授权范围内形成差异化金融管理策略。</p><div class="steps"><div class="step"><small>01</small><strong>同一套业务</strong><p>账单、转账、理财、卡片、订阅与跨场景协作</p></div><div class="step"><small>02</small><strong>不同金融画像</strong><p>目标、流动性、收入稳定性与用户偏好不同</p></div><div class="step"><small>03</small><strong>动态策略调整</strong><p>面对收入延期和大额支出，原计划可重新评估</p></div><div class="step"><small>04</small><strong>始终忠于授权</strong><p>敏感交易须经过独立风控、核验与必要确认</p></div></div></div></section>
-<section class="section" id="engines"><div class="container"><div class="kicker">02 / FOUR ENGINES</div><h2>知己 · 善谋 · 择时 · 守诺</h2><p class="sectionlead">以古希腊概念构成四大核心框架：识别个体差异、选择金融策略、感知行动时机、守护用户利益。</p><div class="grid"><article class="card blue"><div class="greek" style="color:var(--blue)">ETHOS</div><span class="en">ἦθος · KNOW WHO YOU ARE</span><h3>知己 <span class="pill">动态金融画像引擎</span></h3><p>结合前置问卷与授权账户信息，识别金融目标、收入波动、负债压力、流动性状况和行为偏好。画像可解释、可更正、可随状态演化。</p></article><article class="card violet"><div class="greek" style="color:var(--violet)">METIS</div><span class="en">μῆτις · DECIDE WHAT MATTERS</span><h3>善谋 <span class="pill">自适应金融决策引擎</span></h3><p>以预算、资金期限、必要支付和风险约束为基础，生成金融管理目标与可验证行动计划。大模型协调任务，确定性算法承担计算和约束检验。</p></article><article class="card green"><div class="greek" style="color:var(--green)">KAIROS</div><span class="en">καιρός · ACT AT THE RIGHT MOMENT</span><h3>择时 <span class="pill">状态感知与动态执行引擎</span></h3><p>监测账单到期、工资到账、收入延期和资金冲击，按已授权的条件触发、暂停或重规划业务操作，并核对交易回执。</p></article><article class="card amber"><div class="greek" style="color:var(--amber)">ARGOS</div><span class="en">Ἄργος · FAITHFUL BY DESIGN</span><h3>守诺 <span class="pill">用户利益与可信金融守护引擎</span></h3><p>独立实施权限校验、反欺诈、提示词注入防护、适当性检查和行为审计。与其他三大框架同等重要，贯穿其运行全过程，具有风险否决权。</p></article></div><div class="principle">知己其人，善谋其策；择时而动，守诺而行。</div></div></section>
-<section class="section" id="modes"><div class="container"><div class="kicker">03 / PROFILE-TO-POLICY</div><h2>不同的人，需要不同的金融策略。</h2><p class="sectionlead">四种模式不限制用户能使用哪些银行功能，只改变管理目标、服务优先级与建议方式。投资适当性和交易权限始终独立核验。</p><div class="modebar" id="modebar"><button class="modebtn active" data-mode="protect">现金流守护 · PROTECT</button><button class="modebtn" data-mode="recover">负债减压 · RECOVER</button><button class="modebtn" data-mode="accumulate">财富积累 · ACCUMULATE</button><button class="modebtn" data-mode="grow">资产增长 · GROW</button></div><div class="card fade" id="modecard" aria-live="polite"></div></div></section>
-<section class="section" id="scenario"><div class="container"><div class="kicker">04 / INTERACTIVE DEMO</div><h2>同一句请求，为什么得到不同的答案？</h2><p class="sectionlead">用户说：「帮我打理这 20,000 元。」相同的请求，不同的财务状态与目标，Agent 不应机械地推荐同一种行动。</p><div class="demo"><div class="card"><span class="pill">用户 A · 现金流紧张</span><div class="metric">¥20,000</div><p>下个月有房租、信用卡与必要支出，现金储备较少。</p><h3 style="color:var(--blue)">优先保障支付</h3><p>先计算必要资金预留，不建议将短期必需资金转入流动性受限产品。</p></div><div class="card"><span class="pill">用户 B · 储备相对充足</span><div class="metric">¥20,000</div><p>稳定收入、应急资金已单独预留，具备中长期投资目标。</p><h3 style="color:var(--green)">比较可行方案</h3><p>结合投资期限、适当性和流动性需求，提供储蓄与产品比较，而非保证收益。</p></div></div><div class="event" style="margin-top:20px"><div class="tag" style="color:var(--amber)">WHAT IF? / 冲击情景</div><h3>现在，用户 B 的工资突然延期 15 天。</h3><p id="shocktxt" style="color:#bacce0">点击触发模拟冲击，观察 Agent 如何在同一个用户身上调整管理策略。</p><button id="shockbtn">触发收入延期冲击 ↗</button></div><p class="note">该演示说明预期交互逻辑，不连接真实账户，不构成财务建议或产品已实现的声明。</p></div></section>
-<section class="section"><div class="container"><div class="kicker">05 / BUSINESS COVERAGE</div><h2>个性化策略，不牺牲银行业务覆盖。</h2><p class="sectionlead">目标是用统一的工具底座接入赛题核心场景，使场景成为金融管理流程的一部分，而不是孤立的六个按钮。</p><div class="checks"><div class="check">↗ 智能转账<span>指令解析 · 收款人核验 · 执行回执</span></div><div class="check">▦ 账单分析<span>收支分类 · 现金流 · 异常检测</span></div><div class="check">⌁ 订阅与代扣<span>识别持续性支出 · 用户确认</span></div><div class="check">◈ 理财管理<span>目标匹配 · 风险约束 · 适当性</span></div><div class="check">▣ 卡片管理<span>业务查询 · 卡片安全 · 授权操作</span></div><div class="check">✧ 跨场景联动<span>多任务规划 · 状态回写 · 重新评估</span></div></div></div></section>
-<section class="section" id="roadmap"><div class="container"><div class="kicker">06 / BUILD TO WIN</div><h2>从构想，到可验证的原型。</h2><p class="sectionlead">最小可运行版本优先打通「账单读取 → 金融决策 → 用户授权 → 模拟转账/订阅操作 → 状态回写」。再增加理财、卡片和跨场景功能。</p><div class="roles"><div><strong>金融与产品</strong><p>画像维度、约束模型、用户情景与金融价值评估</p></div><div><strong>AI Agent</strong><p>意图识别、工具编排、记忆状态、失败恢复</p></div><div><strong>银行沙箱</strong><p>账户、模拟交易、权限控制、幂等与审计</p></div><div><strong>体验与评测</strong><p>产品交互、情景演示、基准策略与自动化测试</p></div></div><h3 style="margin-top:40px">验证是否真的比通用 Agent 更好</h3><div class="checks"><div class="check">任务完成率<span>跨场景目标能否完成</span></div><div class="check">约束违规率<span>是否遵守授权与资金边界</span></div><div class="check">必要支付保障率<span>情景冲击下支付是否受影响</span></div><div class="check">重复交易率<span>API 超时和重试场景</span></div><div class="check">用户干预次数<span>相同任务所需人工步骤</span></div><div class="check">动态策略改进<span>与静态模式/固定规则对比</span></div></div></div></section>
-<footer class="footer"><div class="container"><div class="tag">BUILDING THE NEXT BANKING AGENT</div><h2>TROPOS<span style="color:var(--green)">.</span></h2><p>知己其人，善谋其策；择时而动，守诺而行。</p><p class="muted">2026 FinTechathon · 微众银行金融科技大学生挑战赛 · 团队讨论版</p><p class="note">独立参赛项目构想，非微众银行官方产品。所有演示内容、技术路径及覆盖能力均为拟议方案。</p></div></footer>
-<script>const modes={protect:['守护流动性，让每笔必要支付有保障。','现金流预测、房租与还款资金预留、收入冲击预警。','优先保证近期支付和最低流动性储备；避免把必需资金锁定。'],recover:['降低还款压力，守住信用与现金流。','多笔到期提醒、还款计划、卡片与订阅管理。','优先核验高成本负债和关键还款期限；重大调整需要用户确认。'],accumulate:['将明确目标变成可持续的储蓄行动。','预算管理、订阅识别、目标储蓄与条件转账。','在完成必要支付与资金预留后安排储蓄，冲击发生时重新计算。'],grow:['在风险边界之内，让资金服务长期目标。','结余资金分析、投资期限匹配、风险与产品比较。','不追求无约束收益最大化；投资建议和交易需要适当性审核。']};function renderMode(k){const x=modes[k];document.querySelectorAll('.modebtn').forEach(b=>b.classList.toggle('active',b.dataset.mode===k));const e=document.getElementById('modecard');e.classList.remove('fade');void e.offsetWidth;e.classList.add('fade');e.innerHTML='<div class="kicker">SELECTED MANAGEMENT POLICY</div><h3>'+x[0]+'</h3><p><strong>优先服务：</strong>'+x[1]+'</p><p><strong>策略原则：</strong>'+x[2]+'</p><span class="pill">完整银行能力保持开放 · 权限独立校验</span>'}document.querySelectorAll('.modebtn').forEach(b=>b.addEventListener('click',()=>renderMode(b.dataset.mode)));renderMode('protect');let shocked=false;document.getElementById('shockbtn').addEventListener('click',()=>{shocked=!shocked;document.getElementById('shocktxt').innerHTML=shocked?'<strong style="color:#8ee3cc">KAIROS 检测到状态变化 → METIS 重新计算流动性 → ARGOS 检查授权。</strong><br>建议暂缓未执行的投资计划，先保障近期付款；任何交易变更仍需必要确认。':'点击触发模拟冲击，观察 Agent 如何在同一个用户身上调整管理策略。';document.getElementById('shockbtn').textContent=shocked?'重置演示 ↺':'触发收入延期冲击 ↗'})</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TROPOS · 同一家银行，三扇不同的窗</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/700.css">
+<style>
+:root{
+  --bg:#e9eeec;--surface:#f7f9f8;--surface2:#edf2f0;--ink:#1d2b2e;--ink2:#4c5b5e;--mute:#7d8a8b;--faint:#aab5b5;
+  --line:rgba(29,43,46,.1);--line2:rgba(29,43,46,.18);--accent:#3d7a73;--bad:#b5503f;
+  --e-ethos:#3d7a73;--e-metis:#4a6788;--e-kairos:#b2803a;--e-argos:#b5503f;
+  --serif:"Noto Serif SC","Songti SC","STSong","Source Han Serif SC","SimSun",serif;
+  --kai:"LXGW WenKai Screen","Kaiti SC","STKaiti","KaiTi","楷体",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font:16px/1.85 var(--sans);background:radial-gradient(1200px 600px at 75% -15%,rgba(242,201,166,.4),transparent 65%),var(--bg)}
+a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:auto;padding:0 32px}
+.nav{display:flex;align-items:center;gap:28px;height:76px}
+.logo{font:700 19px var(--serif);letter-spacing:.26em;margin-right:auto}
+.nav a.l{font-size:14.5px;color:var(--ink2)}.nav a.l:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 22px;border-radius:999px;border:1px solid var(--line2);font-size:15px;transition:background .2s}
+.btn:hover{background:var(--surface)}
+.btn.solid{background:var(--ink);border-color:var(--ink);color:#f4f7f6}.btn.solid:hover{opacity:.9}
+.btn.sm{height:36px;padding:0 16px;font-size:14px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;letter-spacing:.02em}
+.hero{padding:56px 0 30px}
+.hero h1{font-size:clamp(38px,5.4vw,68px);line-height:1.2;max-width:900px}
+.hero .lead{max-width:640px;margin:22px 0 30px;font-size:18px;color:var(--ink2)}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.windows{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin:58px 0 0}
+.w{display:flex;flex-direction:column}
+.w .pane{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:4/5;box-shadow:0 30px 60px -40px rgba(29,43,46,.6)}
+.w svg{position:absolute;inset:0;width:100%;height:100%}
+.w .txt{position:absolute;left:22px;right:22px;top:22px}
+.w .when{font-size:12.5px;opacity:.75}
+.w .h{margin:6px 0 6px;font-size:28px;line-height:1.3}
+.w .s{font-size:13.5px;line-height:1.7;opacity:.85}
+.w.A .pane{color:#1d2b2e}.w.A .h{font-family:var(--serif);font-weight:600}
+.w.B .pane{color:#f4ecdc}.w.B .h{font-family:var(--kai);font-weight:400;letter-spacing:.04em}
+.w.C .pane{color:#0e1a2b}.w.C .h{font-family:var(--sans);font-weight:650;letter-spacing:-.02em}
+.w figcaption{padding:16px 4px 0;font-size:14.5px;color:var(--ink2)}
+.w figcaption b{display:block;font:600 17px var(--serif);color:var(--ink)}
+.section{padding:110px 0 0}
+.section h2{font-size:clamp(28px,3.4vw,40px);line-height:1.35}
+.section .lead{max-width:680px;margin:16px 0 0;color:var(--ink2);font-size:17px}
+.read{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:40px;border-top:1px solid var(--line2)}
+.read div{padding:22px 26px 0 0}
+.read div+div{padding-left:26px;border-left:1px solid var(--line)}
+.read b{display:block;font:600 19px var(--serif);margin-bottom:6px}
+.read p{margin:0;color:var(--ink2);font-size:15px}
+.read i{display:inline-block;width:22px;height:8px;border-radius:4px;margin-right:8px;vertical-align:middle}
+.partners{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:42px;border-top:1px solid var(--line2)}
+.partner{display:grid;grid-template-columns:64px 1fr;gap:20px;padding:28px 28px 28px 0;border-bottom:1px solid var(--line)}
+.partner:nth-child(even){padding-left:28px;border-left:1px solid var(--line)}
+.mono{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;font:600 22px/1 var(--serif);color:var(--c);box-shadow:inset 0 0 0 1px var(--c);background:color-mix(in srgb,var(--c) 8%,transparent)}
+.partner h3{font-size:23px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.partner h3 small{font:400 12px var(--sans);letter-spacing:.12em;color:var(--faint)}
+.partner .role{color:var(--c);font-size:15px;margin:2px 0 8px}
+.partner p{margin:0;color:var(--ink2);font-size:15px}
+.c-ethos{--c:var(--e-ethos)}.c-metis{--c:var(--e-metis)}.c-kairos{--c:var(--e-kairos)}.c-argos{--c:var(--e-argos)}
+.motto{margin:44px 0 0;font:clamp(22px,2.6vw,30px)/1.6 var(--kai);color:var(--ink)}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin:34px 0 18px}
+.modebtn{height:38px;padding:0 18px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--ink2);font-size:14.5px}
+.modebtn.active{background:var(--ink);border-color:var(--ink);color:#f4f7f6}
+#modecard{padding:26px 30px;border-radius:20px;background:var(--surface)}
+#modecard h3{font-size:22px;margin-bottom:8px}
+#modecard p{margin:4px 0;color:var(--ink2)}
+#modecard small{display:block;margin-top:12px;font-size:13px;color:var(--mute)}
+.rain-demo{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:40px}
+.rain-demo article{padding:26px 28px;border-radius:20px;background:var(--surface)}
+.rain-demo .who{font-size:13.5px;color:var(--mute)}
+.rain-demo .amt{font:600 36px var(--serif);margin:4px 0 6px}
+.rain-demo h3{font-size:19px;margin:14px 0 4px}
+.rain-demo p{margin:0;color:var(--ink2);font-size:15px}
+.event{margin-top:22px;padding:24px 28px;border-radius:20px;background:linear-gradient(110deg,#d9e1e4,#eee6dc);display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.event div{flex:1;min-width:260px}
+.event h3{font-size:20px}
+.event p{margin:6px 0 0;color:var(--ink2)}
+.feature{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center;margin-top:10px}
+.feature .big{font:700 clamp(54px,7vw,92px)/1.05 var(--serif);letter-spacing:.06em}
+.feature .sub{font:clamp(20px,2.4vw,26px)/1.5 var(--kai);color:var(--ink2);margin:12px 0 0}
+.flow{list-style:none;margin:0;padding:0;border-top:1px solid var(--line2)}
+.flow li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);font-size:15px;color:var(--ink2)}
+.flow li b{color:var(--ink);font-weight:600;margin-right:6px}
+.flow .mono{width:40px;height:40px;font-size:15px}
+.coverage{display:grid;grid-template-columns:1fr 1fr;gap:0 56px;margin-top:40px}
+.coverage h3{font-size:18px;padding-bottom:10px;border-bottom:1px solid var(--line2)}
+.coverage dl{margin:0}
+.coverage dl div{display:grid;grid-template-columns:120px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+.coverage dt{font-weight:600}
+.coverage dd{margin:0;color:var(--ink2)}
+.footer{margin-top:130px;padding:56px 0 70px;border-top:1px solid var(--line2)}
+.footer .motto{margin:0 0 18px}
+.footer p{margin:4px 0;color:var(--mute);font-size:13.5px}
+@media(max-width:960px){.windows{grid-template-columns:1fr;max-width:420px}.read,.partners,.rain-demo,.feature,.coverage{grid-template-columns:1fr}.read div+div{padding-left:0;border-left:0;border-top:1px solid var(--line)}.read div{padding-bottom:20px}.partner:nth-child(even){padding-left:0;border-left:0}.nav a.l{display:none}}
+@media(max-width:600px){.wrap{padding:0 18px}.hero{padding:30px 0 10px}.section{padding:80px 0 0}.partner{grid-template-columns:48px 1fr;gap:14px;padding-right:0}.mono{width:46px;height:46px;font-size:18px}.coverage dl div{grid-template-columns:96px 1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="nav"><a class="logo" href="#top">TROPOS</a><a class="l" href="#read">怎么读这扇窗</a><a class="l" href="#partners">四位伙伴</a><a class="l" href="#rain">同一场雨</a><a class="l" href="#cool">先别买</a><a class="btn sm solid" href="demo.html">打开工作台</a></header>
+
+  <section class="hero" id="top">
+    <h1>同一家银行，<br>三扇不同的窗。</h1>
+    <p class="lead">TROPOS 先认识你，再决定怎么帮你。收入不定的人，需要一句"这个月稳不稳"；深夜还在刷直播间的人，需要有人温和地拦一下；习惯做计划的人，只想要准确的数字。界面、语气和策略，都跟着人走。</p>
+    <div class="cta"><a class="btn solid" href="demo.html">走进工作台</a><a class="btn" href="#rain">看一场雨怎么改变计划</a></div>
+
+    <div class="windows" id="windows"></div>
+  </section>
+
+  <section class="section" id="read">
+    <h2>窗外的风景，就是接下来 30 天的钱。</h2>
+    <p class="lead">不用读报表。山越高，手头越宽裕；水面是你给自己留的安全线；山脚被水没过的那几天，就是钱会紧的日子。</p>
+    <div class="read">
+      <div><b><i style="background:#7f9f8d"></i>山的高低</b><p>每一天的余额。账单、还款、工资到账，都会让山起伏。</p></div>
+      <div><b><i style="background:#9cb9bf"></i>水面</b><p>你给自己定的最低余额。TROPOS 不会悄悄放松它。</p></div>
+      <div><b><i style="background:#97a4ae"></i>下雨</b><p>收入晚到、突发支出。雨来了，依赖这笔钱的计划会先停下来。</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="partners">
+    <h2>四位伙伴，各管一件事。</h2>
+    <p class="lead">名字取自四个古希腊概念。每一步都由一位伙伴负责、签名、留下记录。</p>
+    <div class="partners">
+      <article class="partner c-ethos"><span class="mono">知</span><div><h3>知己<small>ETHOS</small></h3><div class="role">看清你此刻的处境</div><p>结合简短问卷和授权的账户数据，判断你更需要守住现金、减轻负债、攒钱还是增长。判断说得清依据，你可以随时纠正；处境变了，它也跟着变。</p></div></article>
+      <article class="partner c-metis"><span class="mono">谋</span><div><h3>善谋<small>METIS</small></h3><div class="role">把每一笔算清楚</div><p>在预算、期限、必须支付的款项和风险约束之下，算出可以核对的计划。大模型负责理解和协调，确定性的算法负责计算和检验。</p></div></article>
+      <article class="partner c-kairos"><span class="mono">时</span><div><h3>择时<small>KAIROS</small></h3><div class="role">等对的时候再动</div><p>盯着账单到期、工资到账和突发变化。在你授权的条件下执行、暂停或重新安排，每一张回执都会核对。</p></div></article>
+      <article class="partner c-argos"><span class="mono">守</span><div><h3>守诺<small>ARGOS</small></h3><div class="role">只听你的，替你守门</div><p>名字来自《奥德赛》里等了主人二十年的那只狗。它独立负责权限、反欺诈、提示词注入防护、适当性和审计，对有风险的操作可以说不。</p></div></article>
+    </div>
+    <p class="motto">知己其人，善谋其策；择时而动，守诺而行。</p>
+  </section>
+
+  <section class="section" id="modes">
+    <h2>不同的人，先照顾不同的事。</h2>
+    <p class="lead">四种模式不会限制你能用哪些银行功能，只改变 TROPOS 先照顾什么、怎么提醒你。理财适当性和交易权限始终单独核验。</p>
+    <div class="modes"><button class="modebtn active" data-mode="protect">现金流守护</button><button class="modebtn" data-mode="recover">负债减压</button><button class="modebtn" data-mode="accumulate">财富积累</button><button class="modebtn" data-mode="grow">资产增长</button></div>
+    <div id="modecard" aria-live="polite"></div>
+  </section>
+
+  <section class="section" id="rain">
+    <h2>同一句话，不同的回答；<br>同一场雨，不同的过法。</h2>
+    <p class="lead">两个人都说：「帮我打理这 2 万元。」</p>
+    <div class="rain-demo">
+      <article><div class="who">阿林，收入不定</div><div class="amt">¥20,000</div><p>下个月有房租、信用卡和课程尾款，工资哪天到说不准。</p><h3>先保住要付的钱</h3><p>扣掉 30 天内的必付款和安全线，只剩 ¥2,100 可以自由安排，不建议买任何锁定期产品。</p></article>
+      <article><div class="who">陈工，储备充足</div><div class="amt">¥20,000</div><p>收入稳定，另有独立应急金，三个月后要带家人旅行。</p><h3>可配置 ¥7,730</h3><p>¥3,000 转入旅行目标，¥5,000 比较 90 天内到期的稳健型产品，需要先完成适当性确认。</p></article>
+    </div>
+    <div class="event"><div><h3>如果陈工的工资晚到 15 天？</h3><p id="shocktxt">照原计划，转入和申购会照常扣款，余额会在 11 月 4 日起低于安全线。</p></div><button class="btn solid" id="shockbtn">看 TROPOS 怎么做</button></div>
+  </section>
+
+  <section class="section" id="cool">
+    <div class="feature">
+      <div><div class="big">先别买。</div><p class="sub">想清楚，再付款。</p><p class="lead">双十一前，把想买的东西写成一张申请单。TROPOS 会算出这笔钱会挤掉什么，还会请几千个陌生人给出没有人情滤镜的意见。风险偏高时，经你同意，分期付款要等冷静期过了才放行。</p><p style="margin-top:22px"><a class="btn" href="demo.html">填一张申请单试试</a></p></div>
+      <ol class="flow">
+        <li><span class="mono c-ethos">知</span><span><b>看看最近的你</b>深夜消费、在还分期、还款习惯，只看行为，不贴身份标签</span></li>
+        <li><span class="mono c-metis">谋</span><span><b>把账算清楚</b>付完以后最紧的一天还剩多少、分期多付多少</span></li>
+        <li><span class="mono" style="--c:#4c5b5e">众</span><span><b>陌生人怎么看</b>只分享商品、价格和理由，账户信息不出门</span></li>
+        <li><span class="mono c-kairos">时</span><span><b>要不要等一等</b>24 或 72 小时冷静期，到点再问你一次</span></li>
+        <li><span class="mono c-argos">守</span><span><b>付款前守一下</b>不替你下单，也不会一直拦着你</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>每项银行业务都在，而且都能被检验。</h2>
+    <div class="coverage">
+      <div><h3>覆盖的业务</h3><dl>
+        <div><dt>智能转账</dt><dd>听懂指令，同名收款人会先问你，有回执、不重复扣款</dd></div>
+        <div><dt>账单分析</dt><dd>分类追溯到每笔交易，外来备注一律当作只读文字</dd></div>
+        <div><dt>订阅与代扣</dt><dd>认出重复和低使用的续费，商家回执到了才算取消</dd></div>
+        <div><dt>理财管理</dt><dd>目标与期限匹配，适当性单独核验，不承诺收益</dd></div>
+        <div><dt>卡片管理</dt><dd>查询、挂失与限制，敏感操作逐笔授权</dd></div>
+        <div><dt>先别买</dt><dd>购物申请、匿名意见、付款前的冷静期</dd></div>
+      </dl></div>
+      <div><h3>怎么证明它更好</h3><dl>
+        <div><dt>任务完成率</dt><dd>跨场景的目标能不能完成</dd></div>
+        <div><dt>约束违规率</dt><dd>有没有越过授权与资金边界</dd></div>
+        <div><dt>必付保障率</dt><dd>下雨的时候，该付的钱付不付得出</dd></div>
+        <div><dt>重复交易率</dt><dd>接口超时、重试时会不会多扣</dd></div>
+        <div><dt>干预次数</dt><dd>同一件事需要你动几次手</dd></div>
+        <div><dt>策略改进</dt><dd>与固定规则、静态画像的对照实验</dd></div>
+      </dl></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p class="motto">陪你把日子过明白。</p>
+    <p>2026 FinTechathon 微众银行金融科技大学生挑战赛参赛作品，团队讨论版。</p>
+    <p>独立参赛项目构想，非微众银行官方产品。演示中的账户、交易与投票均为合成数据。</p>
+  </footer>
+</div>
+
+<script>
+/* 三扇窗的缩略风景：与工作台同一套隐喻（山 = 余额，水面 = 安全线） */
+const WINS = [
+  { k: 'A', when: '阿林，早上 7:40', h: '这个月，稳得住。', s: '最紧的一天还比安全线高 ¥2,100。', cap: ['阿林', '自由设计师，收入不定。要的是安心：清晨的窗，一次只说一个结论。'],
+    sky: ['#a9bfcc', '#d9d3cb', '#f1cdb0'], land: ['#9db5a5', '#6f927f'], far: '#c3cecb', water: ['#a2bec4', '#7c9fa8'], ridge: [.55, .5, .68, .7, .72, .45, .52, .6, .62, .66], body: 'sun' },
+  { k: 'B', when: '小周，夜里 11:20', h: '今晚，账都排好了。', s: '最紧的时候还留着 ¥840 的余地。不多，但够用。', cap: ['小周', '分期叠加，常在深夜下单。要的是不被评判：夜里的窗，暖灯，慢慢说。'],
+    sky: ['#0c1230', '#1a2352', '#2e396b'], land: ['#2d3968', '#1d264c'], far: '#232c55', water: ['#1d2753', '#121939'], ridge: [.48, .58, .68, .7, .72, .46, .56, .64, .68, .7], body: 'moon' },
+  { k: 'C', when: '陈工，10/20 12:30', h: '可配置 ¥7,730', s: '30 日最低余额 ¥15,730（10/29），安全线 ¥8,000。', cap: ['陈工', '工程师，收入稳定。要的是精确：正午的窗，网格与数字先行。'],
+    sky: ['#4f8dcf', '#9cc3e8', '#e3eef7'], land: ['#a3c197', '#6f9c78'], far: '#c4d6c0', water: ['#93bcd9', '#6c9cc3'], ridge: [.66, .66, .72, .72, .5, .56, .58, .6, .6, .62], body: 'grid' },
+];
+function mini(w) {
+  const W = 400, H = 500, wy = 400, id = 'g' + w.k;
+  const pts = w.ridge.map((r, i) => [i / (w.ridge.length - 1) * W, 230 + r * 230]);
+  let d = `M0,${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) { const [x1, y1] = pts[i], [x2, y2] = pts[i + 1], mx = (x1 + x2) / 2; d += ` C${mx},${y1} ${mx},${y2} ${x2},${y2}`; }
+  let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+    <linearGradient id="s${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${w.sky[0]}"/><stop offset=".6" stop-color="${w.sky[1]}"/><stop offset="1" stop-color="${w.sky[2]}"/></linearGradient>
+    <linearGradient id="l${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${w.land[0]}"/><stop offset="1" stop-color="${w.land[1]}"/></linearGradient>
+    <linearGradient id="w${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${w.water[0]}" stop-opacity=".8"/><stop offset="1" stop-color="${w.water[1]}"/></linearGradient></defs>
+    <rect width="${W}" height="${H}" fill="url(#s${id})"/>`;
+  if (w.body === 'sun') s += `<circle cx="300" cy="300" r="110" fill="#ffe6c2" opacity=".55"/><circle cx="300" cy="300" r="30" fill="#f7cfa2"/>`;
+  if (w.body === 'moon') { for (let i = 0; i < 30; i++) s += `<circle cx="${(i * 137) % W}" cy="${170 + (i * 59) % 120}" r="${i % 4 ? .9 : 1.5}" fill="#f4ecdc" opacity=".7"/>`; s += `<circle cx="320" cy="215" r="20" fill="#f4e6c4"/><circle cx="329" cy="209" r="17" fill="${w.sky[1]}"/>`; }
+  if (w.body === 'grid') { for (let y = 200; y < H; y += 50) s += `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#fff" stroke-opacity=".3"/>`; for (let x = 0; x < W; x += 50) s += `<line x1="${x}" x2="${x}" y1="0" y2="${H}" stroke="#fff" stroke-opacity=".18"/>`; s += `<circle cx="330" cy="235" r="15" fill="#fff6d2"/>`; }
+  s += `<path d="M0,300 C80,270 160,280 240,296 S360,270 ${W},286 V${H} H0Z" fill="${w.far}"/>`;
+  if (w.body === 'moon') for (let i = 0, x = 0; x < W; i++) { const bw = 14 + (i * 37) % 26, bh = 10 + (i * 53) % 40; s += `<rect x="${x}" y="${300 - bh}" width="${bw}" height="${bh + 40}" fill="#283363" opacity=".85"/>`; for (let r = 0; r < bh / 10; r++) if ((i + r) % 3 === 0) s += `<rect x="${x + 5}" y="${306 - bh + r * 10}" width="2.5" height="3" fill="#f0b46a" opacity=".7"/>`; x += bw + 3; }
+  s += `<path d="${d} L${W},${H} L0,${H}Z" fill="url(#l${id})"/><rect x="0" y="${wy}" width="${W}" height="${H - wy}" fill="url(#w${id})"/>
+    <line x1="0" x2="${W}" y1="${wy}" y2="${wy}" stroke="${w.k === 'B' ? '#f4e6c4' : '#fff'}" stroke-opacity=".75" stroke-dasharray="2 6" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="${w.k === 'B' ? '#f0b46a' : w.k === 'C' ? '#163a28' : '#4f7463'}" stroke-width="2"/></svg>`;
+  return s;
+}
+document.getElementById('windows').innerHTML = WINS.map(w => `<figure class="w ${w.k}" style="margin:0"><div class="pane">${mini(w)}<div class="txt"><div class="when">${w.when}</div><div class="h">${w.h}</div><div class="s">${w.s}</div></div></div><figcaption><b>${w.cap[0]}</b>${w.cap[1]}</figcaption></figure>`).join('');
+
+const modes = {
+  protect: ['守住流动性，让每一笔必付款都付得出。', '现金流预测、房租与还款预留、收入延期预警。', '优先保证近期支付和最低现金；不把短期要用的钱锁起来。'],
+  recover: ['降低还款压力，守住信用与现金流。', '多笔到期提醒、还款计划、卡片与续费管理。', '先处理成本最高的负债和关键还款日；重大调整需要你确认。'],
+  accumulate: ['把明确的目标，变成能坚持的储蓄。', '预算、续费识别、目标储蓄与条件转账。', '必付款和安全线留够之后再存；收入变化时重新计算。'],
+  grow: ['在风险边界之内，让钱服务长期目标。', '结余分析、投资期限匹配、风险与产品比较。', '不追求没有约束的收益；建议与交易都要通过适当性审核。'],
+};
+function renderMode(k) {
+  const x = modes[k];
+  document.querySelectorAll('.modebtn').forEach(b => b.classList.toggle('active', b.dataset.mode === k));
+  document.getElementById('modecard').innerHTML = `<h3>${x[0]}</h3><p><b>先照顾：</b>${x[1]}</p><p><b>原则：</b>${x[2]}</p><small>银行功能照常开放，权限单独核验。</small>`;
+}
+document.querySelectorAll('.modebtn').forEach(b => b.addEventListener('click', () => renderMode(b.dataset.mode)));
+renderMode('protect');
+let shocked = false;
+document.getElementById('shockbtn').addEventListener('click', () => {
+  shocked = !shocked;
+  document.getElementById('shocktxt').innerHTML = shocked
+    ? '择时发现工资晚了，先停下旅行转入和理财申购；善谋重新算账，最紧的一天还剩 ¥12,780，没有碰到安全线；守诺等工资到账、你点头后再恢复。'
+    : '照原计划，转入和申购会照常扣款，余额会在 11 月 4 日起低于安全线。';
+  document.getElementById('shockbtn').textContent = shocked ? '再看一遍' : '看 TROPOS 怎么做';
+});
+</script>
+</body>
+</html>
