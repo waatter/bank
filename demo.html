@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/600.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/700.css">
   <link rel="stylesheet" href="assets/demo.css">
+  <link rel="stylesheet" href="assets/profile-ui.css">
 </head>
 <body data-persona="A" data-view="console">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -47,11 +48,13 @@
     <button data-view="bills"><svg class="ic"><use href="#i-book"/></svg>账本</button>
     <button data-view="transfer"><svg class="ic"><use href="#i-mail"/></svg>转账</button>
     <button data-view="audit"><svg class="ic"><use href="#i-diary"/></svg>日记<em class="count" id="auditCount">0</em></button>
+    <button data-view="profile"><svg class="ic"><use href="#i-users"/></svg>画像</button>
   </nav>
-  <div class="windows"><span>看谁的窗</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
+  <div class="windows"><span>演示账户</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
 </header>
 
 <main class="content">
+  <section class="view" id="view-profile"><div id="profileMount"></div></section>
   <!-- ============ 窗 ============ -->
   <section class="view active" id="view-console">
     <div class="window" id="window">
@@ -93,10 +96,10 @@
       <div>
         <h1>先别买。</h1>
         <p class="sub-voice">想清楚，再付款。</p>
-        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再请几千个陌生人看一眼。不是不让买，是不被推着买。</p>
+        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再参考本地模拟的不同观点。每一步都由你决定。</p>
         <div class="mini">
           <div>距双十一<b><span class="d11"></span> 天</b></div>
-          <div>冷静期省下<b class="ok-t" id="savedTotal">¥0</b></div>
+          <div>避免的拟支出<b class="ok-t" id="savedTotal">¥0</b></div>
           <div>冷静中 / 已放下<b id="coolCount">0 / 0</b></div>
         </div>
       </div>
@@ -128,7 +131,7 @@
           <label class="f"><span>每周大概用几次</span>
             <div class="range"><input id="pUse" type="range" min="0" max="35" value="5"><output id="pUseOut">5 次/周</output></div>
           </label>
-          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陌生人只看得到商品、价格、理由和替代品。余额和身份不会离开这里。</span></div>
+          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陪审意见由本地规则生成，没有真实陌生人参与；信息不会发送给他人。</span></div>
           <button class="btn solid" type="submit" style="width:100%"><svg class="ic"><use href="#i-hourglass"/></svg>递交审批</button>
         </form>
         <div class="approvals" id="flow"></div>
@@ -215,12 +218,15 @@
     </div>
   </section>
 </main>
+<div id="profileGate"></div>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="dialog"><h3 id="modalTitle"></h3><div class="mb" id="modalBody"></div><div class="actions" id="modalActions"></div></div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="assets/profile-engine.js"></script>
+<script src="assets/profile-ui.js"></script>
 <script src="assets/demo.js"></script>
 </body>
 </html>
