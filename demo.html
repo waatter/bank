@@ -3,20 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#05070d">
-  <title>TROPOS · 银行智能体工作台</title>
+  <title>TROPOS · 三扇窗</title>
+  <!-- 霞鹜文楷 / 思源宋体：开源字体，经 jsdelivr 加载；离线时回落到系统楷体与宋体 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/400.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/600.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/700.css">
   <link rel="stylesheet" href="assets/demo.css">
 </head>
-<body>
+<body data-persona="A" data-view="console">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
-  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></symbol>
-  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 17.5v-11"/></symbol>
-  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></symbol>
-  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18M4 12h16"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 22h12M6 2h12"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-diary" viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6Z"/><path d="M6 3v18M10 8h5M10 12h5"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
-  <symbol id="i-shield-x" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m14.5 9.5-5 5M9.5 9.5l5 5"/></symbol>
-  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></symbol>
   <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
@@ -28,250 +30,191 @@
   <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
-  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></symbol>
   <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
   <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></symbol>
-  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 17v4M17 19h4"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
-  <symbol id="i-calc" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01M8 10h.01M12 10h.01M16 10h.01"/></symbol>
-  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-7 10 7Z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
   <symbol id="i-forward" viewBox="0 0 24 24"><path d="m13 19 9-7-9-7v14ZM2 19l9-7-9-7v14Z"/></symbol>
-  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
 </svg>
 
-<div class="app">
-  <aside class="side">
-    <a class="brand" href="index.html" title="返回项目概念页">TROPOS<i>.</i></a>
-    <div class="brand-sub">Adaptive Banking Agent</div>
-    <nav class="nav" aria-label="主导航">
-      <button class="active" data-view="console"><svg class="ic"><use href="#i-dashboard"/></svg><span>Agent 工作台</span></button>
-      <button data-view="cool"><svg class="ic"><use href="#i-hourglass"/></svg><span>先别买</span><em>双11</em></button>
-      <button data-view="bills"><svg class="ic"><use href="#i-receipt"/></svg><span>账单与订阅</span></button>
-      <button data-view="transfer"><svg class="ic"><use href="#i-send"/></svg><span>智能转账</span></button>
-      <button data-view="audit"><svg class="ic"><use href="#i-history"/></svg><span>执行记录</span><em class="count" id="auditCount">0</em></button>
-    </nav>
-    <div class="side-engines">
-      <h6>FOUR ENGINES</h6>
-      <div style="color:var(--ethos)"><i class="pulse"></i><b>ETHOS</b><span style="color:var(--ink2)">知己</span><small>画像</small></div>
-      <div style="color:var(--metis)"><i class="pulse"></i><b>METIS</b><span style="color:var(--ink2)">善谋</span><small>决策</small></div>
-      <div style="color:var(--kairos)"><i class="pulse"></i><b>KAIROS</b><span style="color:var(--ink2)">择时</span><small>调度</small></div>
-      <div style="color:var(--argos)"><i class="pulse"></i><b>ARGOS</b><span style="color:var(--ink2)">守诺</span><small>守护</small></div>
+<header class="top">
+  <a class="brand" href="index.html" title="回到项目介绍">TROPOS</a>
+  <nav class="tabs" aria-label="页面">
+    <button class="active" data-view="console"><svg class="ic"><use href="#i-window"/></svg>窗</button>
+    <button data-view="cool"><svg class="ic"><use href="#i-hourglass"/></svg>先别买<em>双十一</em></button>
+    <button data-view="bills"><svg class="ic"><use href="#i-book"/></svg>账本</button>
+    <button data-view="transfer"><svg class="ic"><use href="#i-mail"/></svg>转账</button>
+    <button data-view="audit"><svg class="ic"><use href="#i-diary"/></svg>日记<em class="count" id="auditCount">0</em></button>
+  </nav>
+  <div class="windows"><span>看谁的窗</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
+</header>
+
+<main class="content">
+  <!-- ============ 窗 ============ -->
+  <section class="view active" id="view-console">
+    <div class="window" id="window">
+      <div id="scene"></div>
+      <div class="mullion"></div>
+      <div class="sky-text"><div class="when" id="when"></div><h1 id="greet"></h1><p id="status"></p></div>
+      <button class="weather" id="shockBtn"></button>
     </div>
-    <div class="sandbox"><svg class="ic"><use href="#i-shield"/></svg><span>沙箱模式：账户、交易与投票均为合成数据，不连接真实银行，不构成金融建议。</span></div>
-  </aside>
+    <div class="legend" id="legend"></div>
+    <div class="sill" id="sill"></div>
+    <div id="consoleNudge"></div>
 
-  <main class="main">
-    <header class="topbar">
-      <div class="persona-switch" id="personaSwitch" role="tablist" aria-label="切换示例用户"></div>
-      <div class="top-meta">
-        <span class="chip"><svg class="ic"><use href="#i-clock"/></svg>沙箱日期 2026-10-20</span>
-        <span class="chip d11"><svg class="ic"><use href="#i-gift"/></svg><span id="d11Chip"></span></span>
-      </div>
-    </header>
-
-    <div class="content">
-      <!-- ============ Agent 工作台 ============ -->
-      <section class="view active" id="view-console">
-        <div class="page-head">
-          <div>
-            <div class="eyebrow">Agent Console · 同一句话，千人千策</div>
-            <h1 id="greet"></h1>
-            <p class="lead" id="personaDesc"></p>
-          </div>
-          <div class="card ethos-card">
-            <header><span><span class="eng ethos">ETHOS</span>&nbsp; 当前画像（可由用户修正）</span><span id="riskPill"></span></header>
-            <div id="modeBars"></div>
-            <div class="factors" id="factors"></div>
-          </div>
-        </div>
-
-        <div class="kpis" id="kpis"></div>
-        <div id="consoleNudge"></div>
-
-        <div class="console-grid">
-          <article class="card chat">
-            <div class="card-head">
-              <div><h2>对 TROPOS 说</h2><p>自然语言下达任务，四引擎依次处理并留痕</p></div>
-              <span class="live"><i class="pulse"></i>在线</span>
-            </div>
-            <div class="chat-log" id="chatLog" aria-live="polite"></div>
-            <div class="suggest" id="suggest"></div>
-            <form class="composer" id="composer">
-              <input id="chatInput" placeholder="例如：帮我打理这 2 万元，别影响之后的大笔开支" autocomplete="off" aria-label="输入指令">
-              <button type="submit" aria-label="发送"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
-            </form>
-          </article>
-
-          <div class="stack">
-            <article class="card" id="cashCard">
-              <div class="card-head">
-                <div><h2>未来 30 天现金路径</h2><p id="chartSub"></p></div>
-                <button class="btn shock" id="shockBtn"><svg class="ic"><use href="#i-zap"/></svg><span>工资晚 15 天</span></button>
-              </div>
-              <div class="chart" id="chart"></div>
-              <div class="legend" id="legend"></div>
-              <div class="chart-summary" id="chartSummary"></div>
-            </article>
-            <article class="card">
-              <div class="card-head">
-                <div><h2>计划队列</h2><p>KAIROS 按时点调度；依赖收入的任务会被自动复核</p></div>
-                <span class="eng kairos">KAIROS</span>
-              </div>
-              <div class="queue" id="queue"></div>
-            </article>
-          </div>
-        </div>
-
-        <article class="card compare" id="compare" hidden></article>
-      </section>
-
-      <!-- ============ 先别买 ============ -->
-      <section class="view" id="view-cool">
-        <div class="cool-hero">
-          <div class="card hero-card">
-            <div class="eyebrow rose">双 11 冷静期 · Cooling-off Review</div>
-            <h1>先别买。<br><span>想清楚，再付款。</span></h1>
-            <p class="lead">在冲动和付款之间加一道审批：写下为什么想买、有没有更便宜的替代品，TROPOS 帮你把账算清，再听听没有人情滤镜的匿名意见。不是反消费，是反冲动消费。</p>
-            <div class="hero-stats">
-              <div><small>距双 11</small><b class="num" id="d11Days"></b></div>
-              <div><small>冷静期帮你省下</small><b class="num ok-t" id="savedTotal">¥0</b></div>
-              <div><small>审批中 / 已放下</small><b class="num" id="coolCount">0 / 0</b></div>
-            </div>
-          </div>
-          <div class="card risk-card" id="riskCard"></div>
-        </div>
-
-        <div class="cool-grid">
-          <article class="card">
-            <div class="card-head"><div><h2>提交购物申请</h2><p>像公司审批一样，先写清楚再花钱</p></div><span class="eng user">USER</span></div>
-            <div class="presets" id="presets"></div>
-            <form id="applyForm">
-              <label class="field"><span>想买什么</span><input id="pItem" required maxlength="30"></label>
-              <div class="row2">
-                <label class="field"><span>价格（元）</span><input id="pPrice" type="number" min="1" step="1" required></label>
-                <label class="field"><span>付款方式</span>
-                  <select id="pPay">
-                    <option value="balance">账户余额</option>
-                    <option value="credit">信用卡（全额）</option>
-                    <option value="inst6">分期 · 6 期</option>
-                    <option value="inst12">分期 · 12 期</option>
-                  </select>
-                </label>
-              </div>
-              <label class="field"><span>为什么想买？<small>越具体越好</small></span><textarea id="pReason" maxlength="140"></textarea></label>
-              <div class="row2">
-                <label class="field"><span>更便宜的替代品</span><input id="pAlt" placeholder="没有可留空" maxlength="30"></label>
-                <label class="field"><span>替代品价格</span><input id="pAltPrice" type="number" min="0" step="1"></label>
-              </div>
-              <label class="field"><span>预计每周用几次</span>
-                <div class="range"><input id="pUse" type="range" min="0" max="35" value="5"><output id="pUseOut">5 次/周</output></div>
-              </label>
-              <div class="share-note"><svg class="ic"><use href="#i-lock"/></svg><span>提交给匿名陪审团的只有商品、价格、理由和替代品。账户、余额与身份信息由 ARGOS 留在本地。</span></div>
-              <button class="btn primary" type="submit" style="width:100%"><svg class="ic"><use href="#i-hourglass"/></svg>提交审批</button>
-            </form>
-          </article>
-
-          <article class="card" id="flowCard">
-            <div class="card-head"><div><h2>审批流</h2><p>ETHOS → METIS → 匿名陪审团 → KAIROS → ARGOS</p></div><span id="flowPill"></span></div>
-            <div id="flow"><div class="empty"><svg class="ic"><use href="#i-hourglass"/></svg>选择左侧示例或填写申请，看看这件东西该不该买。</div></div>
-          </article>
-        </div>
-
-        <div class="cool-bottom">
-          <article class="card">
-            <div class="card-head"><div><h2>冷静清单</h2><p>到期后再问你一次：还想买吗？</p></div><span class="eng kairos">KAIROS</span></div>
-            <div id="coolList"></div>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><h2>为什么由银行来做这件事</h2><p>待验证的业务假设，评测指标见策划书第 22 节</p></div><span class="eng sys">HYPOTHESIS</span></div>
-            <div class="why-list">
-              <div><span class="wi"><svg class="ic"><use href="#i-wallet"/></svg></span><span><b>银行看得见付款后的现金流</b>小程序只能听你说理由，银行能算出这笔钱会不会挤占房租和还款。</span></div>
-              <div><span class="wi"><svg class="ic"><use href="#i-card"/></svg></span><span><b>冷静期放在付款侧</b>分期、信用付款是冲动消费最容易失控的环节，用户授权后由 ARGOS 在付款前多问一次。</span></div>
-              <div><span class="wi"><svg class="ic"><use href="#i-heart"/></svg></span><span><b>先保护用户，再谈长期信任</b>降低过度负债与逾期风险，与消费者权益保护的方向一致；拒绝用身份标签给人分组。</span></div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- ============ 账单与订阅 ============ -->
-      <section class="view" id="view-bills">
-        <div class="page-head" style="grid-template-columns:1fr">
-          <div>
-            <div class="eyebrow">Bills &amp; Subscriptions</div>
-            <h1>账单与订阅</h1>
-            <p class="lead">分类可追溯到每一笔交易；外部文本（如交易备注）一律视为不可信数据，不具备执行权限。</p>
-          </div>
-        </div>
-        <div class="kpis" id="billKpis"></div>
-        <div class="console-grid">
-          <article class="card">
-            <div class="card-head"><div><h2>近 30 天交易</h2><p>商户 · 分类 · 时间 · 金额</p></div><span class="eng ethos">ETHOS</span></div>
-            <div class="catbar" id="catbar"></div>
-            <div class="catlegend" id="catlegend"></div>
-            <div style="overflow-x:auto;margin-top:12px"><table class="table"><thead><tr><th>交易</th><th>分类</th><th>时间</th><th class="amt">金额</th></tr></thead><tbody id="txBody"></tbody></table></div>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><h2>订阅与代扣</h2><p>先识别、再由你决定；"已取消"只在收到服务商回执后显示</p></div><span class="eng argos">ARGOS</span></div>
-            <div id="subs"></div>
-          </article>
-        </div>
-      </section>
-
-      <!-- ============ 智能转账 ============ -->
-      <section class="view" id="view-transfer">
-        <div class="page-head" style="grid-template-columns:1fr">
-          <div>
-            <div class="eyebrow">Transfer · User Authorization</div>
-            <h1>智能转账</h1>
-            <p class="lead">METIS 生成计划，ARGOS 逐项校验：收款人消歧、限额、现金预留、收入依赖、指令来源，最后由你逐笔确认。同一授权只执行一次。</p>
-          </div>
-        </div>
-        <div class="transfer-grid">
-          <article class="card">
-            <div class="card-head"><div><h2>转账草稿</h2><p>只改变本页沙箱账本</p></div><span class="eng metis">METIS</span></div>
-            <form id="tfForm">
-              <label class="field"><span>收款人<small>姓名、备注或关系</small></span><input id="tfTo" value="王磊" autocomplete="off"></label>
-              <div class="payees" id="payees"></div>
-              <div class="row2">
-                <label class="field"><span>金额（元）</span><input id="tfAmt" type="number" min="1" step="1" value="500"></label>
-                <label class="field"><span>执行时间</span>
-                  <select id="tfWhen"><option value="now">立即</option><option value="salary">工资到账后</option></select>
-                </label>
-              </div>
-              <label class="field"><span>用途备注</span><input id="tfMemo" value="聚餐 AA" autocomplete="off" maxlength="60"></label>
-              <label class="checkbox"><input type="checkbox" id="tfTimeout">演示：银行接口超时（验证幂等查询，不重复扣款）</label>
-              <button class="btn primary" type="submit"><svg class="ic"><use href="#i-shield"/></svg>交给 ARGOS 检查</button>
-            </form>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><h2>ARGOS 校验</h2><p>任何一项不通过都不会移动资金</p></div><span class="eng argos">ARGOS</span></div>
-            <div class="checks" id="checks"></div>
-            <div id="tfConfirm"></div>
-          </article>
-        </div>
-      </section>
-
-      <!-- ============ 执行记录 ============ -->
-      <section class="view" id="view-audit">
-        <div class="page-head" style="grid-template-columns:1fr">
-          <div>
-            <div class="eyebrow">Audit Trail</div>
-            <h1>执行记录</h1>
-            <p class="lead">每一次画像更新、计划生成、暂停、拦截、确认和回执都在这里留痕。</p>
-          </div>
-        </div>
-        <article class="card">
-          <div class="card-head">
-            <div class="filters" id="logFilters"></div>
-            <button class="btn sm ghost" id="clearLog">清空本次演示记录</button>
-          </div>
-          <div class="log" id="log"></div>
+    <div class="desk">
+      <article class="panel chat">
+        <div class="block-head"><div><h2>跟 TROPOS 说</h2><p id="chatHint"></p></div></div>
+        <div class="chat-log" id="chatLog" aria-live="polite"></div>
+        <div class="suggest" id="suggest"></div>
+        <form class="composer" id="composer">
+          <input id="chatInput" autocomplete="off" aria-label="想做的事">
+          <button type="submit" aria-label="发送"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
+        </form>
+      </article>
+      <div class="desk-side">
+        <article class="panel">
+          <div class="block-head"><div><h2>接下来 30 天</h2><p>依赖工资的事，会等工资到了再做</p></div></div>
+          <div class="days" id="queue"></div>
         </article>
-      </section>
+        <article class="panel portrait" id="portrait"></article>
+      </div>
     </div>
-  </main>
-</div>
+
+    <section class="compare" id="compare" hidden></section>
+    <p class="foot">TROPOS 参赛原型。账户与交易均为合成数据，不连接真实银行，不构成金融建议。</p>
+  </section>
+
+  <!-- ============ 先别买 ============ -->
+  <section class="view" id="view-cool">
+    <div class="cool-hero">
+      <div>
+        <h1>先别买。</h1>
+        <p class="sub-voice">想清楚，再付款。</p>
+        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再请几千个陌生人看一眼。不是不让买，是不被推着买。</p>
+        <div class="mini">
+          <div>距双十一<b><span class="d11"></span> 天</b></div>
+          <div>冷静期省下<b class="ok-t" id="savedTotal">¥0</b></div>
+          <div>冷静中 / 已放下<b id="coolCount">0 / 0</b></div>
+        </div>
+      </div>
+      <div class="panel you" id="riskCard"></div>
+    </div>
+
+    <div class="form-sheet">
+      <div class="form-title"><h2>购物申请单</h2><span id="formNo"></span></div>
+      <div class="form-grid">
+        <form id="applyForm">
+          <div class="presets" id="presets"></div>
+          <label class="f"><span>想买什么</span><input id="pItem" required maxlength="30"></label>
+          <div class="f2">
+            <label class="f"><span>价格（元）</span><input id="pPrice" type="number" min="1" step="1" required></label>
+            <label class="f"><span>怎么付</span>
+              <select id="pPay">
+                <option value="balance">账户余额</option>
+                <option value="credit">信用卡（全额）</option>
+                <option value="inst6">分期 6 期</option>
+                <option value="inst12">分期 12 期</option>
+              </select>
+            </label>
+          </div>
+          <label class="f"><span>为什么想买<small>写得越具体越好</small></span><textarea id="pReason" rows="3" maxlength="140"></textarea></label>
+          <div class="f2">
+            <label class="f"><span>更便宜的替代品</span><input id="pAlt" placeholder="没有就留空" maxlength="30"></label>
+            <label class="f"><span>替代品价格</span><input id="pAltPrice" type="number" min="0" step="1"></label>
+          </div>
+          <label class="f"><span>每周大概用几次</span>
+            <div class="range"><input id="pUse" type="range" min="0" max="35" value="5"><output id="pUseOut">5 次/周</output></div>
+          </label>
+          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陌生人只看得到商品、价格、理由和替代品。余额和身份不会离开这里。</span></div>
+          <button class="btn solid" type="submit" style="width:100%"><svg class="ic"><use href="#i-hourglass"/></svg>递交审批</button>
+        </form>
+        <div class="approvals" id="flow"></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+
+    <div class="cool-bottom">
+      <section>
+        <div class="block-head"><div><h2>冷静抽屉</h2><p>时间到了，再问你一次还想不想要</p></div></div>
+        <div class="notes" id="coolList"></div>
+      </section>
+      <article class="panel">
+        <div class="block-head"><div><h2>为什么由银行来做</h2><p>待验证的业务假设，评测口径见策划书第 22 节</p></div></div>
+        <ol class="why-list">
+          <li><span><b>银行看得见付款以后的日子</b>小程序只能听你说理由；银行能算出这笔钱会不会挤到房租和还款。</span></li>
+          <li><span><b>冷静期放在付款这一步</b>分期和信用付款最容易失控。经你授权，守诺会在付款前多问一句。</span></li>
+          <li><span><b>先照顾人，再谈长期信任</b>减少过度负债和逾期，与消费者权益保护同向；只看行为，不给人贴身份标签。</span></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 账本 ============ -->
+  <section class="view" id="view-bills">
+    <div class="page-title">
+      <h1>这个月的账本</h1>
+      <p class="lead">每个分类都能追到具体的交易。交易备注是别人写的字，只能看，不能指挥 TROPOS 做任何事。</p>
+    </div>
+    <div class="figures" id="billKpis"></div>
+    <div class="ledger-grid">
+      <article class="panel">
+        <div class="block-head"><div><h2>近 30 天流水</h2></div></div>
+        <div class="ribbon" id="catbar"></div>
+        <div class="ribbon-legend" id="catlegend"></div>
+        <div style="overflow-x:auto"><table class="table"><thead><tr><th>交易</th><th>分类</th><th>时间</th><th class="amt">金额</th></tr></thead><tbody id="txBody"></tbody></table></div>
+      </article>
+      <article class="panel">
+        <div class="block-head"><div><h2>自动续费</h2><p>商家回执到了，才算真的取消</p></div></div>
+        <div id="subs"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 转账 ============ -->
+  <section class="view" id="view-transfer">
+    <div class="page-title">
+      <h1>转一笔钱</h1>
+      <p class="lead">像寄一封信：守诺逐项盖邮戳，确认收款人、金额、转完后的日子和这是不是你本人的意思，最后由你封口。同一封信只寄一次。</p>
+    </div>
+    <div class="envelope-grid">
+      <div class="envelope">
+        <div class="block-head"><div><h2>信封</h2><p>只改动这个页面里的沙箱账本</p></div></div>
+        <form id="tfForm">
+          <label class="f"><span>转给谁<small>名字、备注或关系都行</small></span><input id="tfTo" value="王磊" autocomplete="off"></label>
+          <div class="payees" id="payees"></div>
+          <div class="f2">
+            <label class="f"><span>金额（元）</span><input id="tfAmt" type="number" min="1" step="1" value="500"></label>
+            <label class="f"><span>什么时候转</span>
+              <select id="tfWhen"><option value="now">现在</option><option value="salary">工资到账后</option></select>
+            </label>
+          </div>
+          <label class="f"><span>附言</span><input id="tfMemo" value="聚餐 AA" autocomplete="off" maxlength="60"></label>
+          <label class="checkbox"><input type="checkbox" id="tfTimeout">演示：银行接口超时，看会不会重复扣款</label>
+          <button class="btn solid" type="submit"><svg class="ic"><use href="#i-shield"/></svg>请守诺检查</button>
+        </form>
+      </div>
+      <article class="panel">
+        <div class="block-head"><div><h2>邮戳</h2><p>少盖一枚，钱都不会动</p></div></div>
+        <div class="marks" id="checks"></div>
+        <div id="tfConfirm"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 日记 ============ -->
+  <section class="view" id="view-audit">
+    <div class="diary">
+      <div class="page-title"><h1>TROPOS 的日记</h1><p class="lead">每一次判断、暂停、拦截和确认，都记在这里。</p></div>
+      <article class="panel">
+        <div class="block-head"><div class="filters" id="logFilters"></div><button class="btn sm quiet" id="clearLog">清空这次演示</button></div>
+        <div id="log"></div>
+      </article>
+    </div>
+  </section>
+</main>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="dialog"><h3 id="modalTitle"></h3><div class="mb" id="modalBody"></div><div class="actions" id="modalActions"></div></div>
