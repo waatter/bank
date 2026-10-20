@@ -7,7 +7,7 @@
   const stability = { stable: '收入比较稳定', mixed: '固定收入 + 浮动收入', uncertain: '收入时间和金额不固定' };
   const styles = { A: '清晨 · 安稳留白', B: '深夜 · 温柔陪伴', C: '正午 · 数字清晰' };
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const money = value => '¥' + (Number.isFinite(Number(value)) ? Number(value) : 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+  const money = value => '¥' + (Number.isFinite(Number(value)) ? Number(value) : 0).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
   const data = () => adapter.getData();
   const gate = () => document.getElementById('profileGate');
   const mount = () => document.getElementById('profileMount');
@@ -129,9 +129,9 @@
   function init(value) {
     if (adapter) return;
     adapter = value;
-    gate().addEventListener('click', event => {
+    gate().addEventListener('click', async event => {
       const account = event.target.closest('[data-pu-account]');
-      if (account && !busy) { adapter.selectAccount(account.dataset.puAccount); login(); return; }
+      if (account && !busy) { busy=true;try{await adapter.selectAccount(account.dataset.puAccount);login();}catch(err){error('模拟账户连接失败，请重试。')}finally{busy=false;}return; }
       const button = event.target.closest('[data-pu]'); if (button) action(button.dataset.pu);
     });
     gate().addEventListener('submit', event => {

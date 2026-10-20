@@ -509,3 +509,12 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
   .panel,.envelope{padding:20px 18px}
 }
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* The connected sandbox keeps receipts and connection mode visible. */
+#runtimeStatus{max-width:165px;overflow:hidden;text-overflow:ellipsis;flex:none;font-size:11px}
+.server-proposal{margin-top:18px;padding-top:18px;border-top:1px solid var(--line2)}
+.server-proposal ul{padding-left:18px;font-size:13px;color:var(--ink2)}
+.server-proposal>.btn{margin:4px 6px 4px 0}
+.server-result{margin-top:14px;overflow-wrap:anywhere}
+@media(min-width:641px) and (max-width:1250px){.top{flex-wrap:wrap;gap:12px 22px}.top .windows{margin-left:auto}.tabs{order:3;width:100%;gap:24px}.tabs button.active:after{bottom:-9px}}
+@media(max-width:640px){#runtimeStatus{max-width:135px}.tabs{overflow-x:auto;justify-content:flex-start;gap:10px}.tabs button{flex:none;min-width:36px}.windows>span{display:none}}
