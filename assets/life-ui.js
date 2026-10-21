@@ -184,9 +184,11 @@
       if ((state.scenes || []).some(s=>s.status==='draft')) { setMessage('请先采用或取消生活假设，再重新比较。',true); return; }
       const p=analysis.policies.find(x=>x.id===selectedPlan), amount=number(p && p.metrics.goalAmount);
       if (amount<=0) return;
+      // 提交这次分析所依据的版本；服务端据此拒绝分析之后发生的任何变化。
+      const request={amount,lifeVersion:analysis.lifeVersion,accountRevision:analysis.accountRevision};
       const who=context().persona, action=++actionSequence; setBusy(true);
-      try { const result=await adapter.proposeGoal(amount); if(result && result.ok===false) throw new Error(result.error || '草案未生成。'); if(context().persona===who) setMessage('目标转账草案已交给逐笔确认页面。请核对后决定是否执行。',false); }
-      catch(error) { if(context().persona===who) setMessage(failure(error),true); }
+      try { const result=await adapter.proposeGoal(request); if(result && result.ok===false) throw new Error(result.error || '草案未生成。'); if(context().persona===who) setMessage('目标转账草案已交给逐笔确认页面。请核对后决定是否执行。',false); }
+      catch(error) { if(context().persona===who) { if(error && error.status===409) invalidate(); setMessage(failure(error),true); } }
       finally { if(action===actionSequence && context().persona===who) { setBusy(false); render(); } }
       return;
     }
