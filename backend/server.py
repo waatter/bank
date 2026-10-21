@@ -14,6 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from .model import IntentPlanner, ModelConfig, agent_response, strict_json
+from .life_service import LifeService
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,6 +25,7 @@ STATIC_FILES = {
     "/assets/profile-engine.js": "assets/profile-engine.js",
     "/assets/profile-ui.js": "assets/profile-ui.js", "/assets/profile-ui.css": "assets/profile-ui.css",
     "/assets/backend-client.js": "assets/backend-client.js",
+    "/assets/life-ui.js": "assets/life-ui.js", "/assets/life-ui.css": "assets/life-ui.css",
 }
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
@@ -68,6 +70,7 @@ class TroposServer(ThreadingHTTPServer):
         if not allowed:
             raise ValueError("This demo server only binds to a loopback address")
         self.service = service
+        self.life = LifeService(service)
         self.planner = planner if planner is not None else IntentPlanner()
         self.root = Path(root).resolve()
         if ":" in host:
@@ -207,6 +210,7 @@ class TroposHandler(BaseHTTPRequestHandler):
             return self._static(path)
         if method == "GET" and path == "/api/health":
             return self._json(200, {"ok": True, "sandbox": True, "authentication": "simulated-persona-session",
+                                    "version": "2.0.0",
                                     "modelMode": self.server.planner.mode, "service": "TROPOS synthetic bank"})
         if method == "POST" and path == "/api/sessions":
             body = _object(self._body(), {"persona"}, {"persona"})
@@ -215,6 +219,33 @@ class TroposHandler(BaseHTTPRequestHandler):
             return self._json(201, service.session(body["persona"]))
         uid = self._user()
         body = self._body() if method in {"POST", "PUT"} else None
+        if method == "GET" and path == "/api/life":
+            return self._json(200, self.server.life.get(uid))
+        if method == "POST" and path == "/api/life/settings":
+            _object(body, {"version", "settings"}, {"version", "settings"})
+            return self._json(200, self.server.life.save_settings(uid, body))
+        if method == "POST" and path == "/api/life/scenes":
+            _object(body, {"version", "scene"}, {"version", "scene"})
+            return self._json(201, self.server.life.add_scene(uid, body))
+        if method == "POST" and path == "/api/life/analyze":
+            _object(body, set())
+            return self._json(200, self.server.life.analyze(uid))
+        if method == "POST" and path == "/api/life/goal":
+            _object(body, {"version", "accountRevision", "amount"}, {"version", "accountRevision", "amount"})
+            return self._json(201, self.server.life.propose_goal(uid, body))
+        if method == "POST" and path == "/api/life/commit":
+            _object(body, {"version", "accountRevision", "policyId", "confirmation", "requestKey"},
+                    {"version", "accountRevision", "policyId", "confirmation", "requestKey"})
+            _confirmed(body)
+            return self._json(200, self.server.life.commit_plan(uid, body))
+        life_match = re.fullmatch(r"/api/life/scenes/([^/]+)/(cancel|commit)", path)
+        if method == "POST" and life_match:
+            scene_id, action = _identifier(life_match[1]), life_match[2]
+            fields = {"version", "confirmation", "accountRevision"} if action == "commit" else {"version", "confirmation"}
+            _object(body, fields, fields)
+            _confirmed(body)
+            operation = self.server.life.commit_scene if action == "commit" else self.server.life.cancel_scene
+            return self._json(200, operation(uid, scene_id, body))
         if method == "GET" and path == "/api/state":
             return self._json(200, service.snapshot(uid))
         if method == "GET" and path == "/api/proposals":

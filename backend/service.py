@@ -272,6 +272,11 @@ class BankService:
             {'name': '工资到账条件', 'ok': when != 'salary' or st['salaryReceived'], 'detail': '发薪后计划仅在到账后恢复待确认。'}]
 
     def propose_transfer(self, user_id, payload):
+        with self._db(True) as db:
+            return self._propose_transfer(db, user_id, payload)
+
+    def _propose_transfer(self, db, user_id, payload, life_version=None):
+        """Create a draft inside the caller transaction; never authorise or pay."""
         if not isinstance(payload, dict):
             raise BankError(400, 'INVALID_TRANSFER', '转账方案格式无效。')
         amount = cents(payload.get('amount'), True)
@@ -281,26 +286,41 @@ class BankService:
         memo = payload.get('memo', '')
         if not isinstance(memo, str) or len(memo) > 200:
             raise BankError(400, 'INVALID_TRANSFER', '备注最多 200 字。')
-        with self._db(True) as db:
-            self._consent(db, user_id)
-            user, _ = self._user(db, user_id)
-            payee = db.execute('SELECT content FROM counterparties WHERE user_id=? AND id=?', (user_id, to)).fetchone()
-            if not payee:
-                raise BankError(400, 'UNKNOWN_PAYEE', '请选择明确的已登记收款账户；同名联系人须消歧。')
-            checks = self._checks(db, user_id, amount, when)
-            status = 'pending_confirmation' if all(c['ok'] for c in checks) else ('waiting_condition' if when == 'salary' and not checks[-1]['ok'] else 'blocked')
-            proposal = {'id': uid('proposal'), 'to': to, 'payee': json.loads(payee[0]), 'amount': yuan(amount), 'when': when,
-                        'memo': memo, 'revision': user['revision'], 'status': status, 'expiresAt': time.time() + 600,
-                        'confirmationToken': secrets.token_urlsafe(24)}
-            db.execute('INSERT INTO proposals VALUES(?,?,?)', (proposal['id'], user_id, json.dumps(proposal)))
-            self._audit(db, user_id, 'ARGOS', '转账方案待你确认' if status == 'pending_confirmation' else '转账方案暂缓', f"收款账户 {to}；金额 ¥{yuan(amount):,.2f}；未执行扣款。")
-            return {'proposal': proposal, 'checks': checks, 'snapshot': self._snapshot(db, user_id)}
+        self._consent(db, user_id)
+        user, _ = self._user(db, user_id)
+        payee = db.execute('SELECT content FROM counterparties WHERE user_id=? AND id=?', (user_id, to)).fetchone()
+        if not payee:
+            raise BankError(400, 'UNKNOWN_PAYEE', '请选择明确的已登记收款账户；同名联系人须消歧。')
+        checks = self._checks(db, user_id, amount, when)
+        status = 'pending_confirmation' if all(c['ok'] for c in checks) else ('waiting_condition' if when == 'salary' and not checks[-1]['ok'] else 'blocked')
+        proposal = {'id': uid('proposal'), 'to': to, 'payee': json.loads(payee[0]), 'amount': yuan(amount), 'when': when,
+                    'memo': memo, 'revision': user['revision'], 'status': status, 'expiresAt': time.time() + 600,
+                    'confirmationToken': secrets.token_urlsafe(24)}
+        if life_version is not None:
+            proposal['lifeVersion'] = life_version
+        db.execute('INSERT INTO proposals VALUES(?,?,?)', (proposal['id'], user_id, json.dumps(proposal)))
+        self._audit(db, user_id, 'ARGOS', '转账方案待你确认' if status == 'pending_confirmation' else '转账方案暂缓', f"收款账户 {to}；金额 ¥{yuan(amount):,.2f}；未执行扣款。")
+        return {'proposal': proposal, 'checks': checks, 'snapshot': self._snapshot(db, user_id)}
+
 
     def _proposal(self, db, user_id, proposal_id):
         row = db.execute('SELECT content FROM proposals WHERE user_id=? AND id=?', (user_id, proposal_id)).fetchone()
         if not row:
             raise BankError(404, 'PROPOSAL_NOT_FOUND', '转账方案不存在。')
         return json.loads(row[0])
+
+    @staticmethod
+    def _life_approval_current(db, user_id, proposal):
+        if 'lifeVersion' not in proposal:
+            return True
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='life_state'").fetchone():
+            return False
+        state = db.execute('SELECT version FROM life_state WHERE user_id=?', (user_id,)).fetchone()
+        version = state[0] if state else 0
+        if version != proposal['lifeVersion']:
+            return False
+        return not any(json.loads(row[0]).get('status') == 'draft' for row in
+                       db.execute('SELECT content FROM life_scenes WHERE user_id=?', (user_id,)))
 
     def proposals(self, user_id, limit=50):
         """Recover this user's recent proposals without changing approvals or the ledger.
@@ -334,6 +354,8 @@ class BankService:
                     proposal.update(status='blocked', invalidReason='CONSENT_REQUIRED')
                 elif proposal['revision'] != user['revision']:
                     proposal.update(status='stale', invalidReason='STALE_APPROVAL')
+                elif not self._life_approval_current(db, user_id, proposal):
+                    proposal.update(status='stale', invalidReason='STALE_LIFE_PLAN')
                 elif proposal['expiresAt'] < at:
                     proposal.update(status='expired', invalidReason='APPROVAL_EXPIRED')
                 elif proposal['status'] == 'settled':
@@ -383,6 +405,8 @@ class BankService:
                 raise BankError(409, 'REVOKED', '此方案已撤销。')
             if proposal['revision'] != user['revision']:
                 raise BankError(409, 'STALE_APPROVAL', '账户或画像已变化，请重新生成方案并确认。')
+            if not self._life_approval_current(db, user_id, proposal):
+                raise BankError(409, 'STALE_LIFE_PLAN', '生活安排已变化，请重新比较后生成目标草案。')
             if proposal['expiresAt'] < time.time():
                 raise BankError(409, 'APPROVAL_EXPIRED', '方案已过期，请重新核验。')
             checks = self._checks(db, user_id, cents(proposal['amount'], True), proposal['when'])
@@ -487,6 +511,10 @@ class BankService:
             ids = [r[0] for r in db.execute('SELECT id FROM transactions WHERE user_id=?', (user_id,))]
             for tx in ids:
                 db.execute('DELETE FROM entries WHERE transaction_id=?', (tx,))
+            # Optional v2 planning tables share this reset transaction.
+            for table in ('life_scenes', 'life_state', 'life_plan_receipts'):
+                if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone():
+                    db.execute('DELETE FROM ' + table + ' WHERE user_id=?', (user_id,))
             for table in ['profiles','authorizations','accounts','counterparties','transactions','idempotency','proposals','plans','events','audit','profile_updates']:
                 db.execute('DELETE FROM ' + table + ' WHERE user_id=?', (user_id,))
             db.execute('DELETE FROM users WHERE id=?', (user_id,))

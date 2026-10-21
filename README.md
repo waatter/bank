@@ -1,4 +1,8 @@
-# TROPOS：知己·善谋·择时·守诺
+# TROPOS 2.0：让生活与现金一起规划
+
+**2.0 主入口：**启动后打开工作台的“生活规划”。录入八类生活场景，比较保留原安排、缓冲优先、兼顾生活三种方案，在四个压力情景下查看现金路径、调整代价、现金缓冲敏感性和目标延迟。用户采用方案后登记未来支出，目标储蓄另行生成草案并逐笔确认。
+
+[2.0 架构与经济机制](./docs/TROPOS_2.0架构与经济机制.md) · [三分钟操作清单](./docs/TROPOS_2.0演示清单.md) · [生活规划核对报告](./reports/life-planning.md)
 
 基于动态金融画像与四引擎协同的银行智能体参赛项目。项目策划见 [TROPOS 完整项目策划书](./TROPOS_完整项目策划书_v1.0.md)，产品判断与后续工作见 [争冠路线与动态画像设计](./docs/争冠路线与动态画像.md)。
 
@@ -99,8 +103,10 @@ node tests/profile-invariants.cjs
 node tests/backend-client.cjs
 node --test tests/client-session.cjs
 node --test tests/modal-accessibility.cjs
+node --test tests/life-ui.cjs
 python3 -m eval.benchmark --output reports/evaluation.json
 python3 -m eval.intent_benchmark
+python3 -m eval.life_benchmark --output reports/life-planning.json
 ```
 
 Python 检查覆盖领域账本、授权版本与有效期、工资去重、事务回滚、服务重启、用户隔离、HTTP 入口、并发幂等、模型输出白名单与评估口径。Node 检查覆盖本地业务不变量，真实 HTTP 客户端与工作台之间的数据衔接，以及会话恢复和过期处理；工作台衔接检查使用替代 DOM，不构成浏览器点击或视觉验收。

@@ -516,6 +516,10 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .server-proposal ul{padding-left:18px;font-size:13px;color:var(--ink2)}
 .server-proposal>.btn{margin:4px 6px 4px 0}
 .server-result{margin-top:14px;overflow-wrap:anywhere}
+.version-mark{font:11px var(--sans);color:var(--accent);border:1px solid var(--line2);border-radius:5px;padding:2px 4px;vertical-align:middle;letter-spacing:0}
+.life-entry{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:24px 0}
+.life-entry h2{margin:8px 0}.life-entry p{color:var(--ink2);max-width:48em}.life-entry>.btn{flex:none}
+@media(max-width:640px){.life-entry{align-items:stretch;flex-direction:column;gap:16px}.life-entry>.btn{width:100%}}
 .proposal-history{margin-top:24px;min-width:0}
 .proposal-history .block-head{flex-wrap:wrap;gap:12px}
 .server-proposal{overflow-wrap:anywhere}

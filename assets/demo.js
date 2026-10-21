@@ -484,6 +484,7 @@ function showView(v) {
   if (v === 'profile') window.TroposProfileUI?.render();
   if (v === 'evaluation') renderEvaluation();
   if (v === 'transfer') refreshServerProposals();
+  if(v==='life')state.operationBusy||state.chatBusy?window.TroposLifeUI?.render():window.TroposLifeUI?.refresh();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 async function switchPersona(k, silent = false) {
@@ -1504,6 +1505,7 @@ function renderAll() {
   if (!state.lastAssess || state.lastAssess.persona !== state.persona) renderFlowEmpty();
   if (state.view === 'audit') renderLog();
   window.TroposProfileUI?.render();
+  if(state.view==='life')window.TroposLifeUI?.render();
 }
 
 /* ------------------------------------------------------------------ 同源服务端沙箱 */
@@ -1554,6 +1556,7 @@ async function serverAgentReply(text){
   $('#runtimeStatus').textContent=mode;
   let html=`<div class="rc t-ethos"><span class="pill">${esc(mode)}</span><p>${esc(result.reply)}</p>`;
   if(result.plan)html+=`<h3>${esc(result.plan.title)}</h3><ol>${result.plan.steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol><p class="fine">依据：${esc(result.plan.source)} · 本次建议额外转出上限 ${money(result.plan.transferCeiling)}；现金缺口 ${money(result.plan.cashGap)}。计划不会自动执行或更改预算。</p>`;
+  if(result.plan||result.intent?.action==='purchase')html+='<button class="btn" data-act="go" data-view="life">结合生活场景比较安排</button>';
   if(result.proposal){cacheServerProposal(result.proposal);html+=serverProposalHTML(result.proposal,result.checks||[]);}
   if(result.intent?.action==='purchase')html+='<button class="btn" data-act="go" data-view="cool">查看分期成本与现金影响</button>';
   if(result.intent?.action==='bills'||result.intent?.action==='subscriptions')html+='<button class="btn" data-act="go" data-view="bills">查看账本和续费</button>';
@@ -1700,6 +1703,47 @@ function profileUIData() {
     facts:{balance:st.balance,income:p.income,salaryDay:cashPath(p,st).salaryDay,daily:p.daily,billTotal:obligations(p)},
     snapshot:profileSnapshot(),updates:st.profileUpdates};
 }
+async function lifeRequest(operation){
+  if(!state.serverMode)throw new Error('请启动服务端版本使用生活规划。');
+  if(state.operationBusy||state.chatBusy)throw new Error('当前操作完成后再继续。');
+  const persona=state.persona;state.operationBusy=true;
+  try{
+    const result=await operation();
+    if(persona!==state.persona||persona!==bankAPI.persona)throw new Error('账户已变化，请刷新当前生活安排。');
+    if(result.snapshot){
+      const before=S().revision;
+      applyServerSnapshot(result.snapshot,{preserveTransfer:true});
+      if(typeof result.version==='number'&&result.settings)S().lifeVersion=result.version;
+      const lifeChanged=state.tf?.proposal?.lifeVersion!==undefined&&S().lifeVersion!==undefined&&state.tf.proposal.lifeVersion!==S().lifeVersion;
+      if((S().revision!==before||lifeChanged)&&state.tf&&!state.tf.executed){state.tf=null;$('#tfConfirm').innerHTML='<p class="warn-t">生活安排已变化，原草案需要重新检查。</p>';}
+      renderConsole();renderBills();window.TroposProfileUI?.render();
+    }
+    if(result.accountRevision!==undefined&&result.accountRevision!==S().revision)throw new Error('账本已更新，请重新分析。');
+    return result;
+  }finally{state.operationBusy=false;}
+}
+const lifeAdapter={
+  context:()=>({persona:state.persona,completed:S().completed&&S().profile.readConsent,serverMode:state.serverMode,accountRevision:S().revision}),
+  load:()=>lifeRequest(()=>bankAPI.life()),
+  saveSettings:body=>lifeRequest(()=>bankAPI.lifeSettings(body)),
+  addScene:body=>lifeRequest(()=>bankAPI.lifeScene(body)),
+  cancelScene:(id,body)=>lifeRequest(()=>bankAPI.lifeCancel(id,body)),
+  commitScene:(id,body)=>lifeRequest(()=>bankAPI.lifeCommit(id,body)),
+  commitPlan:body=>lifeRequest(()=>bankAPI.lifeAdopt(body)),
+  analyze:()=>lifeRequest(()=>bankAPI.lifeAnalyze()),
+  handleSnapshot:snapshot=>{if(snapshot?.user?.persona===state.persona&&bankAPI.persona===state.persona)applyServerSnapshot(snapshot,{preserveTransfer:true});},
+  openProfile:()=>{showView('profile');if(!S().completed)window.TroposProfileUI?.openLogin();},
+  proposeGoal:amount=>lifeRequest(async()=>{
+    const current=await bankAPI.life();
+    if(current.scenes.some(scene=>scene.status==='draft'))throw new Error('请先确认或取消待比较的生活安排，再生成目标转账草案。');
+    if(!Number.isFinite(amount)||amount<=0)throw new Error('请重新分析可转入金额。');
+    const result=await bankAPI.lifeGoal({version:current.version,accountRevision:current.snapshot.user.revision,amount});
+    applyServerSnapshot(result.snapshot);cacheServerProposal(result.proposal);
+    state.tf={proposal:result.proposal,allOk:result.proposal.status==='pending_confirmation',key:result.proposal.id,executed:false};
+    showView('transfer');$('#checks').innerHTML='<p>生活义务已经计入，服务端仍会在确认前再次核验现金底线。</p>';
+    $('#tfConfirm').innerHTML=serverProposalHTML(result.proposal,result.checks);return result;
+  }),
+};
 const profileAdapter={
   getData:profileUIData,
   selectAccount:async id=>{if(PERSONAS[id])await switchPersona(id,true);},
@@ -1771,6 +1815,6 @@ async function startWorkbench(){
   }
   for(const k of Object.keys(PERSONAS))if(!state.per[k].profileSnapshot)state.per[k].profileSnapshot=profileSnapshot(k);
   if(!served)log('SYSTEM','本地交互样例已就绪','请运行服务端版本以体验持久账本和模型工具链');
-  renderAll();addAgent(T().welcome);window.TroposProfileUI.init(profileAdapter);
+  renderAll();addAgent(T().welcome);window.TroposProfileUI.init(profileAdapter);window.TroposLifeUI?.init(lifeAdapter);
 }
 startWorkbench();

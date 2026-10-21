@@ -57,6 +57,14 @@
     reset(){return this.request('/api/reset',{method:'POST',body:{confirmation:true}})}
     evaluation(){return this.request('/api/evaluation/latest')}
     intentEvaluation(){return this.request('/api/evaluation/intents')}
+    life(){return this.request('/api/life')}
+    lifeSettings(body){return this.request('/api/life/settings',{method:'POST',body})}
+    lifeScene(body){return this.request('/api/life/scenes',{method:'POST',body})}
+    lifeCancel(id,body){return this.request('/api/life/scenes/'+encodeURIComponent(id)+'/cancel',{method:'POST',body})}
+    lifeCommit(id,body){return this.request('/api/life/scenes/'+encodeURIComponent(id)+'/commit',{method:'POST',body})}
+    lifeAnalyze(){return this.request('/api/life/analyze',{method:'POST',body:{}})}
+    lifeAdopt(body){return this.request('/api/life/commit',{method:'POST',body})}
+    lifeGoal(body){return this.request('/api/life/goal',{method:'POST',body})}
   }
   window.TroposSandboxClient=SandboxClient;
 })();
