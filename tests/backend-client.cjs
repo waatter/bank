@@ -83,7 +83,7 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  const lifeBalance=a.S().balance,accountRevision=a.S().revision,version=life.version;
  let analysis=await a.lifeAdapter.analyze();
  pass('V2 analysis compares four stresses and three policies without moving cash',()=>{assert.equal(analysis.policies.length,3);assert.equal(analysis.stressScenarios.length,4);assert.equal(analysis.lifeVersion,version);assert.equal(a.S().balance,lifeBalance);assert.equal(a.S().revision,accountRevision)});
- await assert.rejects(a.lifeAdapter.proposeGoal(100),/先确认或取消/);
+ await assert.rejects(a.lifeAdapter.proposeGoal({amount:100,lifeVersion:analysis.lifeVersion,accountRevision:analysis.accountRevision}),/先采用或取消/);
  pass('Hypothetical life arrangements cannot silently become an actionable goal transfer',()=>{assert.equal(a.S().balance,lifeBalance);assert.equal(a.state.operationBusy,false)});
  const adoption={version,accountRevision,policyId:'buffer',confirmation:true,requestKey:'life-bridge-adopt-1'};
  life=await a.lifeAdapter.commitPlan(adoption);
@@ -93,7 +93,20 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  pass('A repeated plan confirmation returns its original receipt with one obligation',()=>{assert.equal(life.receipt.id,originalReceipt);assert.equal(a.P().bills.filter(b=>b.source==='life_scene').length,1);assert.equal(a.S().balance,lifeBalance)});
  analysis=await a.lifeAdapter.analyze();
  pass('Committed life obligations are not counted again as hypothetical expenses',()=>assert.equal(analysis.policies[0].allocations.length,0));
- await a.lifeAdapter.proposeGoal(100);const lifeProposal=a.state.tf.proposal;
+ // 复现审阅指出的竞态：分析之后，另一个标签页新增一个假设又取消。草稿不改变账本 revision，
+ // 旧实现会重新读取最新版本并成功生成草案；现在提交的是分析时的版本，必须被拒绝。
+ const goalRequest={amount:100,lifeVersion:analysis.lifeVersion,accountRevision:analysis.accountRevision};
+ const proposalsBefore=(await a.bankAPI.proposals()).proposals.length;
+ let otherTab=await a.bankAPI.lifeScene({version:analysis.lifeVersion,scene:{title:'另一标签页的假设',category:'living',amount:200,earliestDay:2,preferredDay:4,latestDay:9,importance:'flexible',allowSkip:true,allowAlternative:false,alternativeAmount:null,alternativeLabel:''}});
+ await assert.rejects(a.lifeAdapter.proposeGoal(goalRequest),error=>error.status===409);
+ const draftScene=otherTab.scenes.find(scene=>scene.status==='draft');
+ otherTab=await a.bankAPI.lifeCancel(draftScene.id,{version:otherTab.version,confirmation:true});
+ assert.equal(otherTab.snapshot.user.revision,analysis.accountRevision);
+ await assert.rejects(a.lifeAdapter.proposeGoal(goalRequest),error=>error.status===409&&error.code==='LIFE_VERSION_CONFLICT');
+ pass('A goal draft is refused when another tab changed the plan after the analysis, even with the ledger revision unchanged',async()=>{});
+ assert.equal((await a.bankAPI.proposals()).proposals.length,proposalsBefore);assert.equal(a.S().balance,lifeBalance);assert.equal(a.state.operationBusy,false);
+ analysis=await a.lifeAdapter.analyze();
+ await a.lifeAdapter.proposeGoal({amount:100,lifeVersion:analysis.lifeVersion,accountRevision:analysis.accountRevision});const lifeProposal=a.state.tf.proposal;
  pass('Accepted life planning generates a genuine pending goal draft for separate confirmation',()=>{assert.equal(lifeProposal.status,'pending_confirmation');assert.equal(lifeProposal.amount,100);assert.equal(a.S().balance,lifeBalance);assert.ok(node('#tfConfirm').innerHTML.includes('确认这笔沙箱转账'))});
  await a.executeServerProposal(lifeProposal.id,null,true);
  pass('The V2 goal action uses the existing timeout-query and single-debit bank chain',()=>{assert.equal(a.S().balance,lifeBalance-100);assert.equal(a.P().tx.filter(t=>t.proposalId===lifeProposal.id).length,1)});

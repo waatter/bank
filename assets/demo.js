@@ -1710,6 +1710,10 @@ async function lifeRequest(operation){
   try{
     const result=await operation();
     if(persona!==state.persona||persona!==bankAPI.persona)throw new Error('账户已变化，请刷新当前生活安排。');
+    // 分析结果与新草案都带着服务端当前的生活版本；别的标签页改过生活安排时，以此更新本地记录，
+    // 否则下面的比对会把刚生成的有效草案误判为过期。
+    const seenLifeVersion=result.lifeVersion??result.proposal?.lifeVersion;
+    if(Number.isInteger(seenLifeVersion))S().lifeVersion=seenLifeVersion;
     if(result.snapshot){
       const before=S().revision;
       applyServerSnapshot(result.snapshot,{preserveTransfer:true});
@@ -1733,11 +1737,13 @@ const lifeAdapter={
   analyze:()=>lifeRequest(()=>bankAPI.lifeAnalyze()),
   handleSnapshot:snapshot=>{if(snapshot?.user?.persona===state.persona&&bankAPI.persona===state.persona)applyServerSnapshot(snapshot,{preserveTransfer:true});},
   openProfile:()=>{showView('profile');if(!S().completed)window.TroposProfileUI?.openLogin();},
-  proposeGoal:amount=>lifeRequest(async()=>{
-    const current=await bankAPI.life();
-    if(current.scenes.some(scene=>scene.status==='draft'))throw new Error('请先确认或取消待比较的生活安排，再生成目标转账草案。');
+  // 只发一次请求，版本取自用户看到的那次分析：期间任何生活或账本变化（包括别的标签页新增后又取消的假设）
+  // 都会让服务端在同一事务里拒绝，而不是用最新版本把旧分析的金额变成草案。
+  proposeGoal:({amount,lifeVersion,accountRevision}={})=>lifeRequest(async()=>{
     if(!Number.isFinite(amount)||amount<=0)throw new Error('请重新分析可转入金额。');
-    const result=await bankAPI.lifeGoal({version:current.version,accountRevision:current.snapshot.user.revision,amount});
+    if(!Number.isInteger(lifeVersion)||!Number.isInteger(accountRevision))throw new Error('请重新比较后再生成目标转账草案。');
+    if(accountRevision!==S().revision)throw new Error('账本已更新，请重新比较后再生成目标转账草案。');
+    const result=await bankAPI.lifeGoal({version:lifeVersion,accountRevision,amount});
     applyServerSnapshot(result.snapshot);cacheServerProposal(result.proposal);
     state.tf={proposal:result.proposal,allOk:result.proposal.status==='pending_confirmation',key:result.proposal.id,executed:false};
     showView('transfer');$('#checks').innerHTML='<p>生活义务已经计入，服务端仍会在确认前再次核验现金底线。</p>';
