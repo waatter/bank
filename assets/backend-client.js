@@ -3,7 +3,7 @@
   'use strict';
   class SandboxClient {
     constructor(){this.token=null;this.persona=null;this.health=null;this.sessions={};this.selectionSequence=0;
-      try{this.sessions=JSON.parse(sessionStorage.getItem('tropos-api-sessions')||'{}')}catch(_){}
+      try{const stored=JSON.parse(sessionStorage.getItem('tropos-api-sessions')||'{}');if(stored&&typeof stored==='object'&&!Array.isArray(stored))this.sessions=stored;}catch(_){}
     }
     async request(path,{method='GET',body,authenticated=true,token=this.token}={}){
       const headers={'Content-Type':'application/json'};
@@ -46,6 +46,7 @@
       return snapshot;
     }
     profile(profile){return this.request('/api/profile',{method:'PUT',body:profile})}
+    proposals(){return this.request('/api/proposals')}
     agent(message){return this.request('/api/agent',{method:'POST',body:{message}})}
     propose(body){return this.request('/api/transfers/propose',{method:'POST',body})}
     confirm(proposal,simulateTimeout=false){return this.request('/api/proposals/'+encodeURIComponent(proposal.id)+'/confirm',{method:'POST',body:{confirmation:true,confirmationToken:proposal.confirmationToken,simulate_timeout:simulateTimeout}})}
@@ -55,6 +56,7 @@
     event(type){return this.request('/api/events',{method:'POST',body:{type,event_key:crypto.randomUUID()}})}
     reset(){return this.request('/api/reset',{method:'POST',body:{confirmation:true}})}
     evaluation(){return this.request('/api/evaluation/latest')}
+    intentEvaluation(){return this.request('/api/evaluation/intents')}
   }
   window.TroposSandboxClient=SandboxClient;
 })();

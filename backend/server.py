@@ -217,6 +217,8 @@ class TroposHandler(BaseHTTPRequestHandler):
         body = self._body() if method in {"POST", "PUT"} else None
         if method == "GET" and path == "/api/state":
             return self._json(200, service.snapshot(uid))
+        if method == "GET" and path == "/api/proposals":
+            return self._json(200, service.proposals(uid))
         if method == "PUT" and path == "/api/profile":
             return self._json(200, service.save_profile(uid, body))
         if method == "POST" and path == "/api/agent":
@@ -269,8 +271,9 @@ class TroposHandler(BaseHTTPRequestHandler):
             body = _object(body, {"confirmation"}, {"confirmation"})
             _confirmed(body)
             return self._json(200, service.reset(uid))
-        if method == "GET" and path == "/api/evaluation/latest":
-            report = self.server.root / "reports" / "evaluation.json"
+        if method == "GET" and path in {"/api/evaluation/latest", "/api/evaluation/intents"}:
+            filename = "intent-rules.json" if path == "/api/evaluation/intents" else "evaluation.json"
+            report = self.server.root / "reports" / filename
             if not report.is_file() or report.stat().st_size > 2000000:
                 raise HttpError(404, "EVALUATION_NOT_FOUND", "尚未生成评估报告。")
             try:

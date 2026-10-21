@@ -14,6 +14,27 @@ from backend.service import BankService
 
 
 class ApiTests(unittest.TestCase):
+    def test_intent_report_is_authenticated_and_read_from_fixed_path(self):
+        token, _ = self.login()
+        original_root = self.server.root
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'reports').mkdir()
+            self.server.root = root
+            try:
+                self.assertEqual(self.request('GET', '/api/evaluation/intents')[0], 401)
+                self.assertEqual(self.request('GET', '/api/evaluation/intents', token=token)[0], 404)
+                expected = {'summary': {'cases': 41}, 'live_model_run': False}
+                (root / 'reports' / 'intent-rules.json').write_text(json.dumps(expected))
+                status, result, _ = self.request('GET', '/api/evaluation/intents', token=token)
+                self.assertEqual(status, 200)
+                self.assertEqual(result, expected)
+                self.assertEqual(self.request('GET', '/api/evaluation/intents?file=.env', token=token)[0], 400)
+                (root / 'reports' / 'intent-rules.json').write_text('{invalid')
+                self.assertEqual(self.request('GET', '/api/evaluation/intents', token=token)[0], 500)
+            finally:
+                self.server.root = original_root
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.db_path = Path(self.directory.name) / "bank.sqlite3"
@@ -114,6 +135,53 @@ class ApiTests(unittest.TestCase):
         token, snapshot = self.login(consent=False)
         self.assertFalse(snapshot["profile"]["readConsent"])
         self.assertEqual(self.request("POST", "/api/transfers/propose", {"to": "mom", "amount": 100}, token)[0], 403)
+
+    def test_proposals_require_bearer_and_recover_only_current_user(self):
+        self.assertEqual(self.request("GET", "/api/proposals")[0], 401)
+        self.assertEqual(self.request("GET", "/api/proposals", token="fake")[0], 401)
+        token_c, snapshot = self.login("C")
+        token_a, _ = self.login("A")
+        proposal = self.draft(token_c)['proposal']
+        self.server.service = BankService(self.db_path)
+        status, recovered, headers = self.request("GET", "/api/proposals", token=token_c)
+        self.assertEqual(status, 200)
+        self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertEqual(recovered['snapshot']['balance'], snapshot['balance'])
+        self.assertEqual(len(recovered['proposals']), 1)
+        self.assertEqual(recovered['proposals'][0]['id'], proposal['id'])
+        self.assertTrue(recovered['proposals'][0]['canConfirm'])
+        self.assertEqual(recovered['proposals'][0]['confirmationToken'], proposal['confirmationToken'])
+        status, other, _ = self.request("GET", "/api/proposals", token=token_a)
+        self.assertEqual(status, 200)
+        self.assertEqual(other['proposals'], [])
+        self.assertNotIn(proposal['id'], json.dumps(other))
+
+    def test_proposal_recovery_marks_invalid_and_committed_states_without_reposting(self):
+        token, snapshot = self.login()
+        stale = self.draft(token)['proposal']
+        revoked = self.draft(token)['proposal']
+        executed = self.draft(token)['proposal']
+        self.request('POST', f'/api/proposals/{revoked["id"]}/revoke', {'confirmation': True}, token)
+        status, transaction, _ = self.request('POST', f'/api/proposals/{executed["id"]}/confirm', self.confirmation(executed), token)
+        self.assertEqual(status, 200)
+        status, result, _ = self.request('GET', '/api/proposals', token=token)
+        self.assertEqual(status, 200)
+        proposals = {p['id']: p for p in result['proposals']}
+        self.assertEqual(proposals[stale['id']]['status'], 'stale')
+        self.assertEqual(proposals[revoked['id']]['status'], 'revoked')
+        self.assertEqual(proposals[executed['id']]['status'], 'executed')
+        self.assertEqual(proposals[executed['id']]['transaction'], transaction['transaction'])
+        for proposal in proposals.values():
+            self.assertFalse(proposal['canConfirm'])
+            self.assertNotIn('confirmationToken', proposal)
+        self.assertEqual(result['snapshot']['balance'], snapshot['balance'] - 100)
+        status, queried, _ = self.request('GET', '/api/transactions/by-key/' + executed['id'], token=token)
+        self.assertEqual(status, 200)
+        self.assertEqual(queried['transaction']['receipt'], transaction['transaction']['receipt'])
+        status, replay, _ = self.request('POST', f'/api/proposals/{executed["id"]}/confirm', self.confirmation(executed), token)
+        self.assertEqual(status, 200)
+        self.assertEqual(replay['transaction'], transaction['transaction'])
+        self.assertEqual(replay['snapshot']['balance'], result['snapshot']['balance'])
 
     def test_profile_update_requires_new_proposal(self):
         token, snapshot = self.login()

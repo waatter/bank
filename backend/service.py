@@ -302,6 +302,53 @@ class BankService:
             raise BankError(404, 'PROPOSAL_NOT_FOUND', '转账方案不存在。')
         return json.loads(row[0])
 
+    def proposals(self, user_id, limit=50):
+        """Recover this user's recent proposals without changing approvals or the ledger.
+
+        Status is a read-time view of the same revision, expiry and cash gates used
+        by confirm(). Stored approval tokens are returned only while actionable.
+        """
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 50:
+            raise BankError(400, 'INVALID_LIMIT', '方案读取数量须为 1 至 50。')
+        with self._db() as db:
+            user, _ = self._user(db, user_id)
+            consent = self._profile(db, user_id).get('readConsent') is True
+            at = time.time()
+            rows = db.execute('SELECT content FROM proposals WHERE user_id=? ORDER BY rowid DESC LIMIT ?',
+                              (user_id, limit)).fetchall()
+            recovered = []
+            for row in rows:
+                proposal = json.loads(row[0])
+                token = proposal.pop('confirmationToken', None)
+                proposal.update(canConfirm=False, invalidReason=None, checks=[])
+                transaction = db.execute('SELECT content FROM transactions WHERE user_id=? AND idem_key=?',
+                                         (user_id, proposal['id'])).fetchone()
+                # A committed receipt remains authoritative even after expiry or
+                # later account changes. Recovery never turns it into a new action.
+                if transaction:
+                    tx = json.loads(transaction[0])
+                    proposal.update(status='executed', transactionId=tx['id'], transaction=tx)
+                elif proposal['status'] == 'revoked':
+                    proposal['invalidReason'] = 'REVOKED'
+                elif not consent:
+                    proposal.update(status='blocked', invalidReason='CONSENT_REQUIRED')
+                elif proposal['revision'] != user['revision']:
+                    proposal.update(status='stale', invalidReason='STALE_APPROVAL')
+                elif proposal['expiresAt'] < at:
+                    proposal.update(status='expired', invalidReason='APPROVAL_EXPIRED')
+                elif proposal['status'] == 'settled':
+                    proposal.update(status='blocked', invalidReason='TRANSACTION_NOT_FOUND')
+                else:
+                    checks = self._checks(db, user_id, cents(proposal['amount'], True), proposal['when'])
+                    proposal['checks'] = checks
+                    if all(check['ok'] for check in checks) and token:
+                        proposal.update(status='pending_confirmation', canConfirm=True, confirmationToken=token)
+                    else:
+                        status = 'waiting_condition' if proposal['when'] == 'salary' and not checks[-1]['ok'] else 'blocked'
+                        proposal.update(status=status, invalidReason='TRANSFER_BLOCKED' if token else 'INVALID_APPROVAL')
+                recovered.append(proposal)
+            return {'proposals': recovered, 'snapshot': self._snapshot(db, user_id)}
+
     def _post(self, db, user_id, key, kind, amount, merchant, destination, extra=None):
         tx_id = uid('tx')
         tx = {'id': tx_id, 'time': now(), 'merchant': merchant, 'cat': kind, 'amount': yuan(-amount),

@@ -210,6 +210,104 @@ class BankServiceTests(unittest.TestCase):
             db.execute('UPDATE proposals SET content=? WHERE id=?', (json.dumps(p), p['id']))
         self.error('APPROVAL_EXPIRED', lambda: self.svc.confirm(self.c, p['id'], self.approve(p)))
 
+    def test_proposal_recovery_is_read_only_scoped_and_survives_restart(self):
+        self.consent(self.c)
+        self.consent(self.a)
+        proposal = self.proposal()
+        other = self.proposal(user=self.a)
+        before = self.svc.snapshot(self.c)
+        with sqlite3.connect(self.path) as db:
+            stored = db.execute('SELECT content FROM proposals ORDER BY rowid').fetchall()
+        recovered = BankService(self.path).proposals(self.c)
+        self.assertEqual(recovered['snapshot'], before)
+        self.assertEqual([p['id'] for p in recovered['proposals']], [proposal['id']])
+        self.assertNotIn(other['id'], json.dumps(recovered))
+        current = recovered['proposals'][0]
+        self.assertEqual(current['status'], 'pending_confirmation')
+        self.assertTrue(current['canConfirm'])
+        self.assertEqual(current['confirmationToken'], proposal['confirmationToken'])
+        self.assertTrue(all(check['ok'] for check in current['checks']))
+        with sqlite3.connect(self.path) as db:
+            self.assertEqual(db.execute('SELECT content FROM proposals ORDER BY rowid').fetchall(), stored)
+        self.assertEqual(self.svc.confirm(self.c, current['id'], self.approve(current))['snapshot']['balance'], 19900)
+
+    def test_proposal_recovery_withholds_tokens_for_waiting_blocked_and_expired(self):
+        self.consent(self.c)
+        pending = self.proposal()
+        waiting = self.proposal(when='salary')
+        blocked = self.proposal(15000)
+        expired = self.proposal()
+        expired['expiresAt'] = 0
+        with sqlite3.connect(self.path) as db:
+            db.execute('UPDATE proposals SET content=? WHERE id=?', (json.dumps(expired), expired['id']))
+        recovered = {p['id']: p for p in self.svc.proposals(self.c)['proposals']}
+        for proposal, status in [(waiting, 'waiting_condition'), (blocked, 'blocked'), (expired, 'expired')]:
+            with self.subTest(status=status):
+                current = recovered[proposal['id']]
+                self.assertEqual(current['status'], status)
+                self.assertFalse(current['canConfirm'])
+                self.assertNotIn('confirmationToken', current)
+        self.assertTrue(recovered[pending['id']]['canConfirm'])
+        self.assertEqual(recovered[expired['id']]['invalidReason'], 'APPROVAL_EXPIRED')
+
+    def test_recovered_stale_proposal_stays_stale_when_salary_arrives(self):
+        self.consent(self.c)
+        proposal = self.proposal(when='salary')
+        self.svc.event(self.c, {'type': 'salary_received', 'event_key': 'recover-salary'})
+        recovered = self.svc.proposals(self.c)['proposals'][0]
+        self.assertEqual(recovered['status'], 'stale')
+        self.assertEqual(recovered['invalidReason'], 'STALE_APPROVAL')
+        self.assertFalse(recovered['canConfirm'])
+        self.assertNotIn('confirmationToken', recovered)
+        self.error('STALE_APPROVAL', lambda: self.svc.confirm(self.c, proposal['id'], self.approve(proposal)))
+
+    def test_recovered_terminal_statuses_and_receipts_survive_account_changes(self):
+        self.consent(self.c)
+        executed, revoked = self.proposal(), self.proposal()
+        self.svc.revoke(self.c, revoked['id'])
+        transaction = self.svc.confirm(self.c, executed['id'], self.approve(executed))['transaction']
+        with sqlite3.connect(self.path) as db:
+            content = json.loads(db.execute('SELECT content FROM proposals WHERE id=?', (executed['id'],)).fetchone()[0])
+            content['expiresAt'] = 0
+            db.execute('UPDATE proposals SET content=? WHERE id=?', (json.dumps(content), executed['id']))
+        self.svc.event(self.c, {'type': 'bill_added', 'event_key': 'after-execution'})
+        reopened = BankService(self.path)
+        recovered = {p['id']: p for p in reopened.proposals(self.c)['proposals']}
+        self.assertEqual(recovered[revoked['id']]['status'], 'revoked')
+        self.assertEqual(recovered[executed['id']]['status'], 'executed')
+        self.assertEqual(recovered[executed['id']]['transaction'], transaction)
+        self.assertEqual(recovered[executed['id']]['transactionId'], transaction['id'])
+        for proposal in recovered.values():
+            self.assertFalse(proposal['canConfirm'])
+            self.assertNotIn('confirmationToken', proposal)
+        self.assertEqual(reopened.transaction(self.c, executed['id'])['transaction'], transaction)
+        # Original confirmation retries must still return the original receipt.
+        replay = reopened.confirm(self.c, executed['id'], self.approve(executed))
+        self.assertEqual(replay['transaction'], transaction)
+        self.assertEqual(replay['snapshot']['balance'], 19900)
+
+    def test_proposal_recovery_has_a_hard_limit_and_newest_first(self):
+        self.consent(self.c)
+        proposals = [self.proposal() for _ in range(53)]
+        recovered = self.svc.proposals(self.c)['proposals']
+        self.assertEqual([p['id'] for p in recovered], [p['id'] for p in reversed(proposals[-50:])])
+        self.assertEqual(len(self.svc.proposals(self.c, limit=2)['proposals']), 2)
+        for limit in [0, 51, True, '2']:
+            self.error('INVALID_LIMIT', lambda: self.svc.proposals(self.c, limit=limit))
+
+    def test_proposal_recovery_withholds_token_after_read_consent_revoked(self):
+        self.consent(self.c)
+        self.proposal()
+        profile = self.svc.snapshot(self.c)['profile']
+        with sqlite3.connect(self.path) as db:
+            db.execute('UPDATE profiles SET profile=? WHERE user_id=?',
+                       (json.dumps(dict(profile, readConsent=False)), self.c))
+        proposal = self.svc.proposals(self.c)['proposals'][0]
+        self.assertEqual(proposal['status'], 'blocked')
+        self.assertEqual(proposal['invalidReason'], 'CONSENT_REQUIRED')
+        self.assertFalse(proposal['canConfirm'])
+        self.assertNotIn('confirmationToken', proposal)
+
     def test_reset_only_resets_current_synthetic_account(self):
         self.consent(self.c)
         self.consent(self.a)

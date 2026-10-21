@@ -384,19 +384,31 @@ function toast(msg, tone = 'ok') {
 function modal({ title, body, ok = '确认', cancel = '取消', okClass = 'solid', input = false }) {
   return new Promise(resolve => {
     const m = $('#modal');
+    const originFocus=document.activeElement;
+    const background=['.top','.content','#profileGate'].map(selector=>$(selector)).filter(Boolean).map(element=>({element,inert:element.inert}));
+    background.forEach(({element})=>{element.inert=true;});
     $('#modalTitle').textContent = title;
     $('#modalBody').innerHTML = body + (input ? `<textarea id="modalInput" rows="2" placeholder="${esc(input)}"></textarea>` : '');
     $('#modalActions').innerHTML = `<button class="btn quiet" data-r="0">${cancel}</button><button class="btn ${okClass}" data-r="1">${ok}</button>`;
     m.hidden = false;
-    const done = v => { m.hidden = true; m.onclick = null; document.removeEventListener('keydown', onKey); resolve(v); };
-    const onKey = e => { if (e.key === 'Escape') done(false); };
+    let closed=false;
+    const done = v => { if(closed)return;closed=true;m.hidden = true; m.onclick = null; document.removeEventListener('keydown', onKey);background.forEach(({element,inert})=>{element.inert=inert;});if(originFocus?.isConnected)originFocus.focus();resolve(v); };
+    const onKey = e => {
+      if(e.key==='Escape'){e.preventDefault();done(false);return;}
+      if(e.key!=='Tab')return;
+      const controls=$$('button:not([disabled]),textarea,input,select,[tabindex="0"]',m);
+      const first=controls[0],last=controls.at(-1);
+      if(!first){e.preventDefault();return;}
+      if(e.shiftKey&&(document.activeElement===first||!controls.includes(document.activeElement))){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&(document.activeElement===last||!controls.includes(document.activeElement))){e.preventDefault();first.focus();}
+    };
     document.addEventListener('keydown', onKey);
     m.onclick = e => {
       if (e.target === m) return done(false);
       const b = e.target.closest('[data-r]');
       if (b) done(b.dataset.r === '1' ? (input ? ($('#modalInput').value.trim() || true) : true) : false);
     };
-    setTimeout(() => $('[data-r="1"]', m).focus(), 30);
+    setTimeout(() => {if(!closed)$('[data-r="1"]', m).focus();}, 30);
   });
 }
 
@@ -471,6 +483,7 @@ function showView(v) {
   if (v === 'audit') renderLog();
   if (v === 'profile') window.TroposProfileUI?.render();
   if (v === 'evaluation') renderEvaluation();
+  if (v === 'transfer') refreshServerProposals();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 async function switchPersona(k, silent = false) {
@@ -487,6 +500,7 @@ async function switchPersona(k, silent = false) {
   state.lastServerProposal = null;
   state.applySeq++;
   renderAll();
+  if(state.view==='transfer')refreshServerProposals();
   const p = P();
   if (!silent) {
     $('#chatLog').insertAdjacentHTML('beforeend', `<div class="divider">换到${p.name}的窗前</div>`);
@@ -1158,6 +1172,12 @@ function renderCoolList() {
   }).join('');
 }
 function tickTimers() {
+  if(state.serverMode)$$('[data-act="apiConfirm"]').forEach(button=>{
+    const cached=state.serverProposals.get(button.dataset.id);
+    if(!button.disabled&&cached?.persona===state.persona&&cached.proposal.expiresAt*1000<=Date.now()){
+      button.disabled=true;button.textContent='凭证已到期，请重新检查';
+    }
+  });
   let expired = false;
   $$('#coolList .timer[data-ends]').forEach(t => {
     const left = +t.dataset.ends - Date.now();
@@ -1435,12 +1455,27 @@ const ACTIONS = {
   tfReplay: () => duplicateBlocked(),
   apiConfirm: (d,el)=>executeServerProposal(d.id,el,Boolean(el.closest('#tfConfirm'))&&$('#tfTimeout').checked),
   apiQuery: d=>queryServerTransaction(d.id),
+  refreshProposals: async()=>{
+    if(!state.serverMode)return toast('请启动服务端版本以恢复持久方案','warn');
+    if(state.operationBusy||state.chatBusy)return;
+    state.operationBusy=true;
+    try{applyServerSnapshot(await bankAPI.select(state.persona));renderAll();await refreshServerProposals();toast('已重新读取当前账户与方案');}
+    catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;}
+  },
+  reuseProposal: d=>{
+    const cached=state.serverProposals.get(d.id);
+    if(!cached||cached.persona!==state.persona)return;
+    const p=cached.proposal;
+    $('#tfTo').value=p.payee.name+' · '+p.payee.alias;$('#tfAmt').value=p.amount;$('#tfWhen').value=p.when;$('#tfMemo').value=p.memo||'';
+    state.tf=null;$('#tfConfirm').innerHTML='';$('#checks').innerHTML='<p>已填回原方案内容。请核对后重新检查，再确认新的方案；此操作没有转账。</p>';
+    $('#tfForm').scrollIntoView({behavior:'smooth',block:'start'});
+  },
   apiRevoke: async(d,el)=>{
     const cached=state.serverProposals.get(d.id);
     if(state.operationBusy||state.chatBusy||cached?.persona!==state.persona)return;
     state.operationBusy=true;
     try{const result=await bankAPI.revoke(d.id);const box=el.closest('.server-proposal');applyServerSnapshot(result.snapshot,{preserveTransfer:true});box.innerHTML='<p>方案已在服务端撤销，未发生扣款。</p>';toast('已撤销此方案');}
-    catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;}
+    catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;refreshServerProposals();}
   },
   logFilter: d => { state.logFilter = d.k; renderLog(); },
 };
@@ -1492,13 +1527,30 @@ function applyServerSnapshot(snapshot,{preserveTransfer=false}={}) {
 }
 function cacheServerProposal(proposal){state.serverProposals.set(proposal.id,{proposal,persona:state.persona});return proposal;}
 function serverProposalHTML(proposal,checks=[]) {
-  const ready=proposal.status==='pending_confirmation';
-  return `<div class="server-proposal" data-proposal-id="${esc(proposal.id)}"><h3>${ready?'核对后由你确认':'当前尚不能执行'}</h3><p>收款人：${esc(proposal.payee.name)}（${esc(proposal.payee.alias)}） · ${money(proposal.amount)} · ${proposal.when==='salary'?'须工资已到账':'现在转账'}</p><p>${esc(proposal.memo||'无附言')}</p><ul>${checks.map(c=>`<li>${c.ok?'✓':'×'} ${esc(c.name)}：${esc(c.detail)}</li>`).join('')}</ul><p class="fine">方案 ${esc(proposal.id)} · 服务端执行前再次核验，模型不能替你确认。</p>${ready?`<button class="btn solid" data-act="apiConfirm" data-id="${esc(proposal.id)}">确认这笔沙箱转账</button>`:'<p class="warn-t">未发生资金变动；条件满足后需重新生成方案并确认。</p>'}<button class="btn quiet" data-act="apiRevoke" data-id="${esc(proposal.id)}">撤销此方案</button><div class="server-result" aria-live="polite"></div></div>`;
+  if(proposal.status==='pending_confirmation'&&proposal.expiresAt*1000<=Date.now())proposal={...proposal,status:'expired',confirmationToken:undefined,invalidReason:'APPROVAL_EXPIRED'};
+  const ready=proposal.status==='pending_confirmation'&&Boolean(proposal.confirmationToken),executed=proposal.status==='executed';
+  const titles={waiting_condition:'等待收入条件',blocked:'未通过资金检查',revoked:'方案已撤销',executed:'已记账，可核验原回执',expired:'确认凭证已到期',stale:'账户已变化，须重新检查'};
+  const reusable=['waiting_condition','blocked','expired','stale','revoked'].includes(proposal.status);
+  const reasons={REVOKED:'你已撤销此方案。',CONSENT_REQUIRED:'当前尚未同意读取模拟账本，请先完成画像确认。',STALE_APPROVAL:'账户或画像已经变化，原确认凭证不能继续使用。',APPROVAL_EXPIRED:'确认凭证已到期，请重新检查。',TRANSACTION_NOT_FOUND:'原方案状态与交易记录需要核对，请勿新建重复转账。',TRANSFER_BLOCKED:'当前条件未通过，请查看检查明细。',INVALID_APPROVAL:'原确认凭证无效，请重新检查。'};
+  return `<div class="server-proposal" data-proposal-id="${esc(proposal.id)}"><h3>${ready?'核对后由你确认':esc(titles[proposal.status]||'当前尚不能执行')}</h3><p>收款人：${esc(proposal.payee.name)}（${esc(proposal.payee.alias)}） · ${money(proposal.amount)} · ${proposal.when==='salary'?'须工资已到账':'现在转账'}</p><p>${esc(proposal.memo||'无附言')}</p><ul>${checks.map(c=>`<li>${c.ok?'✓':'×'} ${esc(c.name)}：${esc(c.detail)}</li>`).join('')}</ul><p class="fine">方案 ${esc(proposal.id)}${proposal.expiresAt?' · 凭证有效至 '+esc(new Date(proposal.expiresAt*1000).toLocaleString('zh-CN')):''} · 服务端执行前再次核验，模型不能替你确认。</p>${proposal.invalidReason?`<p class="warn-t">${esc(reasons[proposal.invalidReason]||'此方案须重新检查后再决定下一步。')}</p>`:''}${ready?`<button class="btn solid" data-act="apiConfirm" data-id="${esc(proposal.id)}">确认这笔沙箱转账</button>`:executed?`<p>服务端已有交易记录；请查询原凭证，不需另建转账。</p><button class="btn" data-act="apiQuery" data-id="${esc(proposal.id)}">核验原交易回执</button>`:'<p class="warn-t">本方案当前不能执行；重新检查不会自动扣款。</p>'}${reusable?`<button class="btn" data-act="reuseProposal" data-id="${esc(proposal.id)}">填回表单，重新检查</button>`:''}${!executed&&proposal.status!=='revoked'?`<button class="btn quiet" data-act="apiRevoke" data-id="${esc(proposal.id)}">撤销此方案</button>`:''}<div class="server-result" aria-live="polite"></div></div>`;
+}
+let proposalReadSequence=0;
+async function refreshServerProposals(){
+  const root=$('#proposalHistory');if(!root||!state.serverMode)return;
+  const persona=state.persona,sequence=++proposalReadSequence;
+  root.innerHTML='<p class="fine">正在读取当前账户的持久方案…</p>';
+  try{
+    const result=await bankAPI.proposals();
+    if(sequence!==proposalReadSequence||persona!==state.persona||persona!==bankAPI.persona)return;
+    if(result.snapshot?.user?.persona!==persona||!Array.isArray(result.proposals))throw new Error('方案响应与当前账户不一致');
+    if(result.snapshot.user.revision!==S().revision){root.innerHTML='<p class="warn-t">账户有新的变化。请点击“刷新当前账户”重新读取，再核对可执行状态。</p>';return;}
+    root.innerHTML=result.proposals.length?result.proposals.map(proposal=>{cacheServerProposal(proposal);return serverProposalHTML(proposal,proposal.checks||[]);}).join(''):'<p class="fine">当前账户还没有转账方案。先填写收款人与金额，检查后再决定是否确认。</p>';
+  }catch(error){if(sequence===proposalReadSequence&&persona===state.persona)root.innerHTML=`<p class="warn-t">${esc(error.message)}</p><p class="fine">暂时没有取回方案，不表示原交易失败。请恢复连接后刷新并查询原凭证，避免重复转账。</p>`;}
 }
 async function serverAgentReply(text){
   const result=await bankAPI.agent(text);
   if(result.snapshot)applyServerSnapshot(result.snapshot);
-  const mode={llm:'大模型理解 · 服务端核验',rules:'规则模式 · 未启用模型',rules_fallback:'模型未通过校验或不可用 · 已明确降级'}[result.mode]||'服务端草案';
+  const mode={llm:'大模型理解 · 服务端核验',rules:'规则理解 · 本次未调用模型',rules_fallback:'模型未通过校验或不可用 · 已明确降级'}[result.mode]||'服务端草案';
   $('#runtimeStatus').textContent=mode;
   let html=`<div class="rc t-ethos"><span class="pill">${esc(mode)}</span><p>${esc(result.reply)}</p>`;
   if(result.plan)html+=`<h3>${esc(result.plan.title)}</h3><ol>${result.plan.steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol><p class="fine">依据：${esc(result.plan.source)} · 本次建议额外转出上限 ${money(result.plan.transferCeiling)}；现金缺口 ${money(result.plan.cashGap)}。计划不会自动执行或更改预算。</p>`;
@@ -1529,6 +1581,7 @@ async function serverTransferCheck(){
 function serverReceiptHTML(transaction){return `<div class="stub"><span class="ok-seal">沙箱已记账</span><div class="amt num">${money(Math.abs(transaction.amount))}</div><dl><dt>交易号</dt><dd>${esc(transaction.id)}</dd><dt>回执</dt><dd>${esc(transaction.receipt)}</dd><dt>状态</dt><dd>${esc(transaction.status)}</dd></dl></div>`;}
 async function executeServerProposal(id,button,simulateTimeout){
   const cached=state.serverProposals.get(id);if(!cached||cached.persona!==state.persona||state.operationBusy||state.chatBusy)return;
+  if(cached.proposal.expiresAt*1000<=Date.now()){if(button){button.disabled=true;button.textContent='凭证已到期，请重新检查';}toast('确认凭证已到期，请填回表单重新检查','warn');refreshServerProposals();return;}
   state.operationBusy=true;if(button)button.disabled=true;
   const proposal=cached.proposal, box=button?.closest('.server-proposal')?.querySelector('.server-result')||$('#tfConfirm');
   try{
@@ -1545,7 +1598,7 @@ async function executeServerProposal(id,button,simulateTimeout){
     renderConsole();renderBills();window.TroposProfileUI.render();toast('服务端回执已核验');
   }catch(error){
     box.innerHTML=`<p class="warn-t">${esc(error.message)}</p><p>当前不宣称成功。可以查询原凭证，避免重复转账。</p><button class="btn" data-act="apiQuery" data-id="${esc(id)}">查询这笔交易</button>`;
-  }finally{state.operationBusy=false;}
+  }finally{state.operationBusy=false;if(state.view==='transfer')refreshServerProposals();}
 }
 async function queryServerTransaction(id){
   if(state.operationBusy||state.chatBusy)return;
@@ -1553,7 +1606,7 @@ async function queryServerTransaction(id){
   state.operationBusy=true;
   try{const result=await bankAPI.transaction(id);applyServerSnapshot(result.snapshot,{preserveTransfer:true});
     showView('transfer');$('#tfConfirm').innerHTML=serverReceiptHTML(result.transaction);renderConsole();renderBills();toast('查到原交易回执，未重新转账');}
-  catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;}
+  catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;if(state.view==='transfer')refreshServerProposals();}
 }
 async function replayServerProposal(){
   const proposal=state.lastServerProposal;if(!proposal||state.operationBusy||state.chatBusy||state.serverProposals.get(proposal.id)?.persona!==state.persona)return;
@@ -1573,11 +1626,22 @@ async function cancelServerSubscription(id){
   catch(error){toast(error.message,'bad');}finally{state.operationBusy=false;}
 }
 async function renderEvaluation(){
+  renderIntentEvaluation();
   const root=$('#evaluationReport');if(!root)return;
   if(!state.serverMode){root.innerHTML='<p>启动服务端沙箱后，这里会展示可复跑的实际对照结果。</p><p>方法与原始结果已保存在仓库 reports/，不由演示按钮生成成绩。</p>';return;}
   try{const report=await bankAPI.evaluation();const pct=n=>(n*100).toFixed(1)+'%';
     root.innerHTML=`<p>${report.scenario_count} 个合成场景 · ${report.strategy_run_count} 次策略运行 · 同一安全网关</p><div style="overflow-x:auto"><table class="table"><thead><tr><th>策略</th><th>目标达成</th><th>网关拒绝</th><th>新增违规</th><th>可行资金安排比例</th></tr></thead><tbody>${Object.values(report.summary).map(row=>`<tr><td>${esc(row.label)}</td><td>${pct(row.safe_target_attainment_rate)}</td><td>${row.gateway_rejections}</td><td>${row.new_reserve_violations}</td><td>${pct(row.funds_utilisation)}</td></tr>`).join('')}</tbody></table></div><p>“目标达成”指在请求上限内完成参考计算允许的资金安排，允许正确拒绝或减额；不是任务理解准确率。</p><p>所有策略均保留 ARGOS；共同的零新增违规不能归为动态画像独有优势。原有现金缺口没有因此被修复。</p><details><summary>方法、运行来源与限制</summary><p>生成于 ${esc(report.generated_at)}；提交 ${esc(report.git_revision)}；工作区状态 ${report.working_tree_dirty?'运行时存在未提交改动（附源码指纹）':'干净'}。</p><ul>${report.limitations.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`;
   }catch(error){root.innerHTML=`<p class="warn-t">${esc(error.message)}</p>`;}
+}
+async function renderIntentEvaluation(){
+  const root=$('#intentEvaluationReport');if(!root)return;
+  if(!state.serverMode){root.innerHTML='<h2>自然语言任务检查</h2><p>启动服务端版本后可读取固定用例的实际规则检查结果。</p>';return;}
+  root.innerHTML='<h2>自然语言任务检查</h2><p class="fine">正在读取已保存的检查报告…</p>';
+  try{
+    const report=await bankAPI.intentEvaluation(),summary=report.summary;
+    const rows=[['动作判断',summary.action],['动作与完整参数',summary.complete_parameters],['应澄清的请求',summary.safe_refusal],['草案未越界执行',summary.draft_execution_boundary]];
+    root.innerHTML=`<h2>自然语言任务检查</h2><p>${summary.cases} 条固定合成输入 · 运行模式：${esc(report.requested_mode)} · 真实模型任务评测${report.live_model_run?'已单独运行':'尚未运行'}。</p><div style="overflow-x:auto"><table class="table"><thead><tr><th>检查项</th><th>通过 / 样本</th><th>比例</th></tr></thead><tbody>${rows.map(([title,m])=>`<tr><td>${title}</td><td>${m.passed} / ${m.total}</td><td>${m.rate===null?'—':(m.rate*100).toFixed(1)+'%'}</td></tr>`).join('')}</tbody></table></div><p>这些是已知合成输入上的规则回归结果，开发中已使用这些用例；不能当作大模型准确率或未知表达的通过率。检查只到草案，未确认转账。</p><details><summary>失败项与适用范围</summary><p>${report.failures.length?'未通过用例：'+esc(report.failures.join('、')):'本批固定用例无失败；仍需未参与开发的盲测集。'}</p><ul>${report.limitations.map(t=>`<li>${esc(t)}</li>`).join('')}</ul><p class="fine">生成于 ${esc(report.generated_at)} · 用例版本 ${esc(report.dataset_version)}</p></details>`;
+  }catch(error){root.innerHTML=`<h2>自然语言任务检查</h2><p class="warn-t">${esc(error.message)}</p><p class="fine">当前没有可读取的检查结果，不显示推测成绩。</p>`;}
 }
 
 /* ------------------------------------------------------------------ 初始化 */

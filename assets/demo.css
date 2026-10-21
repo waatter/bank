@@ -504,7 +504,7 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
   .ap .slot-seal{width:42px;height:42px}
   .verdict{flex-direction:column;align-items:flex-start;gap:18px}
   .f2{grid-template-columns:1fr}
-  .table th:nth-child(2),.table td:nth-child(2){display:none}
+  #view-bills .table th:nth-child(2),#view-bills .table td:nth-child(2){display:none}
   .entry{grid-template-columns:52px 26px minmax(0,1fr)}
   .panel,.envelope{padding:20px 18px}
 }
@@ -516,5 +516,9 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .server-proposal ul{padding-left:18px;font-size:13px;color:var(--ink2)}
 .server-proposal>.btn{margin:4px 6px 4px 0}
 .server-result{margin-top:14px;overflow-wrap:anywhere}
+.proposal-history{margin-top:24px;min-width:0}
+.proposal-history .block-head{flex-wrap:wrap;gap:12px}
+.server-proposal{overflow-wrap:anywhere}
+.server-proposal .btn{white-space:normal;max-width:100%}
 @media(min-width:641px) and (max-width:1250px){.top{flex-wrap:wrap;gap:12px 22px}.top .windows{margin-left:auto}.tabs{order:3;width:100%;gap:24px}.tabs button.active:after{bottom:-9px}}
 @media(max-width:640px){#runtimeStatus{max-width:135px}.tabs{overflow-x:auto;justify-content:flex-start;gap:10px}.tabs button{flex:none;min-width:36px}.windows>span{display:none}}

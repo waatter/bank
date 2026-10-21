@@ -10,7 +10,7 @@ let errors='';child.stderr.on('data',data=>errors+=data.toString());
 const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Server did not start: '+errors)),10000);let out='';child.stdout.on('data',data=>{out+=data;const match=out.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0])}});child.on('exit',code=>{clearTimeout(timer);reject(new Error('Server exited '+code+': '+errors))})});
 (async()=>{
  const base=await ready,nodes=new Map(),store=new Map();
- function node(key){if(!nodes.has(key))nodes.set(key,{value:'',checked:false,innerHTML:'',textContent:'',style:{},dataset:{},classList:{add(){},remove(){}},querySelector:node,querySelectorAll:()=>[],insertAdjacentHTML(_,html){this.innerHTML+=html},remove(){},scrollTo(){}});return nodes.get(key)}
+ function node(key){if(!nodes.has(key))nodes.set(key,{value:'',checked:false,innerHTML:'',textContent:'',style:{},dataset:{},classList:{add(){},remove(){}},querySelector:node,querySelectorAll:()=>[],insertAdjacentHTML(_,html){this.innerHTML+=html},remove(){},scrollTo(){},scrollIntoView(){}});return nodes.get(key)}
  const context=vm.createContext({console,crypto:require('node:crypto').webcrypto,AbortSignal,structuredClone,
  TroposProfiles:require('../assets/profile-engine.js'),sessionStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},localStorage:{getItem:()=>null,setItem(){}},
  fetch:(p,o={})=>fetch(base+p,{...o,headers:{...o.headers,Origin:base}}),window:{TroposProfileUI:{render(){}},scrollTo(){}},
@@ -19,7 +19,7 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  const source=fs.readFileSync(path.join(root,'assets/demo.js'),'utf8');
  const definitions=source.slice(0,source.indexOf('/* ------------------------------------------------------------------ 初始化 */'));
  const adapter=source.slice(source.indexOf('function profileUIData()'),source.indexOf('async function startWorkbench()'));
- vm.runInContext(definitions+'\n'+adapter+'\nrenderAll=()=>{};renderConsole=()=>{};renderBills=()=>{};renderCool=()=>{};toast=()=>{};globalThis.api={state,P,S,bankAPI,applyServerSnapshot,profileAdapter,serverTransferCheck,executeServerProposal,replayServerProposal,switchPersona,money,setGuard,serverAgentReply,cancelServerSubscription,ACTIONS};',context);
+ vm.runInContext(definitions+'\n'+adapter+'\nrenderAll=()=>{};renderConsole=()=>{};renderBills=()=>{};renderCool=()=>{};toast=()=>{};globalThis.api={state,P,S,bankAPI,applyServerSnapshot,profileAdapter,serverTransferCheck,executeServerProposal,replayServerProposal,switchPersona,money,setGuard,serverAgentReply,cancelServerSubscription,ACTIONS,refreshServerProposals,serverProposalHTML};',context);
  const a=context.api;let count=0;const pass=(name,fn)=>{fn();count++;console.log('PASS',name)};
  a.state.serverMode=true;a.applyServerSnapshot(await a.bankAPI.connect('C'));
  pass('HTTP session and persisted account snapshot reach the workbench',()=>{assert.equal(a.P().name,'陈工');assert.equal(a.S().balance,20000);assert.equal(a.S().completed,false)});
@@ -28,12 +28,19 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  node('#tfTo').value='目标储蓄';node('#tfAmt').value='100.49';node('#tfWhen').value='now';node('#tfMemo').value='HTTP integration';
  await a.serverTransferCheck();const proposal=a.state.tf.proposal;const balance=a.S().balance;
  pass('Confirmation displays cents exactly before any debit',()=>{assert.ok(node('#tfConfirm').innerHTML.includes('¥100.49'));assert.equal(a.money(-0.01),'−¥0.01')});
+ a.state.serverProposals.clear();a.state.tf=null;await a.refreshServerProposals();
+ pass('A cleared browser cache recovers a persisted pending proposal with an explicit confirmation',()=>{assert.equal(a.state.serverProposals.get(proposal.id).proposal.canConfirm,true);assert.ok(node('#proposalHistory').innerHTML.includes('data-act="apiConfirm"'));assert.equal(a.S().balance,balance)});
+ pass('Expired confirmations are not rendered even before another server query',()=>{const expired=a.serverProposalHTML({...proposal,expiresAt:Date.now()/1000-1});assert.ok(!expired.includes('data-act="apiConfirm"'));assert.ok(expired.includes('确认凭证已到期'))});
  await a.executeServerProposal(proposal.id,null,true);
  pass('Timeout confirmation queries the committed original transaction',()=>{assert.equal(a.S().balance,balance-100.49);assert.equal(a.P().tx.filter(t=>t.proposalId===proposal.id).length,1);assert.ok(node('#tfConfirm').innerHTML.includes('沙箱已记账'));assert.ok(node('#tfConfirm').innerHTML.includes('¥100.49'))});
  await a.replayServerProposal();
  pass('UI replay returns original receipt with no second debit',()=>assert.equal(a.S().balance,balance-100.49));
+ a.state.serverProposals.clear();await a.refreshServerProposals();
+ pass('Reload recovery exposes an executed original receipt without a fresh confirm button',()=>{assert.equal(a.state.serverProposals.get(proposal.id).proposal.status,'executed');assert.ok(node('#proposalHistory').innerHTML.includes('核验原交易回执'));assert.ok(!node('#proposalHistory').innerHTML.includes('data-act="apiConfirm"'))});
  node('#tfAmt').value='50';await a.serverTransferCheck();const stale=a.state.tf.proposal;
  assert.equal((await a.profileAdapter.saveProfile({...a.S().profile,reserve:a.S().profile.reserve+100})).ok,true);
+ await a.refreshServerProposals();
+ pass('Recovered approvals become stale after a profile edit and lose their confirmation token',()=>{assert.equal(a.state.serverProposals.get(stale.id).proposal.status,'stale');assert.equal(a.state.serverProposals.get(stale.id).proposal.confirmationToken,undefined)});
  const before=a.S().balance;await a.executeServerProposal(stale.id,null,false);
  pass('Profile edit invalidates an old server proposal even if UI keeps its id',()=>assert.equal(a.S().balance,before));
  const sub=a.S().subs[0];const result=await a.bankAPI.cancelSubscription(sub.id);a.applyServerSnapshot(result.snapshot);
@@ -58,7 +65,14 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  pass('Merchant confirmation holds the origin account throughout the dialog',()=>{assert.equal(a.state.persona,'C');assert.equal(a.state.operationBusy,true)});
  releaseModal(true);await cancellation;
  pass('Confirmed merchant operation updates only the bound account',()=>{assert.equal(a.S().subs.find(s=>s.id===activeSub.id).status,'cancelled');assert.equal(a.state.operationBusy,false)});
+ const originalList=a.bankAPI.proposals.bind(a.bankAPI),oldList=await originalList();let releaseOldList;
+ a.bankAPI.proposals=async()=>{if(a.bankAPI.persona==='C')await new Promise(resolve=>releaseOldList=()=>resolve());else return originalList();return oldList;};
+ const oldRequest=a.refreshServerProposals();a.state.view='transfer';await a.switchPersona('A',true);await a.refreshServerProposals();releaseOldList();await oldRequest;
+ pass('A late recovery response from C cannot populate A or reinstall an old account',()=>{assert.equal(a.state.persona,'A');assert.equal(a.bankAPI.persona,'A');assert.ok(!node('#proposalHistory').innerHTML.includes(proposal.id));assert.ok(node('#proposalHistory').innerHTML.includes('还没有转账方案'))});
+ a.bankAPI.proposals=originalList;
  const report=await a.bankAPI.evaluation();
  pass('Evaluation screen reads saved measured results',()=>assert.equal(report.scenario_count,48));
+ const intents=await a.bankAPI.intentEvaluation();
+ pass('Intent evaluation reads fixed-case results without presenting a live model score',()=>{assert.equal(intents.summary.cases,41);assert.equal(intents.requested_mode,'rules');assert.equal(intents.live_model_run,false);assert.equal(intents.live_model_only_summary,null)});
  console.log(`${count} HTTP/workbench integration checks passed; DOM is stubbed, no browser visual verification.`);
 })().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>{child.kill();fs.rmSync(tmp,{recursive:true,force:true})});

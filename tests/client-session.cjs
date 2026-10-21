@@ -104,3 +104,12 @@ test('explicit credential override does not mutate the active credential',async(
   await client.request('/api/state',{token:'B-inspect'});
   assert.equal(header,'Bearer B-inspect');assert.equal(client.token,'A-live');assert.equal(client.persona,'A');
 });
+
+test('malformed stored session containers do not break account selection',async()=>{
+  for(const value of [null,[],true,'invalid']){
+    const context=vm.createContext({window:{},AbortSignal,fetch:async()=>response({token:'C-new',snapshot:snapshot('C')}),sessionStorage:{getItem:()=>JSON.stringify(value),setItem(){}}});
+    vm.runInContext(source,context);
+    const client=new context.window.TroposSandboxClient();
+    assert.equal((await client.select('C')).user.persona,'C');assert.equal(client.persona,'C');
+  }
+});
