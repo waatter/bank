@@ -1,7 +1,6 @@
 'use strict';
-/* TROPOS 工作台原型（纸与墨 · 场景化界面）
-   所有账户、交易、投票与回执都是浏览器内的合成数据；意图识别与四引擎决策由本文件中的规则实现，
-   不调用任何真实银行接口或模型服务。接入真实 Agent 后，route() 与各 *Reply() 是需要替换的边界。 */
+/* TROPOS 工作台：HTTP 模式使用服务端合成账本及可配置模型；
+   file 模式保留本地交互样例。两种模式均不连接真实银行。 */
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -16,7 +15,7 @@ const SINGLE_LIMIT = 50000;
 const SHOCK_DAYS = 15;
 
 const money = (n, sign = false) => {
-  const r = Math.round(n), s = '¥' + Math.abs(r).toLocaleString('zh-CN');
+  const r = Math.round(Number(n) * 100) / 100, s = '¥' + Math.abs(r).toLocaleString('zh-CN', {maximumFractionDigits:2,minimumFractionDigits:Number.isInteger(r)?0:2});
   return r < 0 ? '−' + s : sign && r > 0 ? '+' + s : s;
 };
 const dateAt = d => { const t = new Date(TODAY); t.setDate(t.getDate() + d); return t; };
@@ -43,8 +42,6 @@ const PERSONAS = {
   A: {
     name: '阿林', initial: '林', color: '#cfe4da', tag: '灵活收入', tone: 'protect',
     desc: '自由设计师，工资到账日不固定；房租、信用卡和课程尾款是近期的刚性支出。',
-    modes: [['现金流守护', 65], ['财富积累', 35]],
-    shockModes: [['现金流守护', 85], ['财富积累', 15]],
     balance: 20000, reserve: 8000, daily: 110, income: 6500, salaryDay: 12,
     buffer: '现金缓冲约 1.6 个月',
     goal: { name: '春节回家路费', target: 6000, saved: 1800 },
@@ -86,8 +83,6 @@ const PERSONAS = {
   B: {
     name: '小周', initial: '周', color: '#f4d4ca', tag: '多笔分期', tone: 'recover',
     desc: '信用卡与多个平台分期叠加，最近常在深夜刷直播间；每月账单多且分散。',
-    modes: [['负债减压', 55], ['现金流守护', 45]],
-    shockModes: [['现金流守护', 70], ['负债减压', 30]],
     balance: 20000, reserve: 6000, daily: 130, income: 11000, salaryDay: 12,
     buffer: '现金缓冲约 0.9 个月',
     goal: { name: '还清高息分期', target: 12000, saved: 3000 },
@@ -134,8 +129,6 @@ const PERSONAS = {
   C: {
     name: '陈工', initial: '陈', color: '#d8e0ee', tag: '储备充足', tone: 'grow',
     desc: '收入稳定，另有 ¥30,000 独立应急金；三个月后有一次家庭旅行。',
-    modes: [['资产增长', 55], ['财富积累', 45]],
-    shockModes: [['现金流守护', 40], ['资产增长', 30], ['财富积累', 30]],
     balance: 20000, reserve: 8000, daily: 90, income: 14000, salaryDay: 10,
     buffer: '另有独立应急金 ¥30,000',
     goal: { name: '三个月后家庭旅行', target: 9000, saved: 3000 },
@@ -191,18 +184,53 @@ const CAT_COLORS = { 住房: '#8fb0c9', 还款: '#7f93b5', 分期: '#a796b8', �
 
 /* ------------------------------------------------------------------ 状态 */
 const state = { persona: 'A', view: 'console', per: {}, log: [], logFilter: 'ALL', chatBusy: false, pendingReq: null, tf: null, applySeq: 0 };
-for (const [k, p] of Object.entries(PERSONAS)) {
-  state.per[k] = {
+state.serverMode=false;state.serverProposals=new Map();
+const bankAPI=window.TroposSandboxClient?new window.TroposSandboxClient():null;
+const PROFILE_STORE = 'tropos-workspace-v2';
+function freshPersona(k) {
+  const p = PERSONAS[k];
+  return {
     balance: p.balance, shocked: false, replan: false, guard: false,
     subs: p.subs.map(s => ({ ...s, status: 'active' })),
-    cooling: [], saved: 0, skipped: 0, goalAdded: 0, extraPlans: [], usedKeys: new Set(),
+    cooling: [], saved: 0, skipped: 0, goalAdded: 0, goalFunded:p.goal.saved, plannedSavings:0, extraPlans: [], usedKeys: new Set(),
+    profile: TroposProfiles.defaults(p, k), completed: false, profileUpdates: [],
+    profileRevision: 0, profileUpdatedAt: '', salaryReceived: false,
+    extraBills: [], transferTx: [], confirmedDeferrals: [], revision: 0,
   };
 }
-const P = () => PERSONAS[state.persona];
+for (const k of Object.keys(PERSONAS)) state.per[k] = freshPersona(k);
+function personaData(k) {
+  const p=PERSONAS[k], st=state.per[k], f=st.profile;
+  if(st.serverSnapshot)return {...p,reserve:f.reserve,tone:f.goalType,goal:{...p.goal,name:f.goalName,target:f.target,saved:st.goalFunded},bills:st.serverSnapshot.bills,plans:st.serverSnapshot.plans,tx:st.serverSnapshot.transactions};
+  return {...p,reserve:f.reserve,tone:f.goalType,
+    goal:{...p.goal,name:f.goalName,target:f.target,saved:st.goalFunded??p.goal.saved},
+    bills:[...p.bills,...st.extraBills],tx:[...st.transferTx,...p.tx]};
+}
+const P = () => personaData(state.persona);
 const S = () => state.per[state.persona];
+function persistWorkspace() {
+  if(state.serverMode)return;
+  try { localStorage.setItem(PROFILE_STORE,JSON.stringify({persona:state.persona,per:state.per,log:state.log.slice(0,300)},(k,v)=>v instanceof Set?[...v]:v)); }
+  catch (_) { /* Private/file browsers can disable storage; the live demo still works. */ }
+}
+function restoreWorkspace() {
+  try {
+    const saved=JSON.parse(localStorage.getItem(PROFILE_STORE)||'null');
+    if(!saved?.per)return;
+    for(const k of Object.keys(PERSONAS)) {
+      const v=saved.per[k], valid=TroposProfiles.validate(v?.profile);
+      if(!v||!valid.ok||!Number.isFinite(v.balance)||v.balance<0)continue;
+      state.per[k]={...freshPersona(k),...v,profile:valid.value,usedKeys:new Set(Array.isArray(v.usedKeys)?v.usedKeys:[])};
+    }
+    if(PERSONAS[saved.persona])state.persona=saved.persona;
+    if(Array.isArray(saved.log))state.log=saved.log.filter(x=>ENG[x.eng]).slice(0,300);
+  } catch (_) { /* Invalid saved sessions fall back to the synthetic fixtures. */ }
+}
+restoreWorkspace();
 
 /* ------------------------------------------------------------------ METIS：30 天现金路径 */
 function cashPath(p, st, o = {}) {
+  if(st.serverSnapshot&&!Object.keys(o).length)return st.serverSnapshot.cash;
   const shocked = o.shocked ?? st.shocked;
   const replan = o.replan ?? (shocked && st.replan);
   const keepDeps = o.keepDeps ?? false;          // 模拟"旧计划照常执行"的反事实
@@ -210,11 +238,13 @@ function cashPath(p, st, o = {}) {
   const salaryDay = p.salaryDay + (shocked ? SHOCK_DAYS : 0);
   const flows = [];
   for (const b of p.bills) {
-    const mv = replan && p.replan.moves.find(m => m.id === b.id);
+    const mv = replan && st.confirmedDeferrals.includes(b.id) && p.replan.moves.find(m => m.id === b.id);
     flows.push({ day: mv ? mv.to : b.day, amount: b.amount, label: b.label, type: 'bill', moved: !!mv });
   }
-  flows.push({ day: salaryDay, amount: p.income, label: '工资到账', type: 'salary' });
+  if (!st.salaryReceived) flows.push({ day: salaryDay, amount: p.income, label: '预计工资（尚未到账）', type: 'salary' });
+  for (const sub of st.subs) if(sub.status!=='cancelled') flows.push({day:sub.next,amount:-sub.fee,label:sub.name+'续费',type:'subscription'});
   for (const pl of [...p.plans, ...st.extraPlans]) {
+    if(st.serverSnapshot)continue; // Unconfirmed intentions are not server obligations.
     if (shocked && pl.dep && !keepDeps) continue;
     flows.push({ day: pl.day, amount: pl.amount, label: pl.label, type: 'plan' });
   }
@@ -234,8 +264,29 @@ function cashPath(p, st, o = {}) {
     events: flows.filter(f => f.day >= 0 && f.day <= HORIZON),
   };
 }
-const obligations = p => p.bills.reduce((s, b) => s - b.amount, 0);
+const obligations = (p,st=S()) => p.bills.reduce((s, b) => s - b.amount, 0) + st.subs.filter(s=>s.status!=='cancelled').reduce((n,s)=>n+s.fee,0);
 const depPlans = (p, st) => [...p.plans, ...st.extraPlans].filter(x => x.dep);
+function profilePriorities(p=P(),st=S()) {
+  if(st.serverSnapshot)return st.serverSnapshot.policy.priorities;
+  return TroposProfiles.policy({profile:st.profile,free:cashPath(p,st).free,income:p.income,
+    debt:p.bills.filter(b=>['还款','分期','贷款'].includes(b.kind)).reduce((n,b)=>n-b.amount,0),shocked:st.shocked});
+}
+const profileModes = (p=P(),st=S()) => profilePriorities(p,st).map(x=>[x.name,x.value]);
+function profileSnapshot(k=state.persona) {
+  const p=personaData(k), st=state.per[k], cp=cashPath(p,st), priorities=profilePriorities(p,st);
+  return {min:cp.min,free:cp.free,mode:priorities[0].name,priorities,
+    incomeStatus:st.salaryReceived?'工资已模拟到账':st.shocked?'预计工资延期 15 天':'预计到账，未计为当前余额',
+    updatedAt:st.profileUpdatedAt||'尚未确认画像',version:TroposProfiles.version};
+}
+function recordProfileUpdate(title,source,reason,k=state.persona,preserveTransfer=false) {
+  const st=state.per[k], prev=st.profileSnapshot, next=profileSnapshot(k);
+  st.revision++; st.profileRevision++; st.profileUpdatedAt=new Date().toISOString();
+  const summary=s=>s?`${s.mode}；30 天最低 ${money(s.min)}；余量 ${money(s.free)}`:'尚未建档';
+  st.profileUpdates.unshift({title,source,at:st.profileUpdatedAt,before:summary(prev),after:summary(next),reason});
+  st.profileUpdates=st.profileUpdates.slice(0,100);st.profileSnapshot=next;
+  if(!preserveTransfer){state.tf=null; $('#tfConfirm').innerHTML='';}
+  persistWorkspace(); window.TroposProfileUI?.render();
+}
 
 /* ------------------------------------------------------------------ ETHOS：消费风险状态（只用行为与现金流信号） */
 function riskOf(p, st) {
@@ -314,11 +365,12 @@ function jury(req, a, p) {
 }
 
 /* ------------------------------------------------------------------ 记录与提示 */
-function log(e, title, detail = '') {
+function log(e, title, detail = '', who = state.persona) {
   const t = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  state.log.unshift({ eng: e, title, detail, t, who: P().name });
+  state.log.unshift({ eng: e, title, detail, t, who: personaData(who).name });
   $('#auditCount').textContent = state.log.length;
   if (state.view === 'audit') renderLog();
+  persistWorkspace();
 }
 let toastTimer;
 function toast(msg, tone = 'ok') {
@@ -332,19 +384,31 @@ function toast(msg, tone = 'ok') {
 function modal({ title, body, ok = '确认', cancel = '取消', okClass = 'solid', input = false }) {
   return new Promise(resolve => {
     const m = $('#modal');
+    const originFocus=document.activeElement;
+    const background=['.top','.content','#profileGate'].map(selector=>$(selector)).filter(Boolean).map(element=>({element,inert:element.inert}));
+    background.forEach(({element})=>{element.inert=true;});
     $('#modalTitle').textContent = title;
     $('#modalBody').innerHTML = body + (input ? `<textarea id="modalInput" rows="2" placeholder="${esc(input)}"></textarea>` : '');
     $('#modalActions').innerHTML = `<button class="btn quiet" data-r="0">${cancel}</button><button class="btn ${okClass}" data-r="1">${ok}</button>`;
     m.hidden = false;
-    const done = v => { m.hidden = true; m.onclick = null; document.removeEventListener('keydown', onKey); resolve(v); };
-    const onKey = e => { if (e.key === 'Escape') done(false); };
+    let closed=false;
+    const done = v => { if(closed)return;closed=true;m.hidden = true; m.onclick = null; document.removeEventListener('keydown', onKey);background.forEach(({element,inert})=>{element.inert=inert;});if(originFocus?.isConnected)originFocus.focus();resolve(v); };
+    const onKey = e => {
+      if(e.key==='Escape'){e.preventDefault();done(false);return;}
+      if(e.key!=='Tab')return;
+      const controls=$$('button:not([disabled]),textarea,input,select,[tabindex="0"]',m);
+      const first=controls[0],last=controls.at(-1);
+      if(!first){e.preventDefault();return;}
+      if(e.shiftKey&&(document.activeElement===first||!controls.includes(document.activeElement))){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&(document.activeElement===last||!controls.includes(document.activeElement))){e.preventDefault();first.focus();}
+    };
     document.addEventListener('keydown', onKey);
     m.onclick = e => {
       if (e.target === m) return done(false);
       const b = e.target.closest('[data-r]');
       if (b) done(b.dataset.r === '1' ? (input ? ($('#modalInput').value.trim() || true) : true) : false);
     };
-    setTimeout(() => $('[data-r="1"]', m).focus(), 30);
+    setTimeout(() => {if(!closed)$('[data-r="1"]', m).focus();}, 30);
   });
 }
 
@@ -407,29 +471,45 @@ const TONE = {
     welcome: '需要我算什么？资金配置、购物评估、转账，或者做一次收入延期测试。',
   },
 };
-const T = () => TONE[state.persona];
+const T = () => TONE[S().profile.style || state.persona];
 function setClock() { const [h, m] = T().clock; TODAY.setHours(h, m, 0, 0); }
 
 /* ------------------------------------------------------------------ 导航与画像切换 */
-function showView(v) {
+function showView(v, {refreshActions=true}={}) {
   state.view = v;
   document.body.dataset.view = v;
   $$('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
   $$('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   if (v === 'audit') renderLog();
+  if (v === 'profile') window.TroposProfileUI?.render();
+  if (v === 'evaluation') renderEvaluation();
+  if (v === 'transfer') refreshServerProposals();
+  if(v==='life')state.operationBusy||state.chatBusy?window.TroposLifeUI?.render():window.TroposLifeUI?.refresh();
+  if(v==='actions')state.operationBusy||state.chatBusy||!refreshActions?window.TroposActions?.render():window.TroposActions?.refresh();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function switchPersona(k, silent = false) {
+async function switchPersona(k, silent = false) {
+  if (state.chatBusy || state.operationBusy) return toast('当前操作完成后再切换账户', 'warn');
   if (k === state.persona) return;
+  if(state.serverMode){
+    state.operationBusy=true;
+    try{const snapshot=await bankAPI.select(k);applyServerSnapshot(snapshot);}
+    catch(error){toast(error.message,'bad');return;}
+    finally{state.operationBusy=false;}
+  }
   state.persona = k;
   state.tf = null;
+  state.lastServerProposal = null;
+  state.applySeq++;
   renderAll();
+  if(state.view==='transfer')refreshServerProposals();
   const p = P();
   if (!silent) {
     $('#chatLog').insertAdjacentHTML('beforeend', `<div class="divider">换到${p.name}的窗前</div>`);
     addAgent(T().welcome);
   }
-  log('ETHOS', `换成 ${p.name} 的视角`, `${p.modes.map(m => `${m[0]} ${m[1]}%`).join('，')}；${p.buffer}`);
+  log('ETHOS', `换成 ${p.name} 的视角`, `${profileModes().map(m => `${m[0]} ${m[1]}%`).join('，')}；${p.buffer}`);
+  persistWorkspace();
 }
 function renderPersonaSwitch() {
   $('#personaSwitch').innerHTML = Object.entries(PERSONAS).map(([k, p]) =>
@@ -448,7 +528,9 @@ function renderConsole() {
   $('#chatHint').textContent = t.hint;
   $('#chatInput').placeholder = t.placeholder;
   const sb = $('#shockBtn');
-  sb.innerHTML = st.shocked ? `${ic('sun')}让工资按时到` : `${ic('cloud')}如果工资晚 15 天`;
+  sb.innerHTML = st.shocked ? `${ic('sun')}撤回延期情景` : `${ic('cloud')}如果工资晚 15 天`;
+  sb.disabled = st.salaryReceived;
+  if(state.serverMode)sb.innerHTML=st.shocked?`${ic('sun')}模拟本期工资到账`:`${ic('cloud')}模拟工资晚 15 天`;
 
   const sill = [
     [t.sill[0], money(st.balance), state.persona === 'C' ? '活期 尾号 0826' : '沙箱账户'],
@@ -459,12 +541,14 @@ function renderConsole() {
   $('#sill').innerHTML = sill.map(([l, v, sm, free]) =>
     `<div><label>${l}</label><div class="v ${free ? (cp.free < 0 ? 'bad-t' : 'ok-t') : ''}">${v}</div><small>${sm}</small></div>`).join('');
 
-  const modes = st.shocked ? p.shockModes : p.modes;
+  const modes = profileModes(p,st);
   $('#portrait').innerHTML = `
-    <div class="block-head"><div><h2>此刻的你</h2><p>知己的判断，说得不对可以随时改</p></div>${pill(MOOD[risk.level][0], MOOD[risk.level][1])}</div>
+    <div class="block-head"><div><h2>此刻的你</h2><p>策略侧重 · 可解释规则分配，不是风险概率</p></div>${pill(MOOD[risk.level][0], MOOD[risk.level][1])}</div>
     ${modes.map(([n, v]) => `<div class="mode"><span>${n}</span><div class="track"><div class="fill" style="width:${v}%"></div></div><b>${v}%</b></div>`).join('')}
     <div class="tags"><span>30 天要付 ${money(obligations(p))}</span><span>${p.buffer}</span>
-      ${st.shocked ? `<span class="hot">工资延到 ${md(cp.salaryDay)}</span>` : `<span>工资预计 ${md(cp.salaryDay)}</span>`}</div>
+      ${st.salaryReceived ? '<span>本期工资已模拟到账</span>' : st.shocked ? `<span class="hot">工资延到 ${md(cp.salaryDay)}</span>` : `<span>工资预计 ${md(cp.salaryDay)}</span>`}</div>
+    <p class="fine">你确认的目标：${esc(p.goal.name)}。画像变化不会替你授权转账。</p>
+    <button class="btn sm" data-act="go" data-view="profile">查看依据与更新记录</button>
     <div class="partners">${Object.entries(PARTNER_LINES).map(([k, line]) => `<div class="partner">${PAL[k]}<div><b>${ENG[k].zh}<small>${k}</small></b><span>${line}</span></div></div>`).join('')}</div>`;
 
   $('#consoleNudge').innerHTML = risk.level === 'high' ? nudgeHTML(p, st) : '';
@@ -472,11 +556,13 @@ function renderConsole() {
   renderQueue();
   renderCompare();
   renderSuggest();
+  window.TroposActions?.render();
 }
 const PARTNER_LINES = { ETHOS: '看清你此刻的处境', METIS: '把每一笔算清楚', KAIROS: '等对的时候再动', ARGOS: '只听你的，替你守门' };
 const PAL = Object.fromEntries(['ETHOS', 'METIS', 'KAIROS', 'ARGOS'].map(k => [k, `<span class="mono ${ENG[k].cls}">${ENG[k].ch}</span>`]));
 
 function nudgeHTML(p, st) {
+  if(state.serverMode)return `<div class="nudge ${st.guard?'on':''}">${PAL.ARGOS}<div class="t"><b>${st.guard?'本页冷静期建议已开启':'消费前，多留一点思考时间'}</b>「先别买」可以记录冷静期和购买意愿，不拦截真实付款，也不修改服务端画像或支付授权。</div><div class="actions"><button class="btn sm" data-act="go" data-view="cool">查看购物评估</button></div></div>`;
   if (st.guard) return `<div class="nudge on">${PAL.ARGOS}<div class="t"><b>冷静期守护开着</b>高风险的分期和信用付款，守诺会等冷静期过了再请你确认。随时可以在「先别买」里关掉。</div></div>`;
   return `<div class="nudge">${PAL.ARGOS}<div class="t"><b>最近夜里买东西有点多</b>近 30 天有 ${Math.round(p.signals.lateNight * 100)}% 的消费在晚上 11 点以后，还有 ${p.signals.bnpl} 笔分期在还${p.signals.revolving ? '，信用卡这几期只还了最低额' : ''}。双十一快到了，要不要让守诺在你付款前多问一句？</div>
     <div class="actions" style="flex:none"><button class="btn sm accent" data-act="guardOn">开启冷静期守护</button><button class="btn sm quiet" data-act="go" data-view="cool">去先别买看看</button></div></div>`;
@@ -512,12 +598,12 @@ function smooth(pts) {
 }
 function renderScene() {
   const p = P(), st = S(), cur = cashPath(p, st), sc = SCENES[T().scene], kind = T().scene;
-  const ghost = st.shocked ? cashPath(p, st, { shocked: false, replan: false }) : null;
-  const weather = !st.shocked ? 'clear' : st.replan ? 'after' : 'rain';
+  const ghost = st.shocked ? (st.serverSnapshot?st.beforeEventCash:cashPath(p, st, { shocked: false, replan: false })) : null;
+  const weather = !st.shocked ? 'clear' : st.replan && cur.free>=0 ? 'after' : 'rain';
   const narrow = $('#scene').clientWidth < 640;
   const W = narrow ? 560 : 960, H = narrow ? 470 : 430, top = narrow ? 210 : 165, bottom = H - 44;
   const all = [...cur.pts, ...(ghost ? ghost.pts : []), p.reserve];
-  const lo = Math.max(0, Math.floor((Math.min(...all) - 5000) / 2000) * 2000);
+  const lo = Math.floor((Math.min(...all) - 5000) / 2000) * 2000;
   const hi = Math.max(...all) + 1500;
   const x = d => 34 + d / HORIZON * (W - 68);
   const y = v => top + (hi - v) / (hi - lo) * (bottom - top);
@@ -629,17 +715,18 @@ function renderScene() {
   });
   svg.addEventListener('pointerleave', () => { cross.setAttribute('opacity', 0); tip.style.opacity = 0; });
   $('#legend').innerHTML = `<span><i style="background:${sc.land[1]}"></i>山的高低：每天的余额</span><span><i style="background:${sc.water[0]}"></i>水面：安全线</span>
-    <span><i style="background:${sc.d11}"></i>被水没过：低于安全线</span>${ghost ? `<span><i style="background:repeating-linear-gradient(90deg,var(--mute) 0 2px,transparent 2px 6px)"></i>虚线：工资按时到的样子</span>` : ''}`;
+    <span><i style="background:${sc.d11}"></i>被水没过：低于安全线</span>${ghost ? `<span><i style="background:repeating-linear-gradient(90deg,var(--mute) 0 2px,transparent 2px 6px)"></i>虚线：${state.serverMode?'最近一次更新前的预测':'工资按时到的样子'}</span>` : ''}`;
 }
 
 function renderQueue() {
   const p = P(), st = S(), cp = cashPath(p, st);
   const replan = st.shocked && st.replan;
   const items = p.bills.map(b => {
-    const mv = replan && p.replan.moves.find(m => m.id === b.id);
-    return { day: mv ? mv.to : b.day, title: b.label, sub: mv ? `改到这天，原本 ${md(b.day)}` : `${b.kind}，钱已留好`, amount: b.amount, pill: mv ? pill('改期', 'info') : '' };
+    const mv = replan && st.confirmedDeferrals.includes(b.id) && p.replan.moves.find(m => m.id === b.id);
+    return { day: mv ? mv.to : b.day, title: b.label, sub: mv ? `账单方已模拟确认延期，原本 ${md(b.day)}` : `${b.kind}，按原到期日计入`, amount: b.amount, pill: mv ? pill('模拟改期', 'info') : '' };
   });
-  items.push({ day: cp.salaryDay, title: '工资到账', sub: st.shocked ? `原本 ${md(p.salaryDay)}，晚了 ${SHOCK_DAYS} 天` : '到账核对后，再做依赖它的事', amount: p.income, cls: 'income', pill: st.shocked ? pill('晚到', 'warn') : '' });
+  if(!st.salaryReceived) items.push({ day: cp.salaryDay, title: '预计工资（尚未到账）', sub: st.shocked ? `原本 ${md(p.salaryDay)}，晚了 ${SHOCK_DAYS} 天` : '到账核对后，再做依赖它的事', amount: p.income, cls: 'income', pill: st.shocked ? pill('晚到', 'warn') : '' });
+  for(const sub of st.subs) if(sub.status!=='cancelled') items.push({day:sub.next,title:sub.name+'续费',sub:'周期订阅 · 未取消前计入预测',amount:-sub.fee,pill:pill('待续费')});
   for (const pl of [...p.plans, ...st.extraPlans]) {
     const paused = st.shocked && pl.dep;
     items.push({ day: pl.day, title: pl.label, sub: paused ? '要等工资到账，先停一停' : `${pl.kind}，做之前会问你`, amount: pl.amount, cls: paused ? 'paused' : '', pill: paused ? pill('暂停', 'warn') : pill('待确认') });
@@ -652,6 +739,11 @@ function renderQueue() {
 
 function renderCompare() {
   const p = P(), st = S(), box = $('#compare');
+  if(state.serverMode){
+    box.hidden=!st.shocked;
+    if(st.shocked)box.innerHTML=`<div class="block-head"><div><h2>收入变了，先暂停，再核验</h2><p>服务端已重算，尚未到账的工资不算当前余额。未确认的预算削减与账单延期均未计入改善。</p></div></div><div class="panel"><p>当前最低预测余额 <b>${money(st.serverSnapshot.cash.min)}</b>，相对现金底线的余量 <b>${money(st.serverSnapshot.cash.free)}</b>。</p><p>依赖工资的计划仍待条件满足；工资到账后恢复待确认，不自动扣款。</p><button class="btn" data-act="go" data-view="profile">查看事件前后记录与依据</button></div>`;
+    return;
+  }
   if (!st.shocked) { box.hidden = true; return; }
   box.hidden = false;
   const blind = cashPath(p, st, { shocked: true, replan: false, keepDeps: true });
@@ -661,14 +753,15 @@ function renderCompare() {
       <div><small>最紧的一天还剩</small><b class="${c.free < 0 ? 'bad-t' : ''}">${money(c.min)}</b></div>
       <div><small>低于安全线</small><b class="${c.breachDays ? 'bad-t' : 'ok-t'}">${c.breachDays} 天</b></div>
       <div><small>最大缺口</small><b class="${c.free < 0 ? 'bad-t' : 'ok-t'}">${c.free < 0 ? money(-c.free) : '没有'}</b></div></div>`;
-  const moves = p.replan.moves.map(m => { const b = p.bills.find(x => x.id === m.id); return `<li>${seal('METIS')}<span>${b.label}从 ${md(b.day)} 挪到 ${md(m.to)}：${m.why}</span></li>`; }).join('');
+  const pendingMoves=p.replan.moves.filter(m=>!st.confirmedDeferrals.includes(m.id));
+  const moves = p.replan.moves.map(m => { const b = p.bills.find(x => x.id === m.id); return `<li>${seal('METIS')}<span>${esc(b.label)}拟从 ${md(b.day)} 改至 ${md(m.to)}：${st.confirmedDeferrals.includes(m.id)?'账单方已模拟确认': '待账单方确认，尚未计入预测改善'}</span></li>`; }).join('');
   box.innerHTML = `
     <div class="block-head"><div><h2>同一场雨，两种过法</h2><p>工资晚到 ${SHOCK_DAYS} 天。左边是照旧执行，右边是 TROPOS 的重新安排。</p></div></div>
     <div class="compare-grid">
-      <div class="plan-sheet old"><h3>照旧执行</h3><p class="sub">多数自动化工具会这样做</p>${trio(blind)}
+      <div class="plan-sheet old"><h3>照旧执行</h3><p class="sub">未复核的原计划（演示对照）</p>${trio(blind)}
         <ul class="plan-list">${deps.map(d => `<li>${ic('alert', 'bad-t')}<span>${md(d.day)} 仍会执行「${esc(d.label)}」${money(d.amount)}，可工资还没到</span></li>`).join('') || '<li>没有依赖工资的事</li>'}
         ${blind.breach >= 0 ? `<li>${ic('trend-down', 'bad-t')}<span>${mdCN(blind.breach)} 起，余额跌到安全线以下</span></li>` : ''}</ul></div>
-      <div class="plan-sheet new">${st.replan ? '<span class="stamp-adopted">已采纳</span>' : ''}<h3>重新安排</h3><p class="sub">${st.replan ? '你同意了，已经生效' : '等你同意才会生效'}</p>${trio(next)}
+      <div class="plan-sheet new">${st.replan ? '<span class="stamp-adopted">已采纳</span>' : ''}<h3>重新安排</h3><p class="sub">${st.replan ? '预算已采纳；未获确认的账单仍按原日期计入' : '方案预览；账单延期需对方另行确认'}</p>${trio(next)}
         <ul class="plan-list">
           ${deps.map(d => `<li>${seal('KAIROS')}<span>「${esc(d.label)}」先停，工资到账核对后再问你</span></li>`).join('')}
           ${moves}
@@ -676,8 +769,8 @@ function renderCompare() {
           <li>${seal('ARGOS')}<span>${next.free < 0 ? `还差 ${money(-next.free)}：如实告诉你，不替你借钱，也不动安全线` : '不动安全线；每一笔钱的进出，仍然逐笔问你'}</span></li>
         </ul></div>
     </div>
-    <div class="compare-foot"><span>知己只更新了眼下的处境，长期目标「${p.goal.name}」没有变。</span>
-      ${st.replan ? `<button class="btn sm quiet" data-act="shockOff">${ic('sun')}让工资按时到</button>` : `<div class="actions"><button class="btn sm solid" data-act="adoptReplan">${ic('check')}采纳重新安排</button><button class="btn sm quiet" data-act="shockOff">撤回这场雨</button></div>`}</div>`;
+    <div class="compare-foot"><span>知己只更新了眼下的处境，长期目标「${esc(p.goal.name)}」没有变。</span>
+      ${st.replan ? `<div class="actions">${pendingMoves.length?'<button class="btn sm" data-act="confirmDeferral">模拟账单方同意延期</button>':''}<button class="btn sm quiet" data-act="shockOff">撤回延期情景</button></div>` : `<div class="actions"><button class="btn sm solid" data-act="adoptReplan">${ic('check')}采纳预算建议</button><button class="btn sm quiet" data-act="shockOff">撤回这场雨</button></div>`}</div>`;
 }
 
 const SUGGEST = {
@@ -708,13 +801,16 @@ function addAgent(say = '') {
 }
 async function ask(text) {
   text = String(text || '').trim();
-  if (!text || state.chatBusy) return;
+  if (!text || state.chatBusy || state.operationBusy) return;
+  if(!S().completed||!S().profile.readConsent){state.afterProfileQuestion=text;window.TroposProfileUI?.openLogin();return;}
   if (state.view !== 'console') showView('console');
   state.chatBusy = true;
   $('#composer button').disabled = true;
   addUser(text);
   log('USER', '你说', text);
-  const r = route(text);
+  let r;
+  try{r=state.serverMode?await serverAgentReply(text):route(text);}
+  catch(error){r={trace:[['ARGOS','服务未确认操作结果']],html:`<div class="rc t-bad"><p>${esc(error.message)}</p><p>未据此显示交易成功。</p></div>`};}
   const el = addAgent();
   await sleep(420);
   $('.typing', el)?.remove();
@@ -748,50 +844,39 @@ function route(t) {
 }
 
 function manageReply(text) {
-  const p = P(), st = S(), cp = cashPath(p, st), deps = depPlans(p, st);
-  const modes = st.shocked ? p.shockModes : p.modes;
-  let tone, title, body, items;
-  if (cp.free < 0) {
-    tone = 't-bad'; title = '先补缺口，暂不安排任何转出';
-    body = `按当前现金路径，${mdCN(cp.breach)} 起余额会跌破 ${money(p.reserve)} 安全线，最大缺口 ${money(-cp.free)}。`;
-    items = ['冻结所有依赖工资的转入、还款和申购', '把非必要消费都放进「先别买」冷静审批', '查看「原计划 vs 新计划」，确认后再执行'];
-  } else if (p.tone === 'protect') {
-    tone = 't-warn'; title = '先留足必要支出，不急着转出';
-    body = `扣除 30 天内的房租、还款和课程尾款，再留出 ${money(p.reserve)} 安全线，真正能灵活安排的只有 ${money(cp.free)}。`;
-    items = ['不建议申购任何有锁定期的产品，保持流动性', `发薪后把 ¥1,500 存入「${p.goal.name}」（已排队，执行前确认）`, '双 11 非必要消费先走「先别买」冷静审批'];
-  } else if (p.tone === 'recover') {
-    tone = 't-warn'; title = '先减负债，再谈储蓄';
-    body = `30 天内有 ${p.bills.filter(b => ['还款', '分期', '贷款'].includes(b.kind)).length} 笔还款与分期，可灵活资金只有 ${money(cp.free)}。`;
-    items = ['每笔到期还款优先保障，不产生逾期', '发薪后提前还清手续费最高的白条分期 ¥3,000', '新增分期前先走冷静审批：你已有 3 笔分期在还'];
-  } else {
-    tone = 't-ok'; title = '满足储备后，可以安排一部分';
-    body = `30 天最低余额 ${money(cp.min)}，比安全线多 ${money(cp.free)}；另有独立应急金。`;
-    items = [`发薪后 ¥3,000 转入「${p.goal.name}」`, '¥5,000 比较 90 天内到期的稳健型产品，旅行前可用，需完成适当性确认', '其余资金留作旅行前的不确定支出'];
-    if (st.shocked) items.unshift('工资延期中：旅行转入与申购保持冻结，到账后再确认');
-  }
-  const others = Object.entries(PERSONAS).filter(([k]) => k !== state.persona);
-  return {
-    trace: [
-      ['ETHOS', `主要模式：${modes[0][0]} ${modes[0][1]}%；${p.buffer}`],
-      ['METIS', `模拟 30 天现金路径：最低点 ${money(cp.min)}（${md(cp.minDay)}），可灵活 ${money(cp.free)}`],
-      ['KAIROS', deps.length ? (st.shocked ? `${deps.length} 个依赖工资的任务已冻结` : `${deps.length} 个任务依赖 ${md(cp.salaryDay)} 工资到账，已设置到账核验`) : '没有依赖收入的任务'],
-      ['ARGOS', '本次只生成计划，不移动资金；转账和申购都要你逐笔确认'],
-    ],
-    html: `<div class="rc ${tone}"><h3>${title}</h3><p>${body}</p>
-      <ul>${items.map(i => `<li>${ic('check')}<span>${i}</span></li>`).join('')}</ul>
-      <div class="why">${money(cp.min)}（30 天最低余额） − ${money(p.reserve)}（安全线） = ${money(cp.free)}</div>
-      <div class="actions">${others.map(([k, o]) => `<button class="btn sm" data-act="askAs" data-persona="${k}" data-text="${esc(text)}">${ic('users')}换成「${o.name} · ${o.tag}」再问一次</button>`).join('')}</div></div>`,
-  };
+  const p=P(),st=S(),cp=cashPath(p,st),deps=depPlans(p,st),modes=profileModes(p,st);
+  const top=profilePriorities(p,st)[0].key;
+  const debt=p.bills.filter(b=>['还款','分期','贷款'].includes(b.kind));
+  const nextBill=[...p.bills].sort((a,b)=>a.day-b.day)[0];
+  const titles={protect:'先守住近期付款和现金底线',recover:'把到期还款排在新增安排前',accumulate:'围绕目标安排有余量的部分',grow:'先核对期限与流动性，再比较资金方案'};
+  const title=cp.free<0?'先处理现金缺口，暂停新增转出':titles[top];
+  const body=`当前 30 天预测最低余额 ${money(cp.min)}（${md(cp.minDay)}），相对你设定的 ${money(p.reserve)} 安全线，${cp.free<0?'缺口':'余量'}为 ${money(Math.abs(cp.free))}。`;
+  const items=[`你确认的目标是「${esc(p.goal.name)}」，目标金额 ${money(p.goal.target)}；它不会随收入冲击自动改变`];
+  if(nextBill)items.push(`最近一笔已知账单：${md(nextBill.day)} ${esc(nextBill.label)} ${money(-nextBill.amount)}；未获对方确认前保留原到期日`);
+  if(cp.free<0)items.push('暂不新增非必要转出；必要还款不擅自取消或延期');
+  else if(top==='recover')items.push(`先保障 ${debt.length} 笔已知还款；提前还款需另查合同费用，并由你确认`);
+  else if(top==='grow')items.push('先核对资金需要使用的日期和产品适当性；当前没有据此自动生成任何申购');
+  else items.push('新储蓄计划必须同时满足现金底线、目标期限和单笔确认');
+  if(deps.length)items.push(`现有演示计划：${deps.map(d=>`${esc(d.label)} ${money(-d.amount)}`).join('；')}。${st.shocked?'当前暂停，等待工资到账再确认':'均为待确认计划，不代表你已授权执行'}`);
+  const others=Object.entries(PERSONAS).filter(([k])=>k!==state.persona);
+  return {trace:[
+    ['ETHOS',`当前策略侧重：${modes[0][0]}；依据用户目标与最新现金状态重算`],
+    ['METIS',`预测最低余额 ${money(cp.min)}；预测收入尚未到账时，不计为当前可用余额`],
+    ['KAIROS',st.shocked?`${deps.length} 项依赖收入的计划暂停`:'按各计划的触发条件再次核验'],
+    ['ARGOS','本次只给建议；转账、申购和新的守护授权都需独立确认']],
+    html:`<div class="rc ${cp.free<0?'t-bad':'t-ethos'}"><h3>${title}</h3><p>${body}</p><ul>${items.map(i=>`<li>${ic('check')}<span>${i}</span></li>`).join('')}</ul><div class="why">${money(cp.min)}（30 天最低余额） − ${money(p.reserve)}（安全线） = ${money(cp.free)}（预测余量，执行前重验）</div><div class="actions">${others.map(([k,o])=>`<button class="btn sm" data-act="askAs" data-persona="${k}" data-text="${esc(text)}">${ic('users')}换成「${o.name} · ${o.tag}」再问一次</button>`).join('')}</div></div>`};
 }
 
 function shockReply() {
   const p = P(), st = S();
+  if(st.salaryReceived) return {trace:[['KAIROS','本期工资已模拟到账']],html:'<div class="rc"><h3>这期收入已到账</h3><p>到账的收入不会重新变成预期收入；重置演示后可再体验延期。</p></div>'};
   if (st.shocked) {
     return { trace: [['KAIROS', '收入延期情景已经在生效中']], html: `<div class="rc t-warn"><h3>情景已生效</h3><p>工资延期至 ${mdCN(cashPath(p, st).salaryDay)}。</p><div class="actions"><button class="btn sm" data-act="toCompare">看看两种过法</button><button class="btn sm quiet" data-act="shockOff">撤销情景</button></div></div>` };
   }
   const deps = depPlans(p, st);
   st.shocked = true; st.replan = false;
   const after = cashPath(p, st);
+  recordProfileUpdate('收入延期，策略已重算','模拟收入事件','长期目标与现金底线保留；暂停依赖该工资的未执行任务');
   log('KAIROS', '检测到收入延期', `工资 ${md(p.salaryDay)} → ${md(after.salaryDay)}`);
   if (deps.length) log('KAIROS', `冻结 ${deps.length} 个依赖收入的任务`, deps.map(d => d.label).join('、'));
   log('METIS', '重算 30 天现金路径', after.free < 0 ? `${md(after.breach)} 起跌破安全线，最大缺口 ${money(-after.free)}` : `最低余额 ${money(after.min)}，仍高于安全线`);
@@ -800,7 +885,7 @@ function shockReply() {
     trace: [
       ['KAIROS', `收入事件：工资 ${md(p.salaryDay)} → ${md(after.salaryDay)}（延期 ${SHOCK_DAYS} 天）`],
       ['KAIROS', deps.length ? `冻结 ${deps.length} 个依赖该收入的任务：${deps.map(d => `「${esc(d.label)}」`).join('')}` : '没有依赖该收入的任务'],
-      ['ETHOS', `短期状态更新为「收入延迟」，${p.shockModes[0][0]}权重升到 ${p.shockModes[0][1]}%；长期目标不变`],
+      ['ETHOS', `短期状态更新为「收入延迟」；当前策略侧重为${profileModes(p,st)[0][0]}，长期目标不变`],
       ['METIS', after.free < 0 ? `重算：${md(after.breach)} 起跌破安全线，最大缺口 ${money(-after.free)}` : `重算：最低余额 ${money(after.min)}，仍高于安全线`],
       ['ARGOS', '旧计划不再自动执行；新计划需你确认后生效'],
     ],
@@ -847,7 +932,7 @@ function purchaseReply(text) {
       ['ARGOS', guardLine],
     ],
     html: `<div class="rc ${tone}"><h3>${a.verdict}</h3><p>${esc(req.item)} · ${money(req.price)} · ${{ balance: '余额支付', credit: '信用卡全额', inst6: '分 6 期', inst12: '分 12 期' }[req.pay]}</p>
-      <div class="actions"><button class="btn sm solid" data-act="openApply">${ic('hourglass')}填一张完整的申请单，听听陌生人怎么说</button></div></div>`,
+      <div class="actions"><button class="btn sm solid" data-act="openApply">${ic('hourglass')}填申请单，查看模拟陪审意见</button></div></div>`,
   };
 }
 
@@ -902,7 +987,7 @@ function subsReply() {
 }
 
 function billSummary(p) {
-  const out = p.tx.filter(t => t.amount < 0 && t.cat !== '储蓄');
+  const out = p.tx.filter(t => t.amount < 0 && !['储蓄','目标储蓄'].includes(t.cat));
   const total = out.reduce((s, t) => s - t.amount, 0);
   const ess = out.filter(t => ESSENTIAL.includes(t.cat)).reduce((s, t) => s - t.amount, 0);
   const byCat = {};
@@ -964,10 +1049,10 @@ function renderCool() {
     <div class="sig"><span>${ic('card')}还在还的分期</span><b>${p.signals.bnpl} 笔</b>${bar(p.signals.bnpl * 25, 'var(--bad)')}</div>
     <div class="sig"><span>${ic('repeat')}信用卡怎么还</span><b class="${p.signals.revolving ? 'bad-t' : 'ok-t'}">${p.signals.revolving ? '这几期只还最低额' : '每期都还清'}</b></div>
     <div class="sig"><span>${ic('wallet')}30 天还能灵活用</span><b class="${risk.cp.free < 1000 ? 'bad-t' : ''}">${money(risk.cp.free)}</b></div>
-    <div class="jar-row">${jarSVG(goalPct)}<div><b>「${p.goal.name}」${goalPct}%</b>放下没买的东西，钱会记进这个罐子</div></div>
+    <div class="jar-row">${jarSVG(goalPct)}<div><b>「${esc(p.goal.name)}」${goalPct}%</b>仅计已存目标资金；另有 ${money(st.plannedSavings||0)} 拟留存，尚未转入。</div></div>
     <div class="switch"><div><b>冷静期守护</b><small>高风险时，分期和信用付款等冷静期过了再确认</small></div>
       <button class="toggle ${st.guard ? 'on' : ''}" data-act="guardToggle" role="switch" aria-checked="${st.guard}" aria-label="冷静期守护"></button></div>
-    <p class="fine">只看钱的流向和消费习惯，不看年龄、职业、性别、地域；习惯变了，判断也会跟着变。</p>`;
+    <p class="fine">${state.serverMode?'购物冷静期是本页的建议与会话偏好，未接入支付拦截，不属于服务端授权或画像修订。':''}只看钱的流向和消费习惯，不看年龄、职业、性别、地域；习惯变了，判断也会跟着变。</p>`;
   $('#presets').innerHTML = '<span>试试这些：</span>' + PRESETS.map((x, i) => `<button type="button" data-act="preset" data-i="${i}">${esc(x.item)} ¥${x.price.toLocaleString('zh-CN')}</button>`).join('');
   $('#formNo').textContent = `No. 1020-${String(state.applySeq + 1).padStart(3, '0')}`;
   renderCoolList();
@@ -976,7 +1061,7 @@ function renderCool() {
 const AP_ROWS = [
   ['ethos', 'ETHOS', '知己', '看看最近的你'],
   ['metis', 'METIS', '善谋', '把账算清楚'],
-  ['jury', null, '众议', '陌生人怎么看'],
+  ['jury', null, '众议', '模拟陪审意见'],
   ['kairos', 'KAIROS', '择时', '要不要等一等'],
   ['argos', 'ARGOS', '守诺', '付款前守一下'],
 ];
@@ -997,7 +1082,7 @@ async function runApproval(req, quiet = false) {
   const credit = a.n || req.pay === 'credit';
   const riskTop = a.factors.filter(f => f.kind === 'risk').slice(0, 2).map(f => f.label);
   const argos = [
-    ['lock', '陌生人只看到商品、价格、理由和替代品，你的余额和身份没有离开家'],
+    ['lock', '陪审意见由本地规则模拟；商品信息、余额和身份均未发送给他人'],
     ...(a.freeAfter < 0 ? [['alert', `付完以后会低于 ${money(p.reserve)} 的安全线：如果坚持，会再请你确认一次`]] : []),
     ...(credit && a.tier === 'high' ? [[st.guard ? 'shield' : 'alert', st.guard ? `冷静期守护开着：这笔${a.n ? '分期' : '信用'}付款要到 ${untilText} 之后才放行` : `建议开启冷静期守护，在高风险时延后分期和信用付款 <button class="btn link" data-act="guardOn">现在开启</button>`]] : []),
     ['heart', '不替你下单，也不会一直拦着你；最后怎么决定，由你'],
@@ -1005,7 +1090,7 @@ async function runApproval(req, quiet = false) {
   const remarks = {
     ethos: a.tier === 'low' ? `冲动指数 ${a.score}，挺稳的。理由具体，用得上。` : `冲动指数 ${a.score}。${riskTop.join('，')}——先缓一缓。`,
     metis: `付完以后，30 天里最紧的那天还剩 ${money(a.after.min)}${a.freeAfter < 0 ? '，比安全线还低' : ''}${a.n ? `；分期要多付 ${money(a.fee)}` : ''}。`,
-    jury: `${j.total.toLocaleString('zh-CN')} 位陌生人看过你的申请，${j.no}% 说别买，${j.yes}% 说买。`,
+    jury: `模拟陪审团（规则生成 ${j.total.toLocaleString('zh-CN')} 份意见）：${j.no}% 建议别买，${j.yes}% 建议买；没有真实用户参与。`,
     kairos: a.hours ? `先放进抽屉 ${a.hours} 小时，${untilText} 再问你。离双 11 还有 ${D11} 天，来得及。` : '不用等，可以直接决定。',
     argos: credit && a.tier === 'high' ? (st.guard ? '冷静期守护开着，这笔付款我先替你按住。' : '这笔是分期或信用付款，建议让我在付款前多守一下。') : '这笔付款我看过了，决定权在你。',
   };
@@ -1060,7 +1145,9 @@ async function runApproval(req, quiet = false) {
 function addCooling(hours, opts = {}) {
   const st = S(), x = state.lastAssess;
   if (!x) return;
-  st.cooling.unshift({ id: Date.now(), item: x.req.item, price: x.req.price, hours: hours || 24, endsAt: Date.now() + (hours || 24) * 3600e3, status: 'cooling', guarded: !!opts.guarded });
+  if(x.coolingId)return toast('这张申请已在冷静抽屉里','warn');
+  x.coolingId=Date.now();
+  st.cooling.unshift({ id:x.coolingId, item: x.req.item, price: x.req.price, hours: hours || 24, endsAt: Date.now() + (hours || 24) * 3600e3, status: 'cooling', guarded: !!opts.guarded });
   log('KAIROS', `放进冷静抽屉：${x.req.item}`, `${hours || 24} 小时后再问你${opts.guarded ? ' · 付款先按住' : ''}`);
   renderCool();
 }
@@ -1082,12 +1169,18 @@ function renderCoolList() {
         : `<button class="btn sm" data-act="coolBuy" data-id="${c.id}">还想要</button><button class="btn sm solid" data-act="coolSkip" data-id="${c.id}">不要了</button>`;
     } else if (c.status === 'skipped') {
       mid = `<span class="timer done">放下了，省 ${money(c.price)}</span>`;
-      actions = c.toGoal ? `<span style="font-size:13px;color:var(--mute)">已记进「${P().goal.name}」</span>` : `<button class="btn sm" data-act="coolGoal" data-id="${c.id}">${ic('target')}记进存钱罐</button>`;
+      actions = c.toGoal ? `<span style="font-size:13px;color:var(--mute)">已记进「${esc(P().goal.name)}」</span>` : `<button class="btn sm" data-act="coolGoal" data-id="${c.id}">${ic('target')}记进存钱罐</button>`;
     } else mid = '<span class="timer" style="color:var(--e-metis)">想清楚了，决定买</span>';
     return `<div class="note ${c.status}"><b>${esc(c.item)}</b><span>${money(c.price)} · 冷静 ${c.hours} 小时${c.guarded ? ' · 付款先按住' : ''}</span>${mid}<div class="actions">${actions}</div></div>`;
   }).join('');
 }
 function tickTimers() {
+  if(state.serverMode)$$('[data-act="apiConfirm"]').forEach(button=>{
+    const cached=state.serverProposals.get(button.dataset.id);
+    if(!button.disabled&&cached?.persona===state.persona&&cached.proposal.expiresAt*1000<=Date.now()){
+      button.disabled=true;button.textContent='凭证已到期，请重新检查';
+    }
+  });
   let expired = false;
   $$('#coolList .timer[data-ends]').forEach(t => {
     const left = +t.dataset.ends - Date.now();
@@ -1115,21 +1208,22 @@ function renderBills() {
   const p = P(), st = S(), b = billSummary(p);
   const active = st.subs.filter(s => s.status !== 'cancelled');
   const review = st.subs.filter(s => s.status === 'active' && ['重复', '低使用'].includes(s.flag)).length;
+  const memoReview = p.tx.filter(t => /忽略|无视|ignore|指令|system|无需确认|不用确认/i.test(t.memo || '')).length;
   $('#billKpis').innerHTML = [
-    ['近 30 天花出去', money(b.total), `${b.out.length} 笔 · 不含存进目标的钱`],
-    ['其中必须花的', money(b.ess), `占 ${Math.round(b.ess / b.total * 100)}% · 住房、还款、分期、交通`],
-    ['每月自动续费', money(active.reduce((s, x) => s + x.fee, 0)), `${active.length} 项还在扣`],
-    ['值得你看一眼', `${review + 1} 项`, `${review} 项续费 · 1 张可疑纸条`],
+    ['可见流水出账', money(b.total), `${b.out.length} 笔合成样本 · 非完整月报`],
+    ['必要分类出账', money(b.ess), `占 ${b.total ? Math.round(b.ess / b.total * 100) : 0}% · 分类不等于本期消费`],
+    ['本窗口待续费', money(active.filter(s => s.next >= 1 && s.next <= HORIZON).reduce((s, x) => s + x.fee, 0)), `${active.length} 项有效订阅 · 尚未扣款`],
+    ['待核对线索', `${review + memoReview} 项`, `${review} 项资料标记续费 · ${memoReview} 条指令型备注`],
   ].map(([l, v, s]) => `<div><label>${l}</label><div class="v">${v}</div><small>${s}</small></div>`).join('');
   $('#catbar').innerHTML = b.cats.map(([c, v]) => `<i title="${c} ${money(v)}" style="width:${v / b.total * 100}%;background:${CAT_COLORS[c] || '#c9bfae'}"></i>`).join('');
   $('#catlegend').innerHTML = b.cats.map(([c, v]) => `<span><i style="background:${CAT_COLORS[c] || '#c9bfae'}"></i>${c} ${money(v)}</span>`).join('');
   $('#txBody').innerHTML = p.tx.map(t => {
     const h = +t.time.slice(6, 8), late = t.amount < 0 && (h >= 23 || h < 5);
     if (t.memo) return `<tr><td class="mer" colspan="2"><b>${esc(t.merchant)}</b>
-        <div class="scrap"><em>外来文字，已隔离，只能读</em>${esc(t.memo)}</div><button class="btn link" style="font-size:13.5px" data-act="readMemo">让 TROPOS 读读这张纸条 →</button></td>
-        <td class="time">${t.time}</td><td class="amt in">+¥0.01</td></tr>`;
-    return `<tr><td class="mer"><b>${esc(t.merchant)}</b>${late ? `<small>${ic('moon')} 深夜</small>` : ''}</td>
-      <td><span class="cat ${ESSENTIAL.includes(t.cat) ? 'ess' : ''}">${t.cat}</span></td><td class="time">${t.time}</td>
+        <div class="scrap"><em>账单附言，不作为操作指令</em>${esc(t.memo)}</div>${t.memo === INJECTION_MEMO ? '<button class="btn link" style="font-size:13.5px" data-act="readMemo">查看指令型备注的处理演示 →</button>' : ''}</td>
+        <td class="time">${esc(t.time)}</td><td class="amt ${t.amount > 0 ? 'in' : ''}">${money(t.amount, true)}</td></tr>`;
+    return `<tr><td class="mer"><b>${esc(t.merchant)}</b>${late ? `<small>${ic('moon')} 深夜</small>` : ''}${state.serverMode&&t.receipt?`<button class="btn link" data-act="apiQuery" data-id="${esc(t.id)}">核验数据库回执</button>`:''}</td>
+      <td><span class="cat ${ESSENTIAL.includes(t.cat) ? 'ess' : ''}">${esc(t.cat)}</span></td><td class="time">${esc(t.time)}</td>
       <td class="amt ${t.amount > 0 ? 'in' : ''}">${money(t.amount, true)}</td></tr>`;
   }).join('');
   $('#subs').innerHTML = st.subs.map(s => {
@@ -1147,6 +1241,7 @@ function renderPayees() {
   $('#payees').innerHTML = PAYEES.map(x => `<button type="button" data-act="payee" data-v="${esc(`${x.name} · ${x.alias}`)}">${esc(x.name)} · ${esc(x.alias)}</button>`).join('');
 }
 function runChecks(render = true) {
+  if(state.serverMode)return serverTransferCheck();
   const p = P(), st = S();
   const to = $('#tfTo').value.trim(), amt = +$('#tfAmt').value, when = $('#tfWhen').value, memo = $('#tfMemo').value;
   const found = to ? matchPayees(to) : [];
@@ -1160,26 +1255,30 @@ function runChecks(render = true) {
   else res.push({ key: 'limit', title: '金额在限额以内', status: 'pass', detail: `${money(amt)}，单笔限额 ${money(SINGLE_LIMIT)}` });
   const cp = cashPath(p, st);
   const day = when === 'salary' ? Math.min(cp.salaryDay + 1, HORIZON + 1) : 0;
-  const after = cashPath(p, st, { extra: amt > 0 && payee?.id !== 'goal' ? [{ day, amount: -amt }] : [] });
-  if (payee?.id === 'goal') res.push({ key: 'reserve', title: '寄完日子还过得去', status: 'pass', detail: '存进你自己的目标账户，钱还在你名下' });
-  else res.push({ key: 'reserve', title: '寄完日子还过得去', status: after.free >= 0 ? 'pass' : 'fail', detail: after.free >= 0 ? `寄完后最紧的一天还剩 ${money(after.min)}，高于安全线` : `寄完后 ${md(after.breach)} 起会低于安全线，最紧时只剩 ${money(after.min)}` });
+  const after = cashPath(p, st, { extra: Number.isFinite(amt)&&amt>0 ? [{ day, amount: -amt }] : [] });
+  const safe=Number.isFinite(amt)&&amt>0&&after.free>=0&&(when!=='now'||amt<=st.balance);
+  res.push({key:'reserve',title:'寄完日子还过得去',status:safe?'pass':'fail',detail:safe?`寄完后最紧的一天还剩 ${money(after.min)}，高于安全线`:`寄出会不足以保障主账户的必要支付和 ${money(p.reserve)} 现金预留；本人目标账户同样需要检查`});
+  res.push({key:'consent',title:'只读同意不代替转账授权',status:st.completed&&st.profile.readConsent?'pass':'fail',detail:st.completed?'当前画像已确认；本笔转账仍等你单独确认':'请先建立并确认模拟账户画像'});
   if (when === 'salary' && st.shocked) res.push({ key: 'income', title: '不靠还没到的钱', status: 'fail', detail: '工资晚到了，「发薪后」的事择时都先停着；改成现在寄，或等到账后再说' });
   else res.push({ key: 'income', title: '不靠还没到的钱', status: 'pass', detail: when === 'salary' ? `等工资到账、核对后再寄（预计 ${md(cp.salaryDay)}）` : '不依赖还没到账的收入' });
   const inj = /忽略|无视|ignore|指令|system|无需确认|不用确认/i.test(memo);
   res.push({ key: 'source', title: '是你本人的意思', status: inj ? 'fail' : 'pass', detail: inj ? '附言里有"指挥别人"的话，已当作不可信文字隔离' : '来自你登录的会话，附言里没有可执行的内容' });
   const allOk = res.every(r => r.status === 'pass');
   res.push({ key: 'confirm', title: '你亲手封口', status: allOk ? 'ask' : 'fail', detail: allOk ? '等你确认；同一封信只寄一次' : '前面的邮戳还没盖齐' });
-  state.tf = { to, amt, when, memo, payee, allOk, key: allOk ? `IDK-${state.persona}-${Date.now().toString(36).toUpperCase()}` : null };
+  state.tf = { to, amt, when, memo, payee, allOk, persona:state.persona,revision:st.revision,
+    fingerprint:JSON.stringify([to,amt,when,memo]),key:allOk?`IDK-${state.persona}-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0,8)}`:null };
   if (render) renderTransferChecks(res);
   return res;
 }
 async function renderTransferChecks(res) {
+  const checked=state.tf;
   const icons = { pass: 'check', fail: 'x', ask: 'clock' };
   $('#checks').innerHTML = res.map(r => `<div class="mark ${r.status}"><span class="postmark">${ic(icons[r.status])}</span><div><b>${r.title}</b><small>${r.detail}</small>
     ${r.options ? `<div class="disamb">${r.options.map(o => `<button type="button" class="btn sm" data-act="payee" data-v="${esc(`${o.name} · ${o.alias}`)}" data-run="1">${esc(o.name)} · ${esc(o.alias)} · 尾号 ${o.acct.slice(-4)}</button>`).join('')}</div>` : ''}</div>
     <span>${r.status === 'pass' ? pill('盖好了', 'ok') : r.status === 'ask' ? pill(r.key === 'payee' ? '请你选' : '等你', 'warn') : pill('没通过', 'bad')}</span></div>`).join('');
   $('#tfConfirm').innerHTML = '';
   for (const r of $$('#checks .mark')) { await sleep(120); r.classList.add('on'); }
+  if(state.tf!==checked)return;
   const tf = state.tf;
   const failed = res.filter(r => r.status === 'fail' && r.key !== 'confirm');
   if (failed.length) log('ARGOS', '这封信没寄出', failed.map(f => f.title).join('、'));
@@ -1190,9 +1289,13 @@ async function renderTransferChecks(res) {
   }
 }
 async function confirmTransfer(btn) {
+  if(state.serverMode){if(state.tf?.proposal)return executeServerProposal(state.tf.proposal.id,btn,$('#tfTimeout').checked);return;}
   const p = P(), st = S(), tf = state.tf;
-  if (!tf?.allOk) return;
+  if (!tf?.allOk || state.operationBusy) return;
+  const fingerprint=JSON.stringify([$('#tfTo').value.trim(),+$('#tfAmt').value,$('#tfWhen').value,$('#tfMemo').value]);
+  if(tf.persona!==state.persona||tf.revision!==st.revision||tf.fingerprint!==fingerprint){state.tf=null;$('#tfConfirm').innerHTML='';toast('信息或账户状态已变化，请重新检查', 'warn');return;}
   if (st.usedKeys.has(tf.key)) { duplicateBlocked(); return; }
+  state.operationBusy=true;
   st.usedKeys.add(tf.key);
   btn.disabled = true;
   const timeout = $('#tfTimeout').checked;
@@ -1201,12 +1304,15 @@ async function confirmTransfer(btn) {
     ? [`→ 提交转账  凭证 ${tf.key}`, '× 8 秒没回音（模拟银行接口超时）', `→ 拿凭证号去问：这笔到底寄出去没有？`, '✓ 已寄出 · 只扣了一次，不再重寄']
     : [`→ 提交转账  凭证 ${tf.key}`, '✓ 已寄出']).map(l => `<div>${l}</div>`).join('')}</div>`);
   for (const d of $$('.proc div', box)) { await sleep(timeout ? 520 : 300); d.classList.add('on'); }
-  const txid = 'TRP-' + new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+  const txid = 'TRP-' + crypto.randomUUID().slice(0,12).toUpperCase();
   if (tf.when === 'salary') st.extraPlans.push({ id: txid, day: p.salaryDay + 1, label: `发薪后寄给 ${tf.payee.name}`, amount: -tf.amt, dep: true, kind: '计划转账' });
   else {
     st.balance -= tf.amt;
     if (tf.payee.id === 'goal') st.goalAdded += tf.amt;
+    st.transferTx.unshift({time:'10/20 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),merchant:tf.payee.name+'（模拟转账）',cat:tf.payee.id==='goal'?'储蓄':'转账',amount:-tf.amt,receipt:txid});
   }
+  tf.executed=true;
+  recordProfileUpdate(tf.when==='salary'?'新增条件转账计划':'模拟转账后更新现金状态','模拟工具回执',`${txid}；收款人和金额已获本次确认`,tf.persona,true);
   if (timeout) log('ARGOS', '接口超时后按凭证号查询', `${tf.key} → 已寄出，未重复扣款`);
   log('ARGOS', tf.when === 'salary' ? '登记一封发薪后再寄的信' : '寄出一笔钱（沙箱）', `${tf.payee.name}（${tf.payee.alias}）${money(tf.amt)} · ${txid}`);
   box.insertAdjacentHTML('beforeend', `<div class="stub"><span class="ok-seal">${tf.when === 'salary' ? '已登记' : '已寄出'}</span><div class="amt num">${money(tf.amt)}</div>
@@ -1214,10 +1320,12 @@ async function confirmTransfer(btn) {
     <div class="actions" style="margin-top:10px"><button class="btn sm quiet" data-act="tfReplay">${ic('repeat')}演示：把同一封信再寄一次</button></div>`);
   $('[data-act="tfCancel"]', box)?.remove();
   btn.remove();
+  state.operationBusy=false;
   toast(tf.when === 'salary' ? '登记好了，工资到账后再寄' : `寄出了 · ${money(tf.amt)}`);
-  renderConsole();
+  renderConsole(); renderBills();
 }
 function duplicateBlocked() {
+  if(state.serverMode&&state.lastServerProposal)return replayServerProposal();
   log('ARGOS', '拦下了重复寄出', `凭证号 ${state.tf?.key} 已经用过，这次没有扣款`);
   toast('这封信已经寄过了，守诺拦下了第二次', 'bad');
   $('.confirm-letter')?.insertAdjacentHTML('beforeend', `<div class="proc"><div class="on" style="color:var(--bad)">× 凭证号 ${state.tf?.key} 已经用过 · 没有重复扣款</div></div>`);
@@ -1237,21 +1345,35 @@ function renderLog() {
 const ACTIONS = {
   go: d => showView(d.view),
   ask: d => ask(d.text),
-  askAs: async d => { switchPersona(d.persona); await sleep(150); ask(d.text); },
+  askAs: async d => { await switchPersona(d.persona); await sleep(150); ask(d.text); },
   toCompare: () => $('#compare').scrollIntoView({ behavior: 'smooth', block: 'start' }),
   shockOff: () => {
+    if(state.serverMode)return toast('服务端事件不能在本页抹除；请模拟实际到账或重置当前合成账户','warn');
     const st = S(); st.shocked = false; st.replan = false;
-    log('KAIROS', '工资按时到了', '依赖工资的事重新排上日程');
-    renderAll(); toast('天晴了，工资按时到');
+    st.confirmedDeferrals=[];
+    recordProfileUpdate('撤回收入延期情景','用户撤回模拟事件','未增加账户余额；预期收入仍需到账核验');
+    log('KAIROS', '撤回收入延期情景', '恢复预计到账时间；没有宣称工资已到账');
+    renderAll(); toast('已撤回延期情景，工资仍是预计收入');
   },
   adoptReplan: async () => {
+    if(state.serverMode)return toast('当前服务保留原支出预算；请在画像中查看建议与待确认事项','warn');
     const p = P();
-    const ok = await modal({ title: '采纳新安排？', body: `依赖工资的事先停一停${p.replan.moves.length ? '，部分账单改个日子' : ''}，日常开销按每天 ${money(p.replan.daily)} 来。不会动任何一笔钱；真要转账，仍然逐笔问你。`, ok: '好，就这样' });
+    const ok = await modal({ title: '采纳预算建议？', body: `依赖工资的事先暂停，日常开销预算按每天 ${money(p.replan.daily)}。${p.replan.moves.length?'账单延期尚需对方确认，在收到确认前，仍按原日期预测。':''}这不授权资金划转。`, ok: '采纳预算建议' });
     if (!ok) return;
     S().replan = true;
+    recordProfileUpdate('采纳预算建议','用户确认','预算调整已计入；账单延期未确认前不计入改善');
     log('USER', '采纳了新安排', '只调整计划，不含任何资金划转');
     log('METIS', '新安排生效', `最紧的一天还剩 ${money(cashPath(p, S()).min)}`);
     renderAll(); toast('新安排生效了');
+  },
+  confirmDeferral: async () => {
+    if(state.serverMode)return toast('本版尚未接入账单方改期回执，仍按原到期日预测','warn');
+    const p=P(), st=S(), k=state.persona;
+    const ok=await modal({title:'模拟账单方确认延期？',body:'这一步模拟收到对方同意回执；真实服务中应由对方接口或人工凭证确认。仅用户采纳建议不会改变账单到期日。',ok:'模拟收到确认'});
+    if(!ok||k!==state.persona)return;
+    st.confirmedDeferrals=p.replan.moves.map(m=>m.id);
+    recordProfileUpdate('收到模拟账单延期确认','模拟账单方回执','已确认的账单才调整预测支付日');
+    log('KAIROS','模拟账单方确认延期','更新正式现金路径；并非用户单方面延期');renderAll();
   },
   guardOn: () => setGuard(true),
   guardToggle: () => setGuard(!S().guard),
@@ -1280,7 +1402,7 @@ const ACTIONS = {
       const ok = await modal({ title: '冷静期守护还开着', body: `这是你之前点头开启的。这笔${x.a.n ? '分期' : '信用'}付款，会等冷静期过了再请你确认；你也可以随时在这页把守护关掉。`, ok: '放进冷静抽屉', cancel: '返回' });
       if (!ok) return;
       addCooling(x.a.hours, { guarded: true });
-      log('ARGOS', '冷静期守护按住了一笔付款', `${x.req.item} ${money(x.req.price)}`);
+    log('ARGOS', '记录一项冷静期建议，未拦截实际付款', `${x.req.item} ${money(x.req.price)}`);
       return;
     }
     const r = await modal({ title: '决定买了？', body: x.a.tier === 'low' ? '理由充分，买得明白。' : '写一句话给几天后的自己，记下这次决定。', ok: '记下来', input: x.a.tier === 'low' ? false : '比如：比过价了，确实每天都会用' });
@@ -1290,6 +1412,8 @@ const ACTIONS = {
   },
   takeAlt: () => {
     const x = state.lastAssess; if (!x) return;
+    if(x.altCounted)return toast('这次选择已经记录过了','warn');
+    x.altCounted=true;
     const st = S(), diff = x.req.price - x.req.altPrice;
     st.saved += diff;
     log('USER', `改买替代品：${x.req.alt}`, `比原来省 ${money(diff)}`);
@@ -1299,46 +1423,80 @@ const ACTIONS = {
   coolBuy: d => { const c = S().cooling.find(x => x.id === +d.id); if (c) { c.status = 'bought'; log('USER', `想清楚了，决定买：${c.item}`, money(c.price)); renderCool(); } },
   coolSkip: d => {
     const st = S(), c = st.cooling.find(x => x.id === +d.id); if (!c) return;
+    if(c.status!=='cooling')return;
     c.status = 'skipped'; st.saved += c.price; st.skipped++;
     log('USER', `放下了：${c.item}`, `省下 ${money(c.price)}`);
     renderCool(); toast(`冷静期帮你省下 ${money(c.price)}`);
   },
   coolGoal: d => {
     const st = S(), c = st.cooling.find(x => x.id === +d.id); if (!c || c.toGoal) return;
-    c.toGoal = true; st.goalAdded += c.price;
-    log('METIS', `记进存钱罐「${P().goal.name}」`, `${money(c.price)}（钱还在账户里，只更新目标进度）`);
-    renderCool(); toast(`记进「${P().goal.name}」了`);
+    c.toGoal = true; st.plannedSavings=(st.plannedSavings||0)+c.price;
+    log('METIS', `为「${P().goal.name}」记录拟留存`, `${money(c.price)}；未实际划转，不增加已存进度`);
+    renderCool(); toast('已记录拟留存；尚未划入目标账户');
   },
   cancelSub: async d => {
-    const st = S(), s = st.subs.find(x => x.id === d.id); if (!s) return;
+    if(state.serverMode)return cancelServerSubscription(d.id);
+    const st = S(), k=state.persona, s = st.subs.find(x => x.id === d.id); if (!s||s.status!=='active'||state.operationBusy) return;
     const ok = await modal({ title: `取消「${s.name}」？`, body: `每月省 ¥${s.fee}。沙箱会替你向商家发出取消请求，收到回执才算真的取消。`, ok: '取消续费', okClass: 'solid' });
     if (!ok) return;
+    if(k!==state.persona)return;
+    state.operationBusy=true;
     s.status = 'pending';
     log('USER', `请求取消续费：${s.name}`, `¥${s.fee}/月`);
     renderBills();
     await sleep(1400);
     s.status = 'cancelled'; s.receipt = 'SUB-' + Math.random().toString(36).slice(2, 8).toUpperCase();
     if (s.flag === '重复') st.subs.forEach(x => { if (x.flag === '重复' && x !== s) { x.flag = ''; x.note += '（重复的那项已取消）'; } });
-    log('ARGOS', `收到商家回执：${s.name} 已取消`, `回执 ${s.receipt}`);
-    renderBills(); toast(`${s.name} 已取消 · 回执 ${s.receipt}`);
+    recordProfileUpdate('取消订阅，未来续费已移除','模拟商户回执',`${s.name} 每月 ¥${s.fee}；仅在取消确认后更新预测`,k);
+    log('ARGOS', `收到模拟商家回执：${s.name} 已取消`, `回执 ${s.receipt}`,k);
+    state.operationBusy=false;
+    renderBills(); renderConsole(); toast(`${s.name} 已模拟取消 · 回执 ${s.receipt}`);
   },
   readMemo: () => { showView('console'); ask(`帮我看看这条账单备注：${INJECTION_MEMO}`); },
   payee: d => { $('#tfTo').value = d.v; if (d.run) runChecks(); },
   tfConfirm: (d, el) => confirmTransfer(el),
   tfCancel: () => { $('#tfConfirm').innerHTML = ''; log('USER', '这封信先不寄了', '没有任何资金变动'); },
   tfReplay: () => duplicateBlocked(),
+  apiConfirm: (d,el)=>executeServerProposal(d.id,el,Boolean(el.closest('#tfConfirm'))&&$('#tfTimeout').checked),
+  apiQuery: d=>queryServerTransaction(d.id),
+  refreshProposals: async()=>{
+    if(!state.serverMode)return toast('请启动服务端版本以恢复持久方案','warn');
+    if(state.operationBusy||state.chatBusy)return;
+    state.operationBusy=true;
+    try{applyServerSnapshot(await bankAPI.select(state.persona));renderAll();await refreshServerProposals();toast('已重新读取当前账户与方案');}
+    catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;}
+  },
+  reuseProposal: d=>{
+    const cached=state.serverProposals.get(d.id);
+    if(!cached||cached.persona!==state.persona)return;
+    const p=cached.proposal;
+    $('#tfTo').value=p.payee.name+' · '+p.payee.alias;$('#tfAmt').value=p.amount;$('#tfWhen').value=p.when;$('#tfMemo').value=p.memo||'';
+    state.tf=null;$('#tfConfirm').innerHTML='';$('#checks').innerHTML='<p>已填回原方案内容。请核对后重新检查，再确认新的方案；此操作没有转账。</p>';
+    $('#tfForm').scrollIntoView({behavior:'smooth',block:'start'});
+  },
+  apiRevoke: async(d,el)=>{
+    const cached=state.serverProposals.get(d.id);
+    if(state.operationBusy||state.chatBusy||cached?.persona!==state.persona)return;
+    state.operationBusy=true;
+    try{const result=await bankAPI.revoke(d.id);const box=el.closest('.server-proposal');applyServerSnapshot(result.snapshot,{preserveTransfer:true});box.innerHTML='<p>方案已在服务端撤销，未发生扣款。</p>';toast('已撤销此方案');}
+    catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;refreshServerProposals();}
+  },
   logFilter: d => { state.logFilter = d.k; renderLog(); },
 };
 function setGuard(on) {
   const st = S(); st.guard = on;
-  log('USER', on ? '开启冷静期守护' : '关掉冷静期守护', on ? '高风险时，分期和信用付款等冷静期过了再确认' : '付款前不再额外按住');
+  if(!state.serverMode){
+    recordProfileUpdate(on?'开启冷静期守护':'撤销冷静期守护','用户单独确认','不会因画像或收入事件自动开启此守护');
+    log('USER', on ? '开启冷静期守护' : '关掉冷静期守护', on ? '高风险时，分期和信用付款等冷静期过了再确认' : '付款前不再额外按住');
+  }
   renderConsole(); renderCool();
   if (state.lastAssess && state.lastAssess.persona === state.persona && state.view === 'cool') runApproval(state.lastAssess.req, true);
-  toast(on ? '冷静期守护开好了，随时可以关' : '冷静期守护关掉了', on ? 'ok' : 'warn');
+  toast(state.serverMode?(on?'本页冷静期建议已开启，未修改服务端画像或支付权限':'本页冷静期建议已关闭'):(on ? '冷静期守护开好了，随时可以关' : '冷静期守护关掉了'), on ? 'ok' : 'warn');
 }
 
 function renderAll() {
-  document.body.dataset.persona = state.persona;
+  document.body.dataset.persona = S().profile.style || state.persona;
+  $('#auditCount').textContent=state.log.length;
   setClock();
   renderPersonaSwitch();
   renderConsole();
@@ -1349,11 +1507,153 @@ function renderAll() {
   $('#tfConfirm').innerHTML = '';
   if (!state.lastAssess || state.lastAssess.persona !== state.persona) renderFlowEmpty();
   if (state.view === 'audit') renderLog();
+  window.TroposProfileUI?.render();
+  if(state.view==='life')window.TroposLifeUI?.render();
+}
+
+/* ------------------------------------------------------------------ 同源服务端沙箱 */
+function applyServerSnapshot(snapshot,{preserveTransfer=false}={}) {
+  if(!snapshot?.user||!snapshot.cash)throw new Error('服务端账户快照格式异常');
+  const k=snapshot.user.persona, st=state.per[k];
+  if(!st)throw new Error('未识别的模拟账户');
+  if(bankAPI.persona&&bankAPI.persona!==k)throw new Error('账户响应已过期，请重新读取当前账户');
+  if(st.serverSnapshot&&snapshot.user.revision!==st.revision)st.beforeEventCash=st.serverSnapshot.cash;
+  snapshot.subscriptions=snapshot.subscriptions.map(sub=>({...sub,receipt:typeof sub.receipt==='object'?sub.receipt?.id:sub.receipt}));
+  snapshot.transactions=snapshot.transactions.map(tx=>({...tx,time:/^\d{4}-/.test(tx.time)?new Date(tx.time).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replaceAll('/','/'):tx.time}));
+  Object.assign(st,{serverSnapshot:snapshot,balance:snapshot.balance,goalFunded:snapshot.goalFunded,goalAdded:0,
+    profile:snapshot.profile,completed:snapshot.profile.readConsent===true,shocked:snapshot.shocked,replan:snapshot.replan,
+    salaryReceived:snapshot.salaryReceived,subs:snapshot.subscriptions,extraBills:[],extraPlans:[],transferTx:[],
+    revision:snapshot.user.revision,profileRevision:snapshot.user.revision,profileUpdates:structuredClone(snapshot.profileUpdates),
+    profileUpdatedAt:snapshot.profileUpdates[0]?.at||''});
+  state.persona=k;
+  state.log=snapshot.audit.map(row=>({eng:ENG[row.engine]?row.engine:'SYSTEM',title:row.title,detail:row.detail,
+    t:new Date(row.at).toLocaleTimeString('zh-CN'),who:snapshot.user.name}));
+  if(!preserveTransfer){state.tf=null;$('#tfConfirm').innerHTML='';}
+}
+function cacheServerProposal(proposal){state.serverProposals.set(proposal.id,{proposal,persona:state.persona});return proposal;}
+function serverProposalHTML(proposal,checks=[]) {
+  if(proposal.status==='pending_confirmation'&&proposal.expiresAt*1000<=Date.now())proposal={...proposal,status:'expired',confirmationToken:undefined,invalidReason:'APPROVAL_EXPIRED'};
+  const ready=proposal.status==='pending_confirmation'&&Boolean(proposal.confirmationToken),executed=proposal.status==='executed';
+  const titles={waiting_condition:'等待收入条件',blocked:'未通过资金检查',revoked:'方案已撤销',executed:'已记账，可核验原回执',expired:'确认凭证已到期',stale:'账户已变化，须重新检查'};
+  const reusable=['waiting_condition','blocked','expired','stale','revoked'].includes(proposal.status);
+  const reasons={REVOKED:'你已撤销此方案。',CONSENT_REQUIRED:'当前尚未同意读取模拟账本，请先完成画像确认。',STALE_APPROVAL:'账户或画像已经变化，原确认凭证不能继续使用。',APPROVAL_EXPIRED:'确认凭证已到期，请重新检查。',TRANSACTION_NOT_FOUND:'原方案状态与交易记录需要核对，请勿新建重复转账。',TRANSFER_BLOCKED:'当前条件未通过，请查看检查明细。',INVALID_APPROVAL:'原确认凭证无效，请重新检查。'};
+  return `<div class="server-proposal" data-proposal-id="${esc(proposal.id)}"><h3>${ready?'核对后由你确认':esc(titles[proposal.status]||'当前尚不能执行')}</h3><p>收款人：${esc(proposal.payee.name)}（${esc(proposal.payee.alias)}） · ${money(proposal.amount)} · ${proposal.when==='salary'?'须工资已到账':'现在转账'}</p><p>${esc(proposal.memo||'无附言')}</p><ul>${checks.map(c=>`<li>${c.ok?'✓':'×'} ${esc(c.name)}：${esc(c.detail)}</li>`).join('')}</ul><p class="fine">方案 ${esc(proposal.id)}${proposal.expiresAt?' · 凭证有效至 '+esc(new Date(proposal.expiresAt*1000).toLocaleString('zh-CN')):''} · 服务端执行前再次核验，模型不能替你确认。</p>${proposal.invalidReason?`<p class="warn-t">${esc(reasons[proposal.invalidReason]||'此方案须重新检查后再决定下一步。')}</p>`:''}${ready?`<button class="btn solid" data-act="apiConfirm" data-id="${esc(proposal.id)}">确认这笔沙箱转账</button>`:executed?`<p>服务端已有交易记录；请查询原凭证，不需另建转账。</p><button class="btn" data-act="apiQuery" data-id="${esc(proposal.id)}">核验原交易回执</button>`:'<p class="warn-t">本方案当前不能执行；重新检查不会自动扣款。</p>'}${reusable?`<button class="btn" data-act="reuseProposal" data-id="${esc(proposal.id)}">填回表单，重新检查</button>`:''}${!executed&&proposal.status!=='revoked'?`<button class="btn quiet" data-act="apiRevoke" data-id="${esc(proposal.id)}">撤销此方案</button>`:''}<div class="server-result" aria-live="polite"></div></div>`;
+}
+let proposalReadSequence=0;
+async function refreshServerProposals(){
+  const root=$('#proposalHistory');if(!root||!state.serverMode)return;
+  const persona=state.persona,sequence=++proposalReadSequence;
+  root.innerHTML='<p class="fine">正在读取当前账户的持久方案…</p>';
+  try{
+    const result=await bankAPI.proposals();
+    if(sequence!==proposalReadSequence||persona!==state.persona||persona!==bankAPI.persona)return;
+    if(result.snapshot?.user?.persona!==persona||!Array.isArray(result.proposals))throw new Error('方案响应与当前账户不一致');
+    if(result.snapshot.user.revision!==S().revision){root.innerHTML='<p class="warn-t">账户有新的变化。请点击“刷新当前账户”重新读取，再核对可执行状态。</p>';return;}
+    root.innerHTML=result.proposals.length?result.proposals.map(proposal=>{cacheServerProposal(proposal);return serverProposalHTML(proposal,proposal.checks||[]);}).join(''):'<p class="fine">当前账户还没有转账方案。先填写收款人与金额，检查后再决定是否确认。</p>';
+  }catch(error){if(sequence===proposalReadSequence&&persona===state.persona)root.innerHTML=`<p class="warn-t">${esc(error.message)}</p><p class="fine">暂时没有取回方案，不表示原交易失败。请恢复连接后刷新并查询原凭证，避免重复转账。</p>`;}
+}
+async function serverAgentReply(text){
+  const result=await bankAPI.agent(text);
+  if(result.snapshot)applyServerSnapshot(result.snapshot);
+  const mode={llm:'大模型理解 · 服务端核验',rules:'规则理解 · 本次未调用模型',rules_fallback:'模型未通过校验或不可用 · 已明确降级'}[result.mode]||'服务端草案';
+  $('#runtimeStatus').textContent=mode;
+  let html=`<div class="rc t-ethos"><span class="pill">${esc(mode)}</span><p>${esc(result.reply)}</p>`;
+  if(result.plan)html+=`<h3>${esc(result.plan.title)}</h3><ol>${result.plan.steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol><p class="fine">依据：${esc(result.plan.source)} · 本次建议额外转出上限 ${money(result.plan.transferCeiling)}；现金缺口 ${money(result.plan.cashGap)}。计划不会自动执行或更改预算。</p>`;
+  if(result.plan||result.intent?.action==='purchase')html+='<button class="btn" data-act="go" data-view="life">结合生活场景比较安排</button>';
+  if(result.proposal){cacheServerProposal(result.proposal);html+=serverProposalHTML(result.proposal,result.checks||[]);}
+  if(result.intent?.action==='purchase')html+='<button class="btn" data-act="go" data-view="cool">查看分期成本与现金影响</button>';
+  if(result.intent?.action==='bills'||result.intent?.action==='subscriptions')html+='<button class="btn solid" data-act="go" data-view="actions">查看现金行动与取消影响</button><button class="btn" data-act="go" data-view="bills">核对原始账本和回执</button>';
+  html+='</div>';
+  renderConsole();renderBills();window.TroposProfileUI.render();
+  return {trace:(result.trace||[]).map(t=>[ENG[t.engine]?t.engine:'SYSTEM',esc(t.detail)]),html};
+}
+async function serverTransferCheck(){
+  if(state.operationBusy||state.chatBusy)return;
+  const found=matchPayees($('#tfTo').value.trim());
+  if(found.length!==1){
+    state.tf=null;$('#tfConfirm').innerHTML='';
+    $('#checks').innerHTML=found.length?`<p>有同名收款人，请明确选择：</p><div class="actions">${found.map(p=>`<button class="btn" data-act="payee" data-run="1" data-v="${esc(p.name+' · '+p.alias)}">${esc(p.name)}（${esc(p.alias)}）尾号 ${esc(p.acct.slice(-4))}</button>`).join('')}</div>`:'<p>请从已登记收款人中明确选择，不能由模型猜测账号。</p>';return;
+  }
+  state.operationBusy=true;
+  try{
+    const result=await bankAPI.propose({to:found[0].id,amount:Number($('#tfAmt').value),when:$('#tfWhen').value,memo:$('#tfMemo').value});
+    applyServerSnapshot(result.snapshot);const proposal=cacheServerProposal(result.proposal);
+    state.tf={proposal,allOk:proposal.status==='pending_confirmation',key:proposal.id,executed:false};
+    $('#checks').innerHTML='<p>以下检查来自服务端；浏览器改值不能绕过执行前的检查。</p>';
+    $('#tfConfirm').innerHTML=serverProposalHTML(proposal,result.checks);window.TroposProfileUI.render();
+  }catch(error){$('#checks').innerHTML=`<p class="bad-t">${esc(error.message)}</p>`;$('#tfConfirm').innerHTML='';}
+  finally{state.operationBusy=false;}
+}
+function serverReceiptHTML(transaction){return `<div class="stub"><span class="ok-seal">沙箱已记账</span><div class="amt num">${money(Math.abs(transaction.amount))}</div><dl><dt>交易号</dt><dd>${esc(transaction.id)}</dd><dt>回执</dt><dd>${esc(transaction.receipt)}</dd><dt>状态</dt><dd>${esc(transaction.status)}</dd></dl></div>`;}
+async function executeServerProposal(id,button,simulateTimeout){
+  const cached=state.serverProposals.get(id);if(!cached||cached.persona!==state.persona||state.operationBusy||state.chatBusy)return;
+  if(cached.proposal.expiresAt*1000<=Date.now()){if(button){button.disabled=true;button.textContent='凭证已到期，请重新检查';}toast('确认凭证已到期，请填回表单重新检查','warn');refreshServerProposals();return;}
+  state.operationBusy=true;if(button)button.disabled=true;
+  const proposal=cached.proposal, box=button?.closest('.server-proposal')?.querySelector('.server-result')||$('#tfConfirm');
+  try{
+    box.innerHTML='<p>已提交本次明确确认，等待服务端回执…</p>';
+    let result=await bankAPI.confirm(proposal,simulateTimeout);
+    if(result.status==='UNKNOWN'){
+      box.innerHTML='<p>接口未返回最终结果；正在按原方案凭证查询，未重新提交扣款。</p>';
+      result=await bankAPI.transaction(result.key||proposal.id);
+    }
+    applyServerSnapshot(result.snapshot,{preserveTransfer:true});
+    state.lastServerProposal=proposal;
+    if(state.tf?.key===id)state.tf.executed=true;
+    box.innerHTML=serverReceiptHTML(result.transaction)+`<button class="btn sm" data-act="tfReplay">用原凭证重复确认，检查是否重复扣款</button>`;
+    renderConsole();renderBills();window.TroposProfileUI.render();toast('服务端回执已核验');
+  }catch(error){
+    box.innerHTML=`<p class="warn-t">${esc(error.message)}</p><p>当前不宣称成功。可以查询原凭证，避免重复转账。</p><button class="btn" data-act="apiQuery" data-id="${esc(id)}">查询这笔交易</button>`;
+  }finally{state.operationBusy=false;if(state.view==='transfer')refreshServerProposals();}
+}
+async function queryServerTransaction(id){
+  if(state.operationBusy||state.chatBusy)return;
+  const cached=state.serverProposals.get(id);if(cached&&cached.persona!==state.persona)return toast('请切回原账户查询','warn');
+  state.operationBusy=true;
+  try{const result=await bankAPI.transaction(id);applyServerSnapshot(result.snapshot,{preserveTransfer:true});
+    showView('transfer');$('#tfConfirm').innerHTML=serverReceiptHTML(result.transaction);renderConsole();renderBills();toast('查到原交易回执，未重新转账');}
+  catch(error){toast(error.message,'warn');}finally{state.operationBusy=false;if(state.view==='transfer')refreshServerProposals();}
+}
+async function replayServerProposal(){
+  const proposal=state.lastServerProposal;if(!proposal||state.operationBusy||state.chatBusy||state.serverProposals.get(proposal.id)?.persona!==state.persona)return;
+  state.operationBusy=true;
+  try{const before=S().balance,result=await bankAPI.confirm(proposal,false);applyServerSnapshot(result.snapshot,{preserveTransfer:true});
+    toast(S().balance===before?'服务返回原交易，没有再次扣款':'状态已重新核验');renderConsole();renderBills();}
+  catch(error){toast(error.message,'bad');}finally{state.operationBusy=false;}
+}
+async function cancelServerSubscription(id,{propagate=false}={}){
+  if(state.operationBusy||state.chatBusy)return {cancelled:false};
+  const sub=S().subs.find(s=>s.id===id);if(!sub)return {cancelled:false};
+  const persona=state.persona;state.operationBusy=true;
+  try{
+    const accepted=await modal({title:`取消「${sub.name}」？`,body:`确认后服务端沙箱将变更续费状态，回执核验后移除下次预计续费 ${money(sub.fee)}。今天余额不变，不产生退款；不会自动把这笔钱转入储蓄。`,ok:'确认取消续费'});
+    if(!accepted||persona!==state.persona||bankAPI.persona!==persona)return {cancelled:false};
+    const result=await bankAPI.cancelSubscription(id);applyServerSnapshot(result.snapshot);renderAll();toast('服务端取消回执已核验');return {cancelled:result.receipt?.status==='cancelled'};}
+  catch(error){toast(error.message,'bad');if(propagate)throw error;return {cancelled:false};}finally{state.operationBusy=false;}
+}
+async function renderEvaluation(){
+  renderIntentEvaluation();
+  const root=$('#evaluationReport');if(!root)return;
+  if(!state.serverMode){root.innerHTML='<p>启动服务端沙箱后，这里会展示可复跑的实际对照结果。</p><p>方法与原始结果已保存在仓库 reports/，不由演示按钮生成成绩。</p>';return;}
+  try{const report=await bankAPI.evaluation();const pct=n=>(n*100).toFixed(1)+'%';
+    root.innerHTML=`<p>${report.scenario_count} 个合成场景 · ${report.strategy_run_count} 次策略运行 · 同一安全网关</p><div style="overflow-x:auto"><table class="table"><thead><tr><th>策略</th><th>目标达成</th><th>网关拒绝</th><th>新增违规</th><th>可行资金安排比例</th></tr></thead><tbody>${Object.values(report.summary).map(row=>`<tr><td>${esc(row.label)}</td><td>${pct(row.safe_target_attainment_rate)}</td><td>${row.gateway_rejections}</td><td>${row.new_reserve_violations}</td><td>${pct(row.funds_utilisation)}</td></tr>`).join('')}</tbody></table></div><p>“目标达成”指在请求上限内完成参考计算允许的资金安排，允许正确拒绝或减额；不是任务理解准确率。</p><p>所有策略均保留 ARGOS；共同的零新增违规不能归为动态画像独有优势。原有现金缺口没有因此被修复。</p><details><summary>方法、运行来源与限制</summary><p>生成于 ${esc(report.generated_at)}；提交 ${esc(report.git_revision)}；工作区状态 ${report.working_tree_dirty?'运行时存在未提交改动（附源码指纹）':'干净'}。</p><ul>${report.limitations.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`;
+  }catch(error){root.innerHTML=`<p class="warn-t">${esc(error.message)}</p>`;}
+}
+async function renderIntentEvaluation(){
+  const root=$('#intentEvaluationReport');if(!root)return;
+  if(!state.serverMode){root.innerHTML='<h2>自然语言任务检查</h2><p>启动服务端版本后可读取固定用例的实际规则检查结果。</p>';return;}
+  root.innerHTML='<h2>自然语言任务检查</h2><p class="fine">正在读取已保存的检查报告…</p>';
+  try{
+    const report=await bankAPI.intentEvaluation(),summary=report.summary;
+    const rows=[['动作判断',summary.action],['动作与完整参数',summary.complete_parameters],['应澄清的请求',summary.safe_refusal],['草案未越界执行',summary.draft_execution_boundary]];
+    root.innerHTML=`<h2>自然语言任务检查</h2><p>${summary.cases} 条固定合成输入 · 运行模式：${esc(report.requested_mode)} · 真实模型任务评测${report.live_model_run?'已单独运行':'尚未运行'}。</p><div style="overflow-x:auto"><table class="table"><thead><tr><th>检查项</th><th>通过 / 样本</th><th>比例</th></tr></thead><tbody>${rows.map(([title,m])=>`<tr><td>${title}</td><td>${m.passed} / ${m.total}</td><td>${m.rate===null?'—':(m.rate*100).toFixed(1)+'%'}</td></tr>`).join('')}</tbody></table></div><p>这些是已知合成输入上的规则回归结果，开发中已使用这些用例；不能当作大模型准确率或未知表达的通过率。检查只到草案，未确认转账。</p><details><summary>失败项与适用范围</summary><p>${report.failures.length?'未通过用例：'+esc(report.failures.join('、')):'本批固定用例无失败；仍需未参与开发的盲测集。'}</p><ul>${report.limitations.map(t=>`<li>${esc(t)}</li>`).join('')}</ul><p class="fine">生成于 ${esc(report.generated_at)} · 用例版本 ${esc(report.dataset_version)}</p></details>`;
+  }catch(error){root.innerHTML=`<h2>自然语言任务检查</h2><p class="warn-t">${esc(error.message)}</p><p class="fine">当前没有可读取的检查结果，不显示推测成绩。</p>`;}
 }
 
 /* ------------------------------------------------------------------ 初始化 */
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
+  if(b&&(state.operationBusy||state.chatBusy)&&!['go','logFilter'].includes(b.dataset.act))return toast('当前操作完成后再继续','warn');
   if (b) { e.preventDefault(); ACTIONS[b.dataset.act]?.(b.dataset, b); return; }
   const tab = e.target.closest('.tabs button');
   if (tab) return showView(tab.dataset.view);
@@ -1361,7 +1661,20 @@ document.addEventListener('click', e => {
   if (per && per.closest('#personaSwitch')) switchPersona(per.dataset.persona);
 });
 $('#composer').addEventListener('submit', e => { e.preventDefault(); const v = $('#chatInput').value; $('#chatInput').value = ''; ask(v); });
-$('#shockBtn').addEventListener('click', () => (S().shocked ? ACTIONS.shockOff() : ask('工资要晚 15 天到账，怎么办？')));
+$('#shockBtn').addEventListener('click', async () => {
+  if(state.operationBusy||state.chatBusy)return;
+  if(state.serverMode){
+    const type=S().shocked?'salary_received':'income_delayed';
+    if(type==='salary_received'){
+      const persona=state.persona;state.operationBusy=true;
+      let accepted;
+      try{accepted=await modal({title:'模拟工资实际到账？',body:'这会向当前合成账本记入本期工资，移除同笔预计收入；不会触发真实银行操作。',ok:'确认模拟到账'});}finally{state.operationBusy=false;}
+      if(!accepted||persona!==state.persona||bankAPI.persona!==persona)return;
+    }
+    const result=await profileAdapter.sendEvent(type);if(!result.ok)toast(result.error,'warn');return;
+  }
+  S().shocked?ACTIONS.shockOff():ask('工资要晚 15 天到账，怎么办？');
+});
 $('#applyForm').addEventListener('submit', e => {
   e.preventDefault();
   const req = readForm();
@@ -1371,7 +1684,12 @@ $('#applyForm').addEventListener('submit', e => {
 });
 $('#pUse').addEventListener('input', e => { $('#pUseOut').textContent = `${e.target.value} 次/周`; });
 $('#tfForm').addEventListener('submit', e => { e.preventDefault(); runChecks(); });
+$('#tfForm').addEventListener('input',()=>{
+  if(state.operationBusy)return;
+  if(state.tf&&!state.tf.executed){state.tf=null;$('#tfConfirm').innerHTML='<p class="muted">信息已修改，请重新检查后再确认。</p>';}
+});
 $('#clearLog').addEventListener('click', async () => {
+  if(state.serverMode)return toast('服务端审计会保留；可在画像中重置当前合成账户','warn');
   if (await modal({ title: '清空这次演示的日记？', body: '只清空当前浏览器里的演示记录。', ok: '清空', okClass: 'solid' })) { state.log = []; $('#auditCount').textContent = 0; renderLog(); }
 });
 setInterval(tickTimers, 1000);
@@ -1381,6 +1699,143 @@ window.addEventListener('resize', () => {
   if (n !== sceneNarrow) { sceneNarrow = n; renderScene(); }
 });
 
-log('SYSTEM', '沙箱准备好了', '三位合成用户、账单、续费和收款人；不连接真实账户');
-renderAll();
-addAgent(T().welcome);
+function profileUIData() {
+  const p=P(), st=S();
+  return {accounts:Object.entries(PERSONAS).map(([id,p])=>({id,name:p.name,description:p.desc})),
+    selectedId:state.persona,accountName:p.name,completed:st.completed,profile:{...st.profile},
+    facts:{balance:st.balance,income:p.income,salaryDay:cashPath(p,st).salaryDay,daily:p.daily,billTotal:obligations(p)},
+    snapshot:profileSnapshot(),updates:st.profileUpdates};
+}
+async function lifeRequest(operation){
+  if(!state.serverMode)throw new Error('请启动服务端版本使用生活规划。');
+  if(state.operationBusy||state.chatBusy)throw new Error('当前操作完成后再继续。');
+  const persona=state.persona;state.operationBusy=true;
+  try{
+    const result=await operation();
+    if(persona!==state.persona||persona!==bankAPI.persona)throw new Error('账户已变化，请刷新当前生活安排。');
+    // 分析结果与新草案都带着服务端当前的生活版本；别的标签页改过生活安排时，以此更新本地记录，
+    // 否则下面的比对会把刚生成的有效草案误判为过期。
+    const seenLifeVersion=result.lifeVersion??result.proposal?.lifeVersion;
+    if(Number.isInteger(seenLifeVersion))S().lifeVersion=seenLifeVersion;
+    if(result.snapshot){
+      const before=S().revision;
+      applyServerSnapshot(result.snapshot,{preserveTransfer:true});
+      if(typeof result.version==='number'&&result.settings)S().lifeVersion=result.version;
+      const lifeChanged=state.tf?.proposal?.lifeVersion!==undefined&&S().lifeVersion!==undefined&&state.tf.proposal.lifeVersion!==S().lifeVersion;
+      if((S().revision!==before||lifeChanged)&&state.tf&&!state.tf.executed){state.tf=null;$('#tfConfirm').innerHTML='<p class="warn-t">生活安排已变化，原草案需要重新检查。</p>';}
+      renderConsole();renderBills();window.TroposProfileUI?.render();
+    }
+    if(result.accountRevision!==undefined&&result.accountRevision!==S().revision)throw new Error('账本已更新，请重新分析。');
+    return result;
+  }finally{state.operationBusy=false;}
+}
+const lifeAdapter={
+  context:()=>({persona:state.persona,completed:S().completed&&S().profile.readConsent,serverMode:state.serverMode,accountRevision:S().revision}),
+  load:()=>lifeRequest(()=>bankAPI.life()),
+  saveSettings:body=>lifeRequest(()=>bankAPI.lifeSettings(body)),
+  addScene:body=>lifeRequest(()=>bankAPI.lifeScene(body)),
+  cancelScene:(id,body)=>lifeRequest(()=>bankAPI.lifeCancel(id,body)),
+  commitScene:(id,body)=>lifeRequest(()=>bankAPI.lifeCommit(id,body)),
+  commitPlan:body=>lifeRequest(()=>bankAPI.lifeAdopt(body)),
+  analyze:()=>lifeRequest(()=>bankAPI.lifeAnalyze()),
+  handleSnapshot:snapshot=>{if(snapshot?.user?.persona===state.persona&&bankAPI.persona===state.persona)applyServerSnapshot(snapshot,{preserveTransfer:true});},
+  openProfile:()=>{showView('profile');if(!S().completed)window.TroposProfileUI?.openLogin();},
+  // 只发一次请求，版本取自用户看到的那次分析：期间任何生活或账本变化（包括别的标签页新增后又取消的假设）
+  // 都会让服务端在同一事务里拒绝，而不是用最新版本把旧分析的金额变成草案。
+  proposeGoal:({amount,lifeVersion,accountRevision}={})=>lifeRequest(async()=>{
+    if(!Number.isFinite(amount)||amount<=0)throw new Error('请重新分析可转入金额。');
+    if(!Number.isInteger(lifeVersion)||!Number.isInteger(accountRevision))throw new Error('请重新比较后再生成目标转账草案。');
+    if(accountRevision!==S().revision)throw new Error('账本已更新，请重新比较后再生成目标转账草案。');
+    const result=await bankAPI.lifeGoal({version:lifeVersion,accountRevision,amount});
+    applyServerSnapshot(result.snapshot);cacheServerProposal(result.proposal);
+    state.tf={proposal:result.proposal,allOk:result.proposal.status==='pending_confirmation',key:result.proposal.id,executed:false};
+    showView('transfer');$('#checks').innerHTML='<p>生活义务已经计入，服务端仍会在确认前再次核验现金底线。</p>';
+    $('#tfConfirm').innerHTML=serverProposalHTML(result.proposal,result.checks);return result;
+  }),
+};
+const actionsAdapter={
+  context:()=>({persona:state.persona,completed:S().completed&&S().profile.readConsent,serverMode:state.serverMode,accountRevision:S().revision}),
+  load:()=>lifeRequest(()=>bankAPI.insights()),
+  open:view=>showView(['console','life','bills','transfer','profile','actions'].includes(view)?view:'actions',{refreshActions:false}),
+  openProfile:()=>{showView('profile');if(!S().completed)window.TroposProfileUI?.openLogin();},
+  cancelSubscription:async id=>{
+    if(!state.serverMode)throw new Error('请先启动服务端沙箱。');
+    return cancelServerSubscription(id,{propagate:true});
+  },
+  notice:message=>toast(message),
+};
+const profileAdapter={
+  getData:profileUIData,
+  selectAccount:async id=>{if(PERSONAS[id])await switchPersona(id,true);},
+  saveProfile:async values=>{
+    if(state.chatBusy||state.operationBusy)return {ok:false,error:'请等当前操作完成后再修改画像。'};
+    const result=TroposProfiles.validate(values);if(!result.ok)return result;
+    if(state.serverMode){state.operationBusy=true;try{applyServerSnapshot(await bankAPI.profile(result.value));renderAll();return {ok:true};}catch(error){return {ok:false,error:error.message};}finally{state.operationBusy=false;}}
+    const st=S();
+    st.profile=result.value;st.completed=true;
+    recordProfileUpdate(st.profileRevision?'更正用户确认的画像':'完成初始画像','用户明确确认',`目标：${st.profile.goalName}；最低现金预留 ${money(st.profile.reserve)}；已同意读取模拟账本，转账仍逐笔确认`);
+    log('ETHOS','用户确认画像','目标、底线和服务偏好来自用户；策略权重由 ETHOS-R1 规则重算');
+    renderAll();return {ok:true};
+  },
+  previewProfile:values=>{
+    const valid=TroposProfiles.validate({...values,target:Number(values.target),reserve:Number(values.reserve)});
+    if(!valid.ok)return null;
+    const p={...P(),reserve:valid.value.reserve},st={...S(),profile:valid.value};
+    const cp=st.serverSnapshot?{...st.serverSnapshot.cash,free:st.serverSnapshot.cash.min-p.reserve}:cashPath(p,st);
+    const priorities=TroposProfiles.policy({profile:valid.value,free:cp.free,income:p.income,debt:p.bills.filter(b=>['还款','分期','贷款'].includes(b.kind)).reduce((n,b)=>n-b.amount,0),shocked:st.shocked});
+    return {min:cp.min,free:cp.free,mode:priorities[0].name};
+  },
+  sendEvent:async type=>{
+    if(state.chatBusy||state.operationBusy)return {ok:false,error:'当前操作完成后再触发新事件。'};
+    const st=S(),p=P();
+    if(!st.completed||!st.profile.readConsent)return {ok:false,error:'请先确认模拟账户画像。'};
+    if(state.serverMode){
+      state.operationBusy=true;
+      try{const result=await bankAPI.event(type);applyServerSnapshot(result.snapshot);renderAll();return {ok:true};}
+      catch(error){return {ok:false,error:error.message};}finally{state.operationBusy=false;}
+    }
+    if(type==='income_delayed') {
+      if(st.shocked)return {ok:false,error:'当前工资延期情景已经生效。'};
+      if(st.salaryReceived)return {ok:false,error:'本期工资已经模拟到账；重置后可再次演示延期。'};
+      shockReply();
+    } else if(type==='bill_added') {
+      if(st.extraBills.some(b=>b.id==='repair-demo'))return {ok:false,error:'这笔维修账单已经计入，未重复添加。'};
+      st.extraBills.push({id:'repair-demo',day:3,label:'维修费（模拟新增）',amount:-1200,kind:'必要支出',icon:'receipt'});
+      recordProfileUpdate('新增维修账单 ¥1,200','模拟账单事件','在第 3 天计入待支付义务，重算 30 天现金路径');
+      log('ETHOS','发现新增必要支出','维修费 ¥1,200；更新状态，不修改长期目标');
+    } else if(type==='salary_received') {
+      if(st.salaryReceived)return {ok:false,error:'本期工资已经入账，未重复记账。'};
+      st.balance+=p.income;st.salaryReceived=true;st.shocked=false;
+      const receipt='PAY-'+crypto.randomUUID().slice(0,8).toUpperCase();
+      st.transferTx.unshift({time:'10/20 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),merchant:'本期工资（模拟到账）',cat:'收入',amount:p.income,receipt});
+      recordProfileUpdate('工资实际模拟到账','模拟入账回执',`${receipt}；增加当前余额，并移除同一笔预期收入，避免重复计算；待执行任务仍需确认`);
+      log('KAIROS','工资模拟到账，待执行任务可复核','仅恢复待确认状态，不自动转账或申购');
+    } else return {ok:false,error:'未识别的事件。'};
+    renderAll();return {ok:true};
+  },
+  enterWorkbench:()=>{showView('console');renderAll();if(state.afterProfileQuestion){const question=state.afterProfileQuestion;state.afterProfileQuestion=null;ask(question);}},
+  reset:async ()=>{
+    if(state.chatBusy||state.operationBusy)throw new Error('操作进行中');
+    if(state.serverMode){state.operationBusy=true;try{applyServerSnapshot(await bankAPI.reset());state.serverProposals.clear();state.lastServerProposal=null;$('#chatLog').innerHTML='';renderAll();addAgent(T().welcome);return;}finally{state.operationBusy=false;}}
+    const k=state.persona;state.per[k]=freshPersona(k);state.tf=null;state.lastAssess=null;state.pendingReq=null;state.applySeq++;
+    state.log=state.log.filter(entry=>entry.who!==PERSONAS[k].name);
+    $('#chatLog').innerHTML='';persistWorkspace();renderAll();addAgent(T().welcome);
+  },
+};
+async function startWorkbench(){
+  const served=typeof location!=='undefined'&&/^https?:$/.test(location.protocol);
+  if(served){
+    state.serverMode=true;
+    try{applyServerSnapshot(await bankAPI.connect(state.persona));$('#runtimeStatus').textContent=bankAPI.health.modelMode==='llm'?'服务端沙箱 · 模型已配置':'服务端沙箱 · 规则模式';}
+    catch(error){
+      $('.content').inert=true;$('.top').inert=true;
+      $('#profileGate').innerHTML=`<div class="pu-overlay"><div class="pu-shell"><div class="pu-card"><h1>暂时连接不到银行沙箱</h1><p>${esc(error.message)}</p><p>当前未切换成本地交易，不会显示未经服务端确认的成功状态。</p><button class="btn" id="retryConnection">重试连接</button></div></div></div>`;
+      $('#retryConnection').addEventListener('click',()=>location.reload());return;
+    }
+  }
+  for(const k of Object.keys(PERSONAS))if(!state.per[k].profileSnapshot)state.per[k].profileSnapshot=profileSnapshot(k);
+  if(!served)log('SYSTEM','本地交互样例已就绪','请运行服务端版本以体验持久账本和模型工具链');
+  renderAll();addAgent(T().welcome);window.TroposProfileUI.init(profileAdapter);window.TroposLifeUI?.init(lifeAdapter);
+  window.TroposActions?.init(actionsAdapter);window.TroposActions?.refresh();
+}
+startWorkbench();

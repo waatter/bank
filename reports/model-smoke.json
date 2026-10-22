@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-20T11:15:48.543119+00:00",
+  "request": "给妈妈转100元，备注晚餐，现在转。",
+  "mode": "llm",
+  "action": "transfer",
+  "draft_status": "pending_confirmation",
+  "executed": false,
+  "trace": [
+    {
+      "engine": "METIS",
+      "detail": "已调用配置的大模型；输出通过动作与字段白名单校验。"
+    },
+    {
+      "engine": "ETHOS",
+      "detail": "财务状态以服务端合成账本为准，用户目标和现金底线由用户确认。"
+    },
+    {
+      "engine": "ARGOS",
+      "detail": "模型只草拟；余额、安全线、收款人与收入依赖检查由服务端确定，执行仍需单独确认。"
+    }
+  ],
+  "scope": "single live-provider intent/proposal smoke; no confirmation or transfer performed"
+}

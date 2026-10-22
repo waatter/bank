@@ -504,8 +504,25 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
   .ap .slot-seal{width:42px;height:42px}
   .verdict{flex-direction:column;align-items:flex-start;gap:18px}
   .f2{grid-template-columns:1fr}
-  .table th:nth-child(2),.table td:nth-child(2){display:none}
+  #view-bills .table th:nth-child(2),#view-bills .table td:nth-child(2){display:none}
   .entry{grid-template-columns:52px 26px minmax(0,1fr)}
   .panel,.envelope{padding:20px 18px}
 }
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* The connected sandbox keeps receipts and connection mode visible. */
+#runtimeStatus{max-width:165px;overflow:hidden;text-overflow:ellipsis;flex:none;font-size:11px}
+.server-proposal{margin-top:18px;padding-top:18px;border-top:1px solid var(--line2)}
+.server-proposal ul{padding-left:18px;font-size:13px;color:var(--ink2)}
+.server-proposal>.btn{margin:4px 6px 4px 0}
+.server-result{margin-top:14px;overflow-wrap:anywhere}
+.version-mark{font:11px var(--sans);color:var(--accent);border:1px solid var(--line2);border-radius:5px;padding:2px 4px;vertical-align:middle;letter-spacing:0}
+.life-entry{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:24px 0}
+.life-entry h2{margin:8px 0}.life-entry p{color:var(--ink2);max-width:48em}.life-entry>.btn{flex:none}
+@media(max-width:640px){.life-entry{align-items:stretch;flex-direction:column;gap:16px}.life-entry>.btn{width:100%}}
+.proposal-history{margin-top:24px;min-width:0}
+.proposal-history .block-head{flex-wrap:wrap;gap:12px}
+.server-proposal{overflow-wrap:anywhere}
+.server-proposal .btn{white-space:normal;max-width:100%}
+@media(min-width:641px) and (max-width:1250px){.top{flex-wrap:wrap;gap:12px 22px}.top .windows{margin-left:auto}.tabs{order:3;width:100%;gap:24px}.tabs button.active:after{bottom:-9px}}
+@media(max-width:640px){#runtimeStatus{max-width:135px}.tabs{overflow-x:auto;justify-content:flex-start;gap:10px}.tabs button{flex:none;min-width:36px}.windows>span{display:none}}

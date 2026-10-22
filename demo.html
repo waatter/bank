@@ -3,13 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TROPOS · 三扇窗</title>
+  <title>TROPOS 2.0 · 生活与流动性</title>
   <!-- 霞鹜文楷 / 思源宋体：开源字体，经 jsdelivr 加载；离线时回落到系统楷体与宋体 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/400.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/600.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/700.css">
   <link rel="stylesheet" href="assets/demo.css">
+  <link rel="stylesheet" href="assets/profile-ui.css">
+  <link rel="stylesheet" href="assets/life-ui.css">
+  <link rel="stylesheet" href="assets/action-ui.css">
 </head>
 <body data-persona="A" data-view="console">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -40,18 +43,27 @@
 </svg>
 
 <header class="top">
-  <a class="brand" href="index.html" title="回到项目介绍">TROPOS</a>
+  <a class="brand" href="index.html" title="回到项目介绍">TROPOS <small class="version-mark">2.0</small></a>
+  <span class="pill" id="runtimeStatus">本地交互样例</span>
   <nav class="tabs" aria-label="页面">
     <button class="active" data-view="console"><svg class="ic"><use href="#i-window"/></svg>窗</button>
+    <button data-view="actions"><svg class="ic"><use href="#i-check"/></svg>行动</button>
+    <button data-view="life"><svg class="ic"><use href="#i-heart"/></svg>生活规划</button>
     <button data-view="cool"><svg class="ic"><use href="#i-hourglass"/></svg>先别买<em>双十一</em></button>
     <button data-view="bills"><svg class="ic"><use href="#i-book"/></svg>账本</button>
     <button data-view="transfer"><svg class="ic"><use href="#i-mail"/></svg>转账</button>
     <button data-view="audit"><svg class="ic"><use href="#i-diary"/></svg>日记<em class="count" id="auditCount">0</em></button>
+    <button data-view="profile"><svg class="ic"><use href="#i-users"/></svg>画像</button>
+    <button data-view="evaluation"><svg class="ic"><use href="#i-check"/></svg>评测</button>
   </nav>
-  <div class="windows"><span>看谁的窗</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
+  <div class="windows"><span>演示账户</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
 </header>
 
 <main class="content">
+  <section class="view" id="view-actions"><div id="actionMount"></div></section>
+  <section class="view" id="view-life"><div id="lifeMount"></div></section>
+  <section class="view" id="view-profile"><div id="profileMount"></div></section>
+  <section class="view" id="view-evaluation"><div class="page-title"><h1>让结果经得起核验。</h1><p class="lead">同一批合成账户、同一组事件、同一个安全网关。这里展示实际运行保存的规则对照与任务检查，不代表模型能力或真实用户收益。</p></div><article class="panel" id="evaluationReport"></article><article class="panel proposal-history" id="intentEvaluationReport"></article></section>
   <!-- ============ 窗 ============ -->
   <section class="view active" id="view-console">
     <div class="window" id="window">
@@ -62,7 +74,9 @@
     </div>
     <div class="legend" id="legend"></div>
     <div class="sill" id="sill"></div>
+    <div id="actionPreview"></div>
     <div id="consoleNudge"></div>
+    <article class="panel life-entry"><div><span class="pill">TROPOS 2.0</span><h2>生活有安排，钱也有余地。</h2><p>把工作、家庭、搬家或购物放进同一张现金日历，比较不同安排在收入延期时的代价。</p></div><button class="btn solid" data-act="go" data-view="life">开始生活规划</button></article>
 
     <div class="desk">
       <article class="panel chat">
@@ -84,7 +98,7 @@
     </div>
 
     <section class="compare" id="compare" hidden></section>
-    <p class="foot">TROPOS 参赛原型。账户与交易均为合成数据，不连接真实银行，不构成金融建议。</p>
+    <p class="foot">TROPOS 参赛原型。合成账本基准日为 2026 年 10 月 20 日，预测从该日起算。账户与交易均为合成数据，不连接真实银行，不构成金融建议。</p>
   </section>
 
   <!-- ============ 先别买 ============ -->
@@ -93,10 +107,10 @@
       <div>
         <h1>先别买。</h1>
         <p class="sub-voice">想清楚，再付款。</p>
-        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再请几千个陌生人看一眼。不是不让买，是不被推着买。</p>
+        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再参考本地模拟的不同观点。每一步都由你决定。</p>
         <div class="mini">
           <div>距双十一<b><span class="d11"></span> 天</b></div>
-          <div>冷静期省下<b class="ok-t" id="savedTotal">¥0</b></div>
+          <div>避免的拟支出<b class="ok-t" id="savedTotal">¥0</b></div>
           <div>冷静中 / 已放下<b id="coolCount">0 / 0</b></div>
         </div>
       </div>
@@ -128,7 +142,7 @@
           <label class="f"><span>每周大概用几次</span>
             <div class="range"><input id="pUse" type="range" min="0" max="35" value="5"><output id="pUseOut">5 次/周</output></div>
           </label>
-          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陌生人只看得到商品、价格、理由和替代品。余额和身份不会离开这里。</span></div>
+          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陪审意见由本地规则生成，没有真实陌生人参与；信息不会发送给他人。</span></div>
           <button class="btn solid" type="submit" style="width:100%"><svg class="ic"><use href="#i-hourglass"/></svg>递交审批</button>
         </form>
         <div class="approvals" id="flow"></div>
@@ -155,13 +169,13 @@
   <!-- ============ 账本 ============ -->
   <section class="view" id="view-bills">
     <div class="page-title">
-      <h1>这个月的账本</h1>
-      <p class="lead">每个分类都能追到具体的交易。交易备注是别人写的字，只能看，不能指挥 TROPOS 做任何事。</p>
+      <h1>每一笔，都有来处。</h1>
+      <p class="lead">这里展示当前可见的合成流水，非完整月报。分类包含还款与转账，不能直接当作消费总额。附言不作为操作指令。</p>
     </div>
     <div class="figures" id="billKpis"></div>
     <div class="ledger-grid">
       <article class="panel">
-        <div class="block-head"><div><h2>近 30 天流水</h2></div></div>
+        <div class="block-head"><div><h2>当前可见流水</h2></div><button class="btn sm" data-act="go" data-view="actions">查看现金行动</button></div>
         <div class="ribbon" id="catbar"></div>
         <div class="ribbon-legend" id="catlegend"></div>
         <div style="overflow-x:auto"><table class="table"><thead><tr><th>交易</th><th>分类</th><th>时间</th><th class="amt">金额</th></tr></thead><tbody id="txBody"></tbody></table></div>
@@ -186,7 +200,7 @@
           <label class="f"><span>转给谁<small>名字、备注或关系都行</small></span><input id="tfTo" value="王磊" autocomplete="off"></label>
           <div class="payees" id="payees"></div>
           <div class="f2">
-            <label class="f"><span>金额（元）</span><input id="tfAmt" type="number" min="1" step="1" value="500"></label>
+            <label class="f"><span>金额（元）</span><input id="tfAmt" type="number" min="0.01" step="0.01" value="500" inputmode="decimal"></label>
             <label class="f"><span>什么时候转</span>
               <select id="tfWhen"><option value="now">现在</option><option value="salary">工资到账后</option></select>
             </label>
@@ -202,6 +216,10 @@
         <div id="tfConfirm"></div>
       </article>
     </div>
+    <article class="panel proposal-history" aria-labelledby="proposalHistoryTitle">
+      <div class="block-head"><div><h2 id="proposalHistoryTitle">找回我的方案</h2><p>刷新或中断后，先核对原方案和结果，再决定下一步。不会自动重新转账。</p></div><button class="btn sm" data-act="refreshProposals">刷新当前账户</button></div>
+      <div id="proposalHistory" aria-live="polite"><p class="fine">服务端版本可恢复最近 50 个方案；本地文件样例不提供此能力。</p></div>
+    </article>
   </section>
 
   <!-- ============ 日记 ============ -->
@@ -215,12 +233,18 @@
     </div>
   </section>
 </main>
+<div id="profileGate"></div>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="dialog"><h3 id="modalTitle"></h3><div class="mb" id="modalBody"></div><div class="actions" id="modalActions"></div></div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="assets/profile-engine.js"></script>
+<script src="assets/profile-ui.js"></script>
+<script src="assets/backend-client.js"></script>
+<script src="assets/life-ui.js"></script>
+<script src="assets/action-ui.js"></script>
 <script src="assets/demo.js"></script>
 </body>
 </html>

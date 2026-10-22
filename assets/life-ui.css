@@ -1,0 +1,97 @@
+/* TROPOS · 资产与生活。沿用三扇窗的字体、颜色与圆角。 */
+#lifeMount{min-width:0}
+.life-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin:16px 0 26px}
+.life-eyebrow{margin:0 0 8px;color:var(--accent);font-size:11px;letter-spacing:.18em;font-weight:600}
+.life-intro{color:var(--ink2);max-width:650px;margin:10px 0 0}
+.life-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.life-button{border:1px solid var(--line2);background:var(--surface);color:var(--ink);min-height:39px;padding:8px 16px;border-radius:var(--r-s);font:inherit;font-size:13px;cursor:pointer}
+.life-button:hover{background:var(--surface2)}
+.life-button:focus-visible,#lifeMount input:focus-visible,#lifeMount select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.life-button:disabled{opacity:.5;cursor:not-allowed}
+.life-button-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.life-button-primary:hover{background:var(--accent);filter:brightness(.96)}
+.life-button-small{min-height:32px;padding:5px 11px;font-size:12px}
+.life-button-danger{color:var(--bad)}
+.life-panel{padding:24px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow);min-width:0;margin-bottom:20px}
+.life-panel-head{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.life-panel-head h2{font-size:20px}
+.life-note{color:var(--mute);font-size:12.5px;line-height:1.7;margin:7px 0}
+.life-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.life-kpi{padding:19px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);min-width:0}
+.life-kpi dt{font-size:12px;color:var(--ink2)}
+.life-kpi dd{font-family:var(--display);font-weight:var(--display-w);font-size:clamp(20px,2.1vw,28px);line-height:1.5;letter-spacing:-.025em;margin:6px 0 2px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.life-kpi small{font-size:11px;color:var(--mute)}
+.life-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.life-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}
+.life-field{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--ink2);min-width:0}
+.life-field-wide{grid-column:1/-1}
+.life-field input,.life-field select{width:100%;min-width:0;min-height:40px;border:1px solid var(--line2);background:var(--surface2);color:var(--ink);padding:8px 11px;border-radius:var(--r-s);font:inherit}
+.life-field small{color:var(--mute);font-size:11.5px}
+.life-field input:disabled{opacity:.5}
+.life-check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink2);margin:12px 0}
+.life-check input{accent-color:var(--accent);flex:none;width:16px;height:16px;margin:3px 0 0}
+.life-dayfields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;grid-column:1/-1}
+.life-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:15px 0}
+.life-category{padding:9px 3px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface2);color:var(--ink2);font-size:12px;cursor:pointer;min-height:38px}
+.life-category[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+.life-category:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.life-rule{border:0;border-top:1px solid var(--line);margin:18px 0}
+.life-callout{padding:13px 15px;border-radius:var(--r-s);background:var(--surface2);font-size:12.5px;color:var(--ink2);margin:14px 0}
+.life-status{padding:12px 16px;border:1px solid var(--line2);background:var(--surface2);border-radius:var(--r-s);font-size:13px;margin:0 0 18px}
+.life-status-error{color:var(--bad);border-color:var(--bad)}
+.life-empty{text-align:center;padding:30px 16px;color:var(--mute)}
+.life-empty h2{color:var(--ink);margin-bottom:12px}
+.life-scene-list,.life-adjustments,.life-bills{list-style:none;margin:0;padding:0}
+.life-scene{padding:15px 0;border-top:1px solid var(--line)}
+.life-scene:first-child{border-top:0}
+.life-scene-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.life-scene-head strong{font-size:14px;overflow-wrap:anywhere}
+.life-money{font-variant-numeric:tabular-nums;white-space:nowrap}
+.life-tag{display:inline-block;background:var(--surface2);border-radius:999px;padding:2px 8px;color:var(--mute);font-size:10px;vertical-align:middle;margin-left:5px;white-space:nowrap}
+.life-tag-accent{background:var(--soft);color:var(--accent)}
+.life-scene .life-actions{margin-top:10px}
+.life-bills li{display:flex;gap:10px;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.life-bills li span:first-child{min-width:0;overflow-wrap:anywhere}
+.life-details{font-size:13px;margin-top:14px}
+.life-details summary{cursor:pointer;color:var(--accent);padding:6px 0}
+.life-plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.life-plan{width:100%;border:1px solid var(--line2);border-radius:var(--r-m);background:var(--surface);text-align:left;color:var(--ink);padding:18px;cursor:pointer;min-width:0}
+.life-plan[aria-pressed="true"]{border:2px solid var(--accent);padding:17px;background:var(--surface2)}
+.life-plan:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.life-plan h3{font-size:16px;margin-bottom:7px}
+.life-plan p{font-size:12px;color:var(--ink2);margin:7px 0 14px;line-height:1.6}
+.life-plan dl{display:grid;gap:7px;margin:0}
+.life-plan dl div{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11px}
+.life-plan dt{color:var(--mute)}
+.life-plan dd{margin:0;font-variant-numeric:tabular-nums;text-align:right}
+.life-recommendation{background:var(--soft);padding:16px 18px;border-radius:var(--r-m);font-size:13px;color:var(--ink2);margin:15px 0}
+.life-recommendation strong{color:var(--accent)}
+.life-stress-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 8px}
+.life-stress-tabs .life-button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+.life-chart{width:100%;overflow:hidden;margin:10px 0}
+.life-chart svg{width:100%;height:auto;display:block;color:var(--accent);overflow:visible}
+.life-chart-labels{display:flex;justify-content:space-between;color:var(--mute);font-size:11px;gap:12px}
+.life-chart-legend{display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:var(--ink2);margin:10px 0}
+.life-chart-legend i{display:inline-block;width:20px;border-top:2px solid var(--accent);vertical-align:middle;margin-right:5px}
+.life-chart-legend i.life-line-safe{border-top:2px dashed var(--warn)}
+.life-chart-legend i.life-line-base{border-color:var(--mute);border-top-style:dotted}
+.life-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.life-metrics div{padding:12px;background:var(--surface2);border-radius:var(--r-s);min-width:0}
+.life-metrics dt{font-size:11px;color:var(--mute)}
+.life-metrics dd{margin:4px 0 0;font-size:17px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.life-warning{color:var(--bad)}
+.life-adjustments li{border-bottom:1px solid var(--line);padding:11px 0;font-size:12.5px}
+.life-adjustments li>div{display:flex;justify-content:space-between;gap:10px}
+.life-adjustments p{margin:5px 0;color:var(--mute);font-size:12px}
+.life-sensitive-row{display:grid;grid-template-columns:110px minmax(0,1fr) 100px;gap:12px;align-items:center;margin:12px 0;font-size:12px}
+.life-sensitive-row svg{width:100%;height:12px;color:var(--accent)}
+.life-sensitive-row span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.life-footer{color:var(--mute);font-size:12px;line-height:1.8;margin-top:20px}
+@media(max-width:850px){.life-columns{grid-template-columns:1fr}.life-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.life-plans{grid-template-columns:1fr}.life-plan dl{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 20px}.life-plan p{margin-bottom:12px}}
+@media(max-width:480px){.life-header{flex-direction:column}.life-panel{padding:18px 15px}.life-kpis{gap:8px}.life-kpi{padding:14px 11px}.life-kpi dd{font-size:21px}.life-kpi dt{font-size:11px}.life-fields{gap:12px 9px}.life-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.life-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.life-sensitive-row{grid-template-columns:85px minmax(0,1fr) 88px;gap:7px;font-size:11px}.life-panel-head{flex-direction:column;gap:10px}.life-dayfields{gap:7px}.life-field{font-size:11.5px}.life-field input,.life-field select{padding:8px}.life-plan{padding:15px}.life-plan[aria-pressed="true"]{padding:14px}}
+@media(prefers-reduced-motion:reduce){#lifeMount *,#lifeMount *::before,#lifeMount *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* 采纳 DS 的轻量统计卡视觉，颜色继续服从当前画像。 */
+.life-metrics div{background:color-mix(in srgb,var(--accent) 4%,var(--surface2));border:1px solid var(--line)}
+.life-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:12px}
+.life-empty p{margin:0 0 10px}
