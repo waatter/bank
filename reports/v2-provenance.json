@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "deliveryDate": "2026-10-22",
+  "calls": [
+    {
+      "task": "catalogue",
+      "route": "deepseek-flash",
+      "model": "deepseek-v4-flash",
+      "ok": true,
+      "rawResponseSha256": "e7836ac8a49af544518aaf54143446f019c371e4a8d2a2e5a93b8b838282d0c7",
+      "rawResponsePublished": false
+    },
+    {
+      "task": "store",
+      "route": "deepseek-pro",
+      "model": "deepseek-v4-pro",
+      "ok": true,
+      "rawResponseSha256": "89ef89de04914ed3fc2a2751323f660b6f8f7013888f7d0ca43ef09cad8aedbe",
+      "rawResponsePublished": false
+    },
+    {
+      "task": "ui",
+      "route": "deepseek-pro",
+      "model": "deepseek-v4-pro",
+      "ok": true,
+      "rawResponseSha256": "7fba40a04b465f7ee5e3329dd24cf839285672fd383cff3a0ed4755116ceb9f1",
+      "rawResponsePublished": false
+    }
+  ],
+  "scope": "模型提供目录、界面及常规后端草稿；经济计算、授权和集成经过独立审查。来源指纹不等于正确性证明。"
+}

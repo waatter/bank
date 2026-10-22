@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-21T11:54:42.577193+00:00",
+  "generated_at": "2026-10-22T09:48:43.050278+00:00",
   "requested_mode": "rules",
   "actual_modes": {
     "rules": 41
@@ -14,14 +14,14 @@
   "case_sha256": "667dc21465c991cc726618ff15715f9b18611bdbfe8c9f7b92fcc6c74e72ecd3",
   "source_sha256": {
     "backend/model.py": "814cffdccd7f9d408b6e5432ab0bcd40db00fe6a2cb87bb1abc6970f69e15b8e",
-    "backend/service.py": "7ab0fba4a2d0f820bc98489b828021048702b7e43fbfee8947cbc2b2a18030ba",
+    "backend/service.py": "d30589f53099183f4d4552d41847a94788d7e275ff71dc6e605bfaad303c02b7",
     "backend/fixtures.json": "caa90b2f815ebece61f0d669773264663a89aec0c38626fc2303f10fd0a21b47",
     "eval/intent_benchmark.py": "827a7d4d50ee13d02d2f3865c5d83f359e4603cae451ef10cf171d6ae61c5881"
   },
   "source_changed_during_run": [],
-  "git_revision": "227baf1ab9c5ec1ff4b0b26467b6dd1d1d0b9f2e",
+  "git_revision": "b7cb3bc6e32c42119d642bd3127014d0ce042566",
   "working_tree_dirty": true,
-  "runtime_seconds": 0.415,
+  "runtime_seconds": 0.451,
   "summary": {
     "cases": 41,
     "action": {

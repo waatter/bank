@@ -62,8 +62,8 @@
 - 固定种子：`20261021`（用于稳定场景标识；没有随机抽样）。
 - 源码总指纹：`ad52331b99768a3a5f81cef3946c96171e5279704196642ad115bc3fa83a9b27`。
 - 目录指纹：`dce09193a1f21e29d84b503591fddad608eb575b129bb61d86852e0d3556eb54`。
-- Git revision：`b33df852d43bff4fb54dc810e97d14cff4777955`；工作区 dirty：`True`。
-- Python：`3.12.2`；运行耗时：0.745 秒。
+- Git revision：`b7cb3bc6e32c42119d642bd3127014d0ce042566`；工作区 dirty：`False`。
+- Python：`3.12.2`；运行耗时：1.076 秒。
 - 命令：`python3 -m eval.life_benchmark --output reports/life-planning.json`。
 
 JSON保留每案例的输入、三种方案、四种压力路径、敏感性、独立核对错误及逐文件源码指纹。

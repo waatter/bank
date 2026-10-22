@@ -1,6 +1,6 @@
 {
   "benchmark": "TROPOS METIS-LIFE-2 known synthetic mechanism regression",
-  "generated_at": "2026-10-21T14:29:05.750746+00:00",
+  "generated_at": "2026-10-22T09:48:40.165741+00:00",
   "seed": 20261021,
   "random_sampling": false,
   "seed_use": "稳定合成场景标识；没有随机抽样",
@@ -51,35 +51,14 @@
   },
   "catalogue_sha256": "dce09193a1f21e29d84b503591fddad608eb575b129bb61d86852e0d3556eb54",
   "runtime": {
-    "seconds": 0.745,
+    "seconds": 1.076,
     "python": "3.12.2",
     "platform": "macOS-26.6.1-arm64-arm-64bit"
   },
   "git": {
-    "revision": "b33df852d43bff4fb54dc810e97d14cff4777955",
-    "dirty": true,
-    "status": [
-      "M assets/backend-client.js",
-      " M assets/demo.css",
-      " M assets/demo.js",
-      " M backend/server.py",
-      " M backend/service.py",
-      " M demo.html",
-      " M index.html",
-      " M tests/backend-client.cjs",
-      "?? assets/life-ui.css",
-      "?? assets/life-ui.js",
-      "?? backend/life_planner.py",
-      "?? backend/life_scenarios.json",
-      "?? backend/life_service.py",
-      "?? \"docs/TROPOS_2.0\\346\\274\\224\\347\\244\\272\\346\\270\\205\\345\\215\\225.md\"",
-      "?? eval/life_benchmark.py",
-      "?? tests/life-ui.cjs",
-      "?? tests/test_life_api.py",
-      "?? tests/test_life_benchmark.py",
-      "?? tests/test_life_planner.py",
-      "?? tests/test_life_service.py"
-    ],
+    "revision": "b7cb3bc6e32c42119d642bd3127014d0ce042566",
+    "dirty": false,
+    "status": [],
     "status_available": true
   },
   "summary": {
