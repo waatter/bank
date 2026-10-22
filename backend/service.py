@@ -220,6 +220,16 @@ class BankService:
         with self._db() as db:
             return self._snapshot(db, user_id)
 
+    def insights(self, user_id):
+        """Read consent and the full insight basis in one consistent transaction."""
+        from .insights import build_insights
+        with self._db() as db:
+            self._consent(db, user_id)
+            snapshot = self._snapshot(db, user_id)
+            result = build_insights(snapshot)
+            result['snapshot'] = snapshot
+            return result
+
     def _audit(self, db, user_id, engine, title, detail):
         db.execute('INSERT INTO audit(user_id,content) VALUES(?,?)', (user_id, json.dumps({'engine': engine, 'title': title, 'detail': detail, 'at': now()}, ensure_ascii=False)))
 

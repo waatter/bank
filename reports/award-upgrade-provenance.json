@@ -1,0 +1,34 @@
+{
+  "iteration": "award-inspired-cash-actions",
+  "date": "2026-10-22",
+  "modelCalls": [
+    {
+      "agent": "deepseek-flash",
+      "model": "deepseek-v4-flash",
+      "ok": true
+    }
+  ],
+  "rawResponseSha256": "2afd6d50dc3a319c90138214070a1d26db208764e74ba4e48c170717a13bb962",
+  "rawResponsePublished": false,
+  "sourceSha256": {
+    "backend/insights.py": "c0c850613782628d3444fb99c57bba6432a15401ff6b2d4f529f50fdf68cca6c",
+    "backend/service.py": "4c555fa3bd790682026ae9b995ba0e5efc502daa1bced1419b0c65920dbb616a",
+    "backend/server.py": "1600e5ca4c1c459266a76f53c7a204da460f9d8856079cee046e322401010770",
+    "backend/model.py": "3f001b7a74d437b7bf864f0de71056185a2fd535b53a57e8113588814e50cb28",
+    "assets/action-ui.js": "6eb57f07f3ff3f8c5574bdccebb1f3ce55ec9ad39050afe006a1f0f343d97ca8",
+    "assets/action-ui.css": "c65036f0ecfa53c666d60b6438708f832fa858eabe7105e59d7ae2338830d6d7",
+    "assets/backend-client.js": "e7c23351156d05027cc951b9d5f723a20d612a827dab87eddd34cb75284742f3",
+    "assets/demo.js": "7153a789add5ec514866666f8ec5e7ba04cc73917bc0eb96210fb2bc95642982",
+    "demo.html": "ec029363c825500f323e62a6eed6590ac7ee65b6d04f408a56b3ed21fd43341f"
+  },
+  "review": "Static source and contract review; no new automated or browser tests run. Prior v2.0 test counts do not constitute validation of this iteration.",
+  "researchDocument": "docs/往届获奖产品对标与增强计划.md",
+  "reviewFixes": [
+    "工资行动入口对应实际页面",
+    "出账与消费口径区分",
+    "取消响应未知时清除旧报告",
+    "导出换行与日期正则",
+    "工资到账状态随快照更新",
+    "首页单项预览导航保留当前选择"
+  ]
+}

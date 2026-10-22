@@ -475,7 +475,7 @@ const T = () => TONE[S().profile.style || state.persona];
 function setClock() { const [h, m] = T().clock; TODAY.setHours(h, m, 0, 0); }
 
 /* ------------------------------------------------------------------ 导航与画像切换 */
-function showView(v) {
+function showView(v, {refreshActions=true}={}) {
   state.view = v;
   document.body.dataset.view = v;
   $$('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
@@ -485,6 +485,7 @@ function showView(v) {
   if (v === 'evaluation') renderEvaluation();
   if (v === 'transfer') refreshServerProposals();
   if(v==='life')state.operationBusy||state.chatBusy?window.TroposLifeUI?.render():window.TroposLifeUI?.refresh();
+  if(v==='actions')state.operationBusy||state.chatBusy||!refreshActions?window.TroposActions?.render():window.TroposActions?.refresh();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 async function switchPersona(k, silent = false) {
@@ -555,6 +556,7 @@ function renderConsole() {
   renderQueue();
   renderCompare();
   renderSuggest();
+  window.TroposActions?.render();
 }
 const PARTNER_LINES = { ETHOS: '看清你此刻的处境', METIS: '把每一笔算清楚', KAIROS: '等对的时候再动', ARGOS: '只听你的，替你守门' };
 const PAL = Object.fromEntries(['ETHOS', 'METIS', 'KAIROS', 'ARGOS'].map(k => [k, `<span class="mono ${ENG[k].cls}">${ENG[k].ch}</span>`]));
@@ -1206,21 +1208,22 @@ function renderBills() {
   const p = P(), st = S(), b = billSummary(p);
   const active = st.subs.filter(s => s.status !== 'cancelled');
   const review = st.subs.filter(s => s.status === 'active' && ['重复', '低使用'].includes(s.flag)).length;
+  const memoReview = p.tx.filter(t => /忽略|无视|ignore|指令|system|无需确认|不用确认/i.test(t.memo || '')).length;
   $('#billKpis').innerHTML = [
-    ['近 30 天花出去', money(b.total), `${b.out.length} 笔 · 不含存进目标的钱`],
-    ['其中必须花的', money(b.ess), `占 ${Math.round(b.ess / b.total * 100)}% · 住房、还款、分期、交通`],
-    ['每月自动续费', money(active.reduce((s, x) => s + x.fee, 0)), `${active.length} 项还在扣`],
-    ['值得你看一眼', `${review + 1} 项`, `${review} 项续费 · 1 张可疑纸条`],
+    ['可见流水出账', money(b.total), `${b.out.length} 笔合成样本 · 非完整月报`],
+    ['必要分类出账', money(b.ess), `占 ${b.total ? Math.round(b.ess / b.total * 100) : 0}% · 分类不等于本期消费`],
+    ['本窗口待续费', money(active.filter(s => s.next >= 1 && s.next <= HORIZON).reduce((s, x) => s + x.fee, 0)), `${active.length} 项有效订阅 · 尚未扣款`],
+    ['待核对线索', `${review + memoReview} 项`, `${review} 项资料标记续费 · ${memoReview} 条指令型备注`],
   ].map(([l, v, s]) => `<div><label>${l}</label><div class="v">${v}</div><small>${s}</small></div>`).join('');
   $('#catbar').innerHTML = b.cats.map(([c, v]) => `<i title="${c} ${money(v)}" style="width:${v / b.total * 100}%;background:${CAT_COLORS[c] || '#c9bfae'}"></i>`).join('');
   $('#catlegend').innerHTML = b.cats.map(([c, v]) => `<span><i style="background:${CAT_COLORS[c] || '#c9bfae'}"></i>${c} ${money(v)}</span>`).join('');
   $('#txBody').innerHTML = p.tx.map(t => {
     const h = +t.time.slice(6, 8), late = t.amount < 0 && (h >= 23 || h < 5);
     if (t.memo) return `<tr><td class="mer" colspan="2"><b>${esc(t.merchant)}</b>
-        <div class="scrap"><em>外来文字，已隔离，只能读</em>${esc(t.memo)}</div><button class="btn link" style="font-size:13.5px" data-act="readMemo">让 TROPOS 读读这张纸条 →</button></td>
-        <td class="time">${t.time}</td><td class="amt in">+¥0.01</td></tr>`;
+        <div class="scrap"><em>账单附言，不作为操作指令</em>${esc(t.memo)}</div>${t.memo === INJECTION_MEMO ? '<button class="btn link" style="font-size:13.5px" data-act="readMemo">查看指令型备注的处理演示 →</button>' : ''}</td>
+        <td class="time">${esc(t.time)}</td><td class="amt ${t.amount > 0 ? 'in' : ''}">${money(t.amount, true)}</td></tr>`;
     return `<tr><td class="mer"><b>${esc(t.merchant)}</b>${late ? `<small>${ic('moon')} 深夜</small>` : ''}${state.serverMode&&t.receipt?`<button class="btn link" data-act="apiQuery" data-id="${esc(t.id)}">核验数据库回执</button>`:''}</td>
-      <td><span class="cat ${ESSENTIAL.includes(t.cat) ? 'ess' : ''}">${t.cat}</span></td><td class="time">${t.time}</td>
+      <td><span class="cat ${ESSENTIAL.includes(t.cat) ? 'ess' : ''}">${esc(t.cat)}</span></td><td class="time">${esc(t.time)}</td>
       <td class="amt ${t.amount > 0 ? 'in' : ''}">${money(t.amount, true)}</td></tr>`;
   }).join('');
   $('#subs').innerHTML = st.subs.map(s => {
@@ -1559,7 +1562,7 @@ async function serverAgentReply(text){
   if(result.plan||result.intent?.action==='purchase')html+='<button class="btn" data-act="go" data-view="life">结合生活场景比较安排</button>';
   if(result.proposal){cacheServerProposal(result.proposal);html+=serverProposalHTML(result.proposal,result.checks||[]);}
   if(result.intent?.action==='purchase')html+='<button class="btn" data-act="go" data-view="cool">查看分期成本与现金影响</button>';
-  if(result.intent?.action==='bills'||result.intent?.action==='subscriptions')html+='<button class="btn" data-act="go" data-view="bills">查看账本和续费</button>';
+  if(result.intent?.action==='bills'||result.intent?.action==='subscriptions')html+='<button class="btn solid" data-act="go" data-view="actions">查看现金行动与取消影响</button><button class="btn" data-act="go" data-view="bills">核对原始账本和回执</button>';
   html+='</div>';
   renderConsole();renderBills();window.TroposProfileUI.render();
   return {trace:(result.trace||[]).map(t=>[ENG[t.engine]?t.engine:'SYSTEM',esc(t.detail)]),html};
@@ -1618,15 +1621,15 @@ async function replayServerProposal(){
     toast(S().balance===before?'服务返回原交易，没有再次扣款':'状态已重新核验');renderConsole();renderBills();}
   catch(error){toast(error.message,'bad');}finally{state.operationBusy=false;}
 }
-async function cancelServerSubscription(id){
-  if(state.operationBusy||state.chatBusy)return;
-  const sub=S().subs.find(s=>s.id===id);if(!sub)return;
+async function cancelServerSubscription(id,{propagate=false}={}){
+  if(state.operationBusy||state.chatBusy)return {cancelled:false};
+  const sub=S().subs.find(s=>s.id===id);if(!sub)return {cancelled:false};
   const persona=state.persona;state.operationBusy=true;
   try{
-    const accepted=await modal({title:`取消「${sub.name}」？`,body:`确认后服务端沙箱将变更续费状态，收到回执才从未来现金路径移除每月 ${money(sub.fee)}。`,ok:'确认取消续费'});
-    if(!accepted||persona!==state.persona||bankAPI.persona!==persona)return;
-    const result=await bankAPI.cancelSubscription(id);applyServerSnapshot(result.snapshot);renderAll();toast('服务端取消回执已核验');}
-  catch(error){toast(error.message,'bad');}finally{state.operationBusy=false;}
+    const accepted=await modal({title:`取消「${sub.name}」？`,body:`确认后服务端沙箱将变更续费状态，回执核验后移除下次预计续费 ${money(sub.fee)}。今天余额不变，不产生退款；不会自动把这笔钱转入储蓄。`,ok:'确认取消续费'});
+    if(!accepted||persona!==state.persona||bankAPI.persona!==persona)return {cancelled:false};
+    const result=await bankAPI.cancelSubscription(id);applyServerSnapshot(result.snapshot);renderAll();toast('服务端取消回执已核验');return {cancelled:result.receipt?.status==='cancelled'};}
+  catch(error){toast(error.message,'bad');if(propagate)throw error;return {cancelled:false};}finally{state.operationBusy=false;}
 }
 async function renderEvaluation(){
   renderIntentEvaluation();
@@ -1750,6 +1753,17 @@ const lifeAdapter={
     $('#tfConfirm').innerHTML=serverProposalHTML(result.proposal,result.checks);return result;
   }),
 };
+const actionsAdapter={
+  context:()=>({persona:state.persona,completed:S().completed&&S().profile.readConsent,serverMode:state.serverMode,accountRevision:S().revision}),
+  load:()=>lifeRequest(()=>bankAPI.insights()),
+  open:view=>showView(['console','life','bills','transfer','profile','actions'].includes(view)?view:'actions',{refreshActions:false}),
+  openProfile:()=>{showView('profile');if(!S().completed)window.TroposProfileUI?.openLogin();},
+  cancelSubscription:async id=>{
+    if(!state.serverMode)throw new Error('请先启动服务端沙箱。');
+    return cancelServerSubscription(id,{propagate:true});
+  },
+  notice:message=>toast(message),
+};
 const profileAdapter={
   getData:profileUIData,
   selectAccount:async id=>{if(PERSONAS[id])await switchPersona(id,true);},
@@ -1822,5 +1836,6 @@ async function startWorkbench(){
   for(const k of Object.keys(PERSONAS))if(!state.per[k].profileSnapshot)state.per[k].profileSnapshot=profileSnapshot(k);
   if(!served)log('SYSTEM','本地交互样例已就绪','请运行服务端版本以体验持久账本和模型工具链');
   renderAll();addAgent(T().welcome);window.TroposProfileUI.init(profileAdapter);window.TroposLifeUI?.init(lifeAdapter);
+  window.TroposActions?.init(actionsAdapter);window.TroposActions?.refresh();
 }
 startWorkbench();

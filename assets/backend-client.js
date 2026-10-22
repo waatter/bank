@@ -58,6 +58,7 @@
     evaluation(){return this.request('/api/evaluation/latest')}
     intentEvaluation(){return this.request('/api/evaluation/intents')}
     life(){return this.request('/api/life')}
+    insights(){return this.request('/api/insights')}
     lifeSettings(body){return this.request('/api/life/settings',{method:'POST',body})}
     lifeScene(body){return this.request('/api/life/scenes',{method:'POST',body})}
     lifeCancel(id,body){return this.request('/api/life/scenes/'+encodeURIComponent(id)+'/cancel',{method:'POST',body})}

@@ -457,10 +457,31 @@ def agent_response(service, user_id, message, planner):
         result.update(drafted)
         result["reply"] = "转账草案已生成，请核对收款人、金额、时间与检查结果，再单独点击确认。尚未扣款。"
         result["trace"].append({"engine": "ARGOS", "detail": "模型只草拟；余额、安全线、收款人与收入依赖检查由服务端确定，执行仍需单独确认。"})
-    elif action == "bills":
-        result["reply"] = "已读取当前合成账本的账单，请查看下方账单与现金路径。未确认的延期不会改善正式预测。"
-    elif action == "subscriptions":
-        result["reply"] = "已读取当前合成订阅。取消任一订阅前，请在对应条目单独确认，并以返回的取消回执为准。"
+    elif action in {"bills", "subscriptions"}:
+        if result["snapshot"]["profile"].get("readConsent") is not True:
+            result["reply"] = "请先建立画像并确认读取模拟账本，再查看账单分析与续费安排。"
+        else:
+            from .insights import build_insights
+            insights = build_insights(result["snapshot"])
+            result["insights"] = insights
+            if action == "bills":
+                spending, liquidity = insights["spending"], insights["liquidity"]
+                categories = "、".join(row["name"] for row in spending["categories"][:3]) or "暂无出账分类"
+                result["reply"] = (
+                    f"当前可见合成流水共 {spending['rowCount']} 笔，出账 ¥{spending['outflow']:,.2f}，"
+                    f"主要分类为{categories}。这不是完整月报，转账与还款也不等于消费。"
+                    f"未来 30 天预计最低余额 ¥{liquidity['minBalance']:,.2f}，"
+                    f"现金底线缺口 ¥{liquidity['gap']:,.2f}；有 {len(spending['review'])} 条规则核对线索，非欺诈结论。"
+                )
+            else:
+                active = [row for row in insights["subscriptions"] if row["status"] == "active"]
+                review = [row for row in active if row["flag"] in {"低使用", "重复"}]
+                result["reply"] = (
+                    f"当前有 {len(active)} 项有效合成订阅，其中 {len(review)} 项在资料中标记为低使用或重复。"
+                    "可以逐项比较取消后的现金路径；每次取消仍需你确认并核对回执。"
+                    "减少的是未来预计扣费，今天余额不会增加，也不会自动转入储蓄。"
+                )
+            result["trace"].append({"engine": "METIS", "detail": "统计与单项续费反事实来自当前账本快照和整数分计算；模型不决定金额，不执行流水备注。"})
     elif action == "plan":
         if result["snapshot"]["profile"].get("readConsent") is not True:
             result["reply"] = "请先完成画像并主动确认读取模拟账本，再生成个人资金计划。当前没有生成财务方案或取得操作授权。"

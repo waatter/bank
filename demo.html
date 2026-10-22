@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/demo.css">
   <link rel="stylesheet" href="assets/profile-ui.css">
   <link rel="stylesheet" href="assets/life-ui.css">
+  <link rel="stylesheet" href="assets/action-ui.css">
 </head>
 <body data-persona="A" data-view="console">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -46,6 +47,7 @@
   <span class="pill" id="runtimeStatus">本地交互样例</span>
   <nav class="tabs" aria-label="页面">
     <button class="active" data-view="console"><svg class="ic"><use href="#i-window"/></svg>窗</button>
+    <button data-view="actions"><svg class="ic"><use href="#i-check"/></svg>行动</button>
     <button data-view="life"><svg class="ic"><use href="#i-heart"/></svg>生活规划</button>
     <button data-view="cool"><svg class="ic"><use href="#i-hourglass"/></svg>先别买<em>双十一</em></button>
     <button data-view="bills"><svg class="ic"><use href="#i-book"/></svg>账本</button>
@@ -58,6 +60,7 @@
 </header>
 
 <main class="content">
+  <section class="view" id="view-actions"><div id="actionMount"></div></section>
   <section class="view" id="view-life"><div id="lifeMount"></div></section>
   <section class="view" id="view-profile"><div id="profileMount"></div></section>
   <section class="view" id="view-evaluation"><div class="page-title"><h1>让结果经得起核验。</h1><p class="lead">同一批合成账户、同一组事件、同一个安全网关。这里展示实际运行保存的规则对照与任务检查，不代表模型能力或真实用户收益。</p></div><article class="panel" id="evaluationReport"></article><article class="panel proposal-history" id="intentEvaluationReport"></article></section>
@@ -71,6 +74,7 @@
     </div>
     <div class="legend" id="legend"></div>
     <div class="sill" id="sill"></div>
+    <div id="actionPreview"></div>
     <div id="consoleNudge"></div>
     <article class="panel life-entry"><div><span class="pill">TROPOS 2.0</span><h2>生活有安排，钱也有余地。</h2><p>把工作、家庭、搬家或购物放进同一张现金日历，比较不同安排在收入延期时的代价。</p></div><button class="btn solid" data-act="go" data-view="life">开始生活规划</button></article>
 
@@ -165,13 +169,13 @@
   <!-- ============ 账本 ============ -->
   <section class="view" id="view-bills">
     <div class="page-title">
-      <h1>这个月的账本</h1>
-      <p class="lead">每个分类都能追到具体的交易。交易备注是别人写的字，只能看，不能指挥 TROPOS 做任何事。</p>
+      <h1>每一笔，都有来处。</h1>
+      <p class="lead">这里展示当前可见的合成流水，非完整月报。分类包含还款与转账，不能直接当作消费总额。附言不作为操作指令。</p>
     </div>
     <div class="figures" id="billKpis"></div>
     <div class="ledger-grid">
       <article class="panel">
-        <div class="block-head"><div><h2>近 30 天流水</h2></div></div>
+        <div class="block-head"><div><h2>当前可见流水</h2></div><button class="btn sm" data-act="go" data-view="actions">查看现金行动</button></div>
         <div class="ribbon" id="catbar"></div>
         <div class="ribbon-legend" id="catlegend"></div>
         <div style="overflow-x:auto"><table class="table"><thead><tr><th>交易</th><th>分类</th><th>时间</th><th class="amt">金额</th></tr></thead><tbody id="txBody"></tbody></table></div>
@@ -240,6 +244,7 @@
 <script src="assets/profile-ui.js"></script>
 <script src="assets/backend-client.js"></script>
 <script src="assets/life-ui.js"></script>
+<script src="assets/action-ui.js"></script>
 <script src="assets/demo.js"></script>
 </body>
 </html>

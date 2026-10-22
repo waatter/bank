@@ -26,6 +26,7 @@ STATIC_FILES = {
     "/assets/profile-ui.js": "assets/profile-ui.js", "/assets/profile-ui.css": "assets/profile-ui.css",
     "/assets/backend-client.js": "assets/backend-client.js",
     "/assets/life-ui.js": "assets/life-ui.js", "/assets/life-ui.css": "assets/life-ui.css",
+    "/assets/action-ui.js": "assets/action-ui.js", "/assets/action-ui.css": "assets/action-ui.css",
 }
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
@@ -248,6 +249,8 @@ class TroposHandler(BaseHTTPRequestHandler):
             return self._json(200, operation(uid, scene_id, body))
         if method == "GET" and path == "/api/state":
             return self._json(200, service.snapshot(uid))
+        if method == "GET" and path == "/api/insights":
+            return self._json(200, service.insights(uid))
         if method == "GET" and path == "/api/proposals":
             return self._json(200, service.proposals(uid))
         if method == "PUT" and path == "/api/profile":
