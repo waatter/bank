@@ -1,8 +1,11 @@
 .venv/
 .local/
+.tmp/
 .env
 .env.*
 !.env.example
+deploy/.env.production
+deploy/data/
 __pycache__/
 *.py[cod]
 *.sqlite*

@@ -42,7 +42,7 @@ class LifeApiTests(unittest.TestCase):
 
     def test_health_version_and_auth_consent(self):
         status,health=self.call('GET','/api/health')
-        self.assertEqual((status,health['version']),(200,'2.0.0'))
+        self.assertEqual((status,health['version']),(200,'3.0.0'))
         self.assertEqual(self.call('GET','/api/life')[0],401)
         token,_=self.login(consent=False)
         self.assertEqual(self.call('GET','/api/life',token=token)[0],403)

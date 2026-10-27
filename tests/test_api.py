@@ -1,5 +1,6 @@
 """Real loopback HTTP + SQLite integration tests; no real banking or paid model API."""
 import concurrent.futures
+import contextlib
 import http.client
 import json
 import sqlite3
@@ -98,8 +99,9 @@ class ApiTests(unittest.TestCase):
 
     def test_session_expiration(self):
         token, _ = self.login()
-        with sqlite3.connect(self.db_path) as database:
+        with contextlib.closing(sqlite3.connect(self.db_path)) as database:
             database.execute("UPDATE sessions SET expires=0")
+            database.commit()
         self.assertEqual(self.request("GET", "/api/state", token=token)[0], 401)
 
     def test_static_allowlist_and_inline_script_nonce(self):

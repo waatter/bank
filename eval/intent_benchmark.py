@@ -167,7 +167,7 @@ def benchmark(*, live_model=False, cases_path=CASES):
     planner = IntentPlanner(config)
     started = time.monotonic()
     source_paths = [ROOT / 'backend/model.py', ROOT / 'backend/service.py', ROOT / 'backend/fixtures.json', Path(__file__)]
-    source_hash = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths}
+    source_hash = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths}
     rows = [run_case(case, planner) for case in dataset['cases']]
     actual_modes = dict(Counter(row['observed']['mode'] or 'error' for row in rows))
     git = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True)
@@ -180,8 +180,8 @@ def benchmark(*, live_model=False, cases_path=CASES):
         'configured_model': config.model if live_model else None,
         'dataset_version': dataset['dataset_version'], 'dataset_origin': dataset['origin'],
         'case_sha256': hashlib.sha256(cases_path.read_bytes()).hexdigest(),
-        'source_sha256': source_hash, 'source_changed_during_run': [str(p.relative_to(ROOT)) for p in source_paths
-            if source_hash[str(p.relative_to(ROOT))] != hashlib.sha256(p.read_bytes()).hexdigest()],
+        'source_sha256': source_hash, 'source_changed_during_run': [p.relative_to(ROOT).as_posix() for p in source_paths
+            if source_hash[p.relative_to(ROOT).as_posix()] != hashlib.sha256(p.read_bytes()).hexdigest()],
         'git_revision': git.stdout.strip() or None, 'working_tree_dirty': bool(dirty.stdout.strip()),
         'runtime_seconds': round(time.monotonic() - started, 3),
         'summary': aggregate(rows), 'summary_by_category': {cat: aggregate([r for r in rows if r['category'] == cat])

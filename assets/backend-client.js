@@ -2,11 +2,19 @@
 (function () {
   'use strict';
   class SandboxClient {
-    constructor(){this.token=null;this.persona=null;this.health=null;this.sessions={};this.selectionSequence=0;
+    constructor(){this.token=null;this.persona=null;this.health=null;this.sessions={};this.selectionSequence=0;this.accessToken=null;
+      try{
+        const stored=sessionStorage.getItem('tropos-lan-access');
+        const query=typeof window?.location?.search==='string'?new URLSearchParams(window.location.search).get('access'):null;
+        const candidate=query||stored;
+        if(typeof candidate==='string'&&/^[A-Za-z0-9_-]{24,128}$/.test(candidate)){this.accessToken=candidate;sessionStorage.setItem('tropos-lan-access',candidate);}
+        if(query&&window.history?.replaceState){const clean=new URL(window.location.href);clean.searchParams.delete('access');window.history.replaceState(null,'',clean.pathname+clean.search+clean.hash);}
+      }catch(_){}
       try{const stored=JSON.parse(sessionStorage.getItem('tropos-api-sessions')||'{}');if(stored&&typeof stored==='object'&&!Array.isArray(stored))this.sessions=stored;}catch(_){}
     }
     async request(path,{method='GET',body,authenticated=true,token=this.token}={}){
       const headers={'Content-Type':'application/json'};
+      if(this.accessToken)headers['X-Tropos-Access']=this.accessToken;
       if(authenticated){if(!token)throw new Error('请先进入模拟账户');headers.Authorization='Bearer '+token;}
       let response;
       try{response=await fetch(path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(65000)});}
@@ -59,6 +67,23 @@
     intentEvaluation(){return this.request('/api/evaluation/intents')}
     life(){return this.request('/api/life')}
     insights(){return this.request('/api/insights')}
+    shoppingProviders(){return this.request('/api/shopping/providers')}
+    shoppingSearch(body){return this.request('/api/shopping/search',{method:'POST',body})}
+    shoppingCheckout(body){return this.request('/api/shopping/checkout',{method:'POST',body})}
+    shoppingConfirm(checkout,requestKey){return this.request('/api/shopping/checkouts/'+encodeURIComponent(checkout.id)+'/confirm',{method:'POST',body:{confirmation:true,confirmationToken:checkout.confirmationToken,requestKey}})}
+    shoppingOrders(){return this.request('/api/shopping/orders')}
+    shoppingOrder(id){return this.request('/api/shopping/orders/'+encodeURIComponent(id))}
+    shoppingAdvance(id){return this.request('/api/shopping/orders/'+encodeURIComponent(id)+'/advance',{method:'POST',body:{confirmation:true}})}
+    paotuiStatus(){return this.request('/api/shopping/paotui')}
+    paotuiAuthStart(){return this.request('/api/shopping/paotui/auth/start',{method:'POST',body:{}})}
+    paotuiAuthComplete(){return this.request('/api/shopping/paotui/auth/complete',{method:'POST',body:{}})}
+    paotuiLogout(){return this.request('/api/shopping/paotui/logout',{method:'POST',body:{confirmation:true}})}
+    paotuiAddresses(){return this.request('/api/shopping/paotui/addresses')}
+    paotuiPreview(body){return this.request('/api/shopping/paotui/preview',{method:'POST',body})}
+    paotuiConfirm(preview,requestKey,highAmountConfirmation=false){return this.request('/api/shopping/paotui/previews/'+encodeURIComponent(preview.id)+'/confirm',{method:'POST',body:{confirmation:true,confirmationToken:preview.confirmationToken,requestKey,highAmountConfirmation}})}
+    paotuiOrders(){return this.request('/api/shopping/paotui/orders')}
+    paotuiPayment(id){return this.request('/api/shopping/paotui/orders/'+encodeURIComponent(id)+'/payment',{method:'POST',body:{}})}
+    paotuiOrderStatus(id){return this.request('/api/shopping/paotui/orders/'+encodeURIComponent(id)+'/status',{method:'POST',body:{}})}
     lifeSettings(body){return this.request('/api/life/settings',{method:'POST',body})}
     lifeScene(body){return this.request('/api/life/scenes',{method:'POST',body})}
     lifeCancel(id,body){return this.request('/api/life/scenes/'+encodeURIComponent(id)+'/cancel',{method:'POST',body})}

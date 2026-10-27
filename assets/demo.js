@@ -486,6 +486,7 @@ function showView(v, {refreshActions=true}={}) {
   if (v === 'transfer') refreshServerProposals();
   if(v==='life')state.operationBusy||state.chatBusy?window.TroposLifeUI?.render():window.TroposLifeUI?.refresh();
   if(v==='actions')state.operationBusy||state.chatBusy||!refreshActions?window.TroposActions?.render():window.TroposActions?.refresh();
+  if(v==='shopping')state.operationBusy||state.chatBusy?window.TroposShopping?.render():window.TroposShopping?.refresh();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 async function switchPersona(k, silent = false) {
@@ -503,6 +504,7 @@ async function switchPersona(k, silent = false) {
   state.applySeq++;
   renderAll();
   if(state.view==='transfer')refreshServerProposals();
+  if(state.view==='shopping')window.TroposShopping?.refresh();
   const p = P();
   if (!silent) {
     $('#chatLog').insertAdjacentHTML('beforeend', `<div class="divider">换到${p.name}的窗前</div>`);
@@ -1764,6 +1766,27 @@ const actionsAdapter={
   },
   notice:message=>toast(message),
 };
+const shoppingAdapter={
+  context:()=>({persona:state.persona,completed:S().completed&&S().profile.readConsent,serverMode:state.serverMode,accountRevision:S().revision}),
+  providers:()=>bankAPI.shoppingProviders(),
+  search:body=>bankAPI.shoppingSearch(body),
+  checkout:body=>bankAPI.shoppingCheckout(body),
+  confirm:(checkout,key)=>bankAPI.shoppingConfirm(checkout,key),
+  orders:()=>bankAPI.shoppingOrders(),
+  advance:id=>bankAPI.shoppingAdvance(id),
+  paotuiStatus:()=>bankAPI.paotuiStatus(),
+  paotuiAuthStart:()=>bankAPI.paotuiAuthStart(),
+  paotuiAuthComplete:()=>bankAPI.paotuiAuthComplete(),
+  paotuiLogout:()=>bankAPI.paotuiLogout(),
+  paotuiAddresses:()=>bankAPI.paotuiAddresses(),
+  paotuiPreview:body=>bankAPI.paotuiPreview(body),
+  paotuiConfirm:(preview,key,high)=>bankAPI.paotuiConfirm(preview,key,high),
+  paotuiOrders:()=>bankAPI.paotuiOrders(),
+  paotuiPayment:id=>bankAPI.paotuiPayment(id),
+  paotuiOrderStatus:id=>bankAPI.paotuiOrderStatus(id),
+  handleSnapshot:snapshot=>{if(snapshot?.user?.persona===state.persona&&bankAPI.persona===state.persona){applyServerSnapshot(snapshot,{preserveTransfer:true});renderAll();}},
+  notice:message=>toast(message),
+};
 const profileAdapter={
   getData:profileUIData,
   selectAccount:async id=>{if(PERSONAS[id])await switchPersona(id,true);},
@@ -1837,5 +1860,6 @@ async function startWorkbench(){
   if(!served)log('SYSTEM','本地交互样例已就绪','请运行服务端版本以体验持久账本和模型工具链');
   renderAll();addAgent(T().welcome);window.TroposProfileUI.init(profileAdapter);window.TroposLifeUI?.init(lifeAdapter);
   window.TroposActions?.init(actionsAdapter);window.TroposActions?.refresh();
+  window.TroposShopping?.init(shoppingAdapter);
 }
 startWorkbench();

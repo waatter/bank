@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="assets/profile-ui.css">
   <link rel="stylesheet" href="assets/life-ui.css">
   <link rel="stylesheet" href="assets/action-ui.css">
+  <link rel="stylesheet" href="assets/shopping-ui.css">
 </head>
 <body data-persona="A" data-view="console">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -48,6 +49,7 @@
   <nav class="tabs" aria-label="页面">
     <button class="active" data-view="console"><svg class="ic"><use href="#i-window"/></svg>窗</button>
     <button data-view="actions"><svg class="ic"><use href="#i-check"/></svg>行动</button>
+    <button data-view="shopping"><svg class="ic"><use href="#i-wallet"/></svg>帮我买</button>
     <button data-view="life"><svg class="ic"><use href="#i-heart"/></svg>生活规划</button>
     <button data-view="cool"><svg class="ic"><use href="#i-hourglass"/></svg>先别买<em>双十一</em></button>
     <button data-view="bills"><svg class="ic"><use href="#i-book"/></svg>账本</button>
@@ -61,6 +63,7 @@
 
 <main class="content">
   <section class="view" id="view-actions"><div id="actionMount"></div></section>
+  <section class="view" id="view-shopping"><div id="shoppingMount"></div></section>
   <section class="view" id="view-life"><div id="lifeMount"></div></section>
   <section class="view" id="view-profile"><div id="profileMount"></div></section>
   <section class="view" id="view-evaluation"><div class="page-title"><h1>让结果经得起核验。</h1><p class="lead">同一批合成账户、同一组事件、同一个安全网关。这里展示实际运行保存的规则对照与任务检查，不代表模型能力或真实用户收益。</p></div><article class="panel" id="evaluationReport"></article><article class="panel proposal-history" id="intentEvaluationReport"></article></section>
@@ -245,6 +248,7 @@
 <script src="assets/backend-client.js"></script>
 <script src="assets/life-ui.js"></script>
 <script src="assets/action-ui.js"></script>
+<script src="assets/shopping-ui.js"></script>
 <script src="assets/demo.js"></script>
 </body>
 </html>
