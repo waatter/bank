@@ -35,7 +35,8 @@
     const failedChecks = list(step.checks).filter(c => !c.ok);
     const head = `<div class="ms-head"><span class="ms-title">${esc(step.title)}</span>${step.amount?`<span class="ms-amt num">${money(step.amount)}</span>`:''}</div>`;
     const meta = `<div class="ms-meta">${isClarify?'<span class="ms-tier tq">澄清</span>':`<span class="ms-tier ${tc}">${tname}</span><span class="ms-rule">${esc(trule)}</span>`}<span class="ms-status ${tone}">${esc(label)}</span></div>`;
-    const clause = step.clause && step.tool !== 'guard' ? `<p class="ms-clause">“${esc(step.clause)}”</p>` : '';
+    const clause = step.tool === 'guard' || !step.clause ? '' : step.source && step.source !== step.clause
+      ? `<p class="ms-clause">你说“${esc(step.source)}” → 理解为“${esc(step.clause)}”</p>` : `<p class="ms-clause">“${esc(step.clause)}”</p>`;
     const note = step.note ? `<p class="ms-note">${esc(step.note)}</p>` : '';
     const options = planned && list(step.options).length ? `<div class="ms-options">${step.options.map(o=>`<button type="button" class="ms-chip" data-mission-ask="${esc(o.message)}">${esc(o.label)}</button>`).join('')}</div>` : '';
     const checks = list(step.checks).length ? `<details class="ms-checks"${failedChecks.length?' open':''}><summary>${failedChecks.length?`${failedChecks.length} 项未通过`:`${step.checks.length} 项核验通过`}</summary><ul>${step.checks.map(c=>`<li class="${c.ok?'':'no'}"><i>${c.ok?'✓':'×'}</i><b>${esc(c.name)}</b>${esc(c.detail)}</li>`).join('')}</ul></details>` : '';

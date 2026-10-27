@@ -124,7 +124,7 @@ body[data-persona="C"] .wcard.credit{background:linear-gradient(135deg,#2b2f3a,#
 body[data-persona="C"] .gd-free form{border-radius:var(--r-m)}
 .gd-free input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:14.5px}
 .gd-group{margin-bottom:26px}
-.gd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.gd-grid{display:grid;align-items:start;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .gd-card{display:flex;flex-direction:column;gap:8px;padding:16px 18px;border-radius:var(--r-m);background:var(--surface);box-shadow:var(--shadow);border-left:3px solid var(--bad);min-width:0}
 .gd-card.control{border-left-color:var(--ok)}
 .gd-card header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
@@ -147,4 +147,17 @@ body[data-persona="C"] .gd-free form{border-radius:var(--r-m)}
 .gd-steps li.s-ready span{color:var(--warn)}
 .gd-limits ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink2)}
 @media(max-width:900px){.gd-score{grid-template-columns:1fr 1fr}.gd-how{grid-column:1/-1}}
-@media(max-width:640px){.gd-score{grid-template-columns:1fr}.gd-free form{border-radius:var(--r-m);flex-direction:column;padding:10px}.gd-free input{padding:6px 4px}}
+@media(max-width:640px){.gd-score{grid-template-columns:1fr 1fr;gap:12px}.gd-score>div>b{font-size:32px}.gd-free form{border-radius:var(--r-m);flex-direction:column;padding:10px}.gd-free input{padding:6px 4px}}
+
+/* ---------- 演示导演 ---------- */
+.dr-open{height:30px;font-size:12.5px;padding:0 12px;flex:none}
+.director{position:fixed;right:22px;bottom:22px;z-index:60;width:min(380px,calc(100vw - 32px));padding:16px 18px 14px;border-radius:var(--r-l);background:var(--surface);color:var(--ink);box-shadow:0 24px 60px -24px rgba(0,0,0,.45),0 0 0 1px var(--line2);animation:in .3s ease both}
+.director h3{font-size:18px;margin:4px 0 6px}
+.director p{margin:0;font:14px/1.8 var(--voice);color:var(--ink2)}
+.dr-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--accent);letter-spacing:.12em}
+.dr-head button{border:0;background:none;font-size:20px;line-height:1;color:var(--mute)}
+.dr-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.dr-bar{height:3px;margin-top:12px;border-radius:3px;background:var(--surface2);overflow:hidden}
+.dr-bar i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.dr-focus{outline:3px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:4px;border-radius:var(--r-m);transition:outline-color .6s}
+@media(max-width:640px){.dr-open{display:none}.director{right:16px;bottom:96px}}

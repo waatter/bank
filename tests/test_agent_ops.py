@@ -180,3 +180,73 @@ class MissionTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ModelDecompositionTest(unittest.TestCase):
+    """The model may only rephrase; every step must point back to the user's own words."""
+
+    @classmethod
+    def setUpClass(cls):
+        import threading
+        from http.server import ThreadingHTTPServer
+        from tests.test_model import MockProvider
+        cls.Mock = MockProvider
+        cls.upstream = ThreadingHTTPServer(('127.0.0.1', 0), MockProvider)
+        cls.thread = threading.Thread(target=cls.upstream.serve_forever, daemon=True)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.upstream.shutdown()
+        cls.upstream.server_close()
+        cls.thread.join()
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.bank = BankService(Path(self.tmp.name) / 'test.sqlite3')
+        self.ops = AgentOps(self.bank)
+        session = self.bank.session('B')
+        self.uid = session['snapshot']['user']['id']
+        self.bank.save_profile(self.uid, dict(session['snapshot']['profile'], readConsent=True))
+        self.planner = IntentPlanner(ModelConfig('TEST-ONLY-KEY', f'http://127.0.0.1:{self.upstream.server_port}', 'mock', 1))
+        self.message = '那个健身卡月费太浪费了停掉吧，房租2000给张阿姨打过去，卡好像丢了先锁上信用卡尾号2203'
+
+    def tearDown(self):
+        self.tmp.cleanup()
+        self.Mock.response = {'action': 'transfer', 'to': '妈妈', 'amount': 100, 'when': 'now', 'memo': ''}
+
+    def respond(self, steps):
+        self.Mock.response = {'steps': steps}
+        return agent_response(self.bank, self.uid, self.message, self.planner, self.ops)
+
+    def test_grounded_model_split_keeps_sources(self):
+        result = self.respond([
+            {'source': '那个健身卡月费太浪费了停掉吧', 'request': '取消健身房月卡'},
+            {'source': '房租2000给张阿姨打过去', 'request': '给张阿姨转2000元，备注房租'},
+            {'source': '卡好像丢了先锁上信用卡尾号2203', 'request': '冻结信用卡尾号2203'}])
+        self.assertEqual(result['splitMode'], 'llm')
+        steps = result['mission']['steps']
+        self.assertEqual([s['tool'] for s in steps], ['cancel_subscription', 'transfer', 'card_freeze'])
+        self.assertEqual(steps[1]['args'], {'to': 'landlord', 'amount': 2000.0, 'when': 'now', 'memo': '房租'})
+        self.assertEqual(steps[0]['source'], '那个健身卡月费太浪费了停掉吧')
+        self.assertEqual(self.bank.snapshot(self.uid)['balance'], 20000)
+
+    def test_ungrounded_model_output_falls_back_to_rules(self):
+        cases = {
+            'ungrounded_number': [{'source': '房租2000给张阿姨打过去', 'request': '给张阿姨转20000元'}],
+            'ungrounded_source': [{'source': '给王磊（表弟）转2000', 'request': '给王磊（表弟）转2000元'}],
+            'ungrounded_action': [{'source': '那个健身卡月费太浪费了停掉吧', 'request': '挂失信用卡'}],
+            'ungrounded_payee': [{'source': '房租2000给张阿姨打过去', 'request': '给妈妈转2000元'}],
+        }
+        for reason, steps in cases.items():
+            with self.subTest(reason=reason):
+                result = self.respond(steps)
+                self.assertEqual(result['splitMode'], 'rules_fallback')
+                self.assertIn(reason, result['trace'][0]['detail'])
+                self.assertIn('降级', result['reply'])
+
+    def test_dropped_negation_is_rejected(self):
+        self.message = '别冻结信用卡，看看账单'
+        result = self.respond([{'source': '别冻结信用卡', 'request': '冻结信用卡'}, {'source': '看看账单', 'request': '查看账单'}])
+        self.assertEqual(result['splitMode'], 'rules_fallback')
+        self.assertNotIn('card_freeze', [s['tool'] for s in result['mission']['steps'] if s['status'] == 'ready'])

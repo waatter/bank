@@ -37,7 +37,7 @@ STATIC_FILES = {
     "/assets/action-ui.js": "assets/action-ui.js", "/assets/action-ui.css": "assets/action-ui.css",
     "/assets/shopping-ui.js": "assets/shopping-ui.js", "/assets/shopping-ui.css": "assets/shopping-ui.css",
     "/assets/mission-ui.js": "assets/mission-ui.js", "/assets/mission-ui.css": "assets/mission-ui.css",
-    "/assets/guard-ui.js": "assets/guard-ui.js",
+    "/assets/guard-ui.js": "assets/guard-ui.js", "/assets/director.js": "assets/director.js",
 }
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 

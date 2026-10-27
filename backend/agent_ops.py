@@ -170,6 +170,10 @@ class AgentOps:
     def classify(self, db, user_id, clause, subs, cards):
         """把一个分句变成一个工具调用；理解不了或信息不足时返回 clarify，从不猜测。"""
         text = re.sub(r"\s+", "", clause)
+        named_subs = [x for x in subs if x['status'] == 'active' and x['name'].replace(' ', '') in text]
+        if named_subs and re.search(r"取消|退订|停掉|关掉|不要了", text):
+            # “健身房月卡”是订阅，不是银行卡：点名的订阅优先于卡片规则。
+            return ('cancel_subscription', {'subs': [x['id'] for x in named_subs]})
         if '卡' in text and re.search(r"好像|可能|似乎|不确定|不知道", text) and re.search(r"丢|被盗|找不到", text) and not re.search(r"挂失", text):
             # 不确定是否丢失时不挂失（不可逆）；先查看卡片，冻结需用户明说。
             return ('card_status', {'uncertainLoss': True})
@@ -379,10 +383,12 @@ class AgentOps:
         cash = snap['cash']
         return {'min': cash['min'], 'minDay': cash['minDay'], 'free': cash['free'], 'balance': snap['balance']}
 
-    def plan(self, user_id, message, mode='rules'):
+    def plan(self, user_id, message, mode='rules', decomposed=None):
         if not isinstance(message, str) or not 1 <= len(message.strip()) <= 2000:
             raise BankError(400, 'INVALID_MESSAGE', '请输入 1 至 2000 字的请求。')
-        clauses = self.split(message)
+        # 模型只负责把口语改写成规范子请求，且每步都指回原话片段；分类、取数、核验仍由规则完成。
+        clauses = [d['request'] for d in decomposed] if decomposed else self.split(message)
+        sources = [d['source'] for d in decomposed] if decomposed else clauses
         with self.bank._db(True) as db:
             self.bank._consent(db, user_id)
             user, _ = self.bank._user(db, user_id)
@@ -397,7 +403,7 @@ class AgentOps:
                               'status': 'refused', 'note': guarded['question'], 'checks': [], 'args': {}, 'clause': message})
                 self.bank._audit(db, user_id, 'ARGOS', '多步请求被拦截', '消息含跳过确认、伪造指令或引用不存在的历史；未生成任何可执行步骤。')
             card_ref = None
-            for clause in clauses[:8]:
+            for clause, source in list(zip(clauses, sources))[:8]:
                 text = re.sub(r"\s+", "", clause)
                 if '卡' in text:
                     kind, tail = re.search(r"信用卡|借记卡|储蓄卡|工资卡|银行卡", text), re.search(r"尾号\s*(\d{4})", text)
@@ -415,6 +421,7 @@ class AgentOps:
                     if not args['subs']:
                         continue
                 step = self._step(db, user_id, tool, args, deduction, snap, cards, saved, clause)
+                step['source'] = source
                 if step['status'] == 'ready':
                     deduction += step.get('impact', 0)
                     if step['tool'] == 'wealth_subscribe' or (step['tool'] == 'transfer' and step['args']['to'] == 'goal'):
@@ -560,7 +567,7 @@ class AgentOps:
         return True, {'receipt': receipt, 'card': card}
 
     # ------------------------------------------------------------------ 对话入口
-    def respond(self, user_id, message):
+    def respond(self, user_id, message, planner=None):
         """/api/agent 的任务单分支：与单一意图同样只起草，执行仍需逐步授权。"""
         with self.bank._db() as db:
             consent = self.bank._profile(db, user_id).get('readConsent') is True
@@ -568,7 +575,8 @@ class AgentOps:
             return {'mode': 'rules', 'intent': {'action': 'clarify', 'question': '请先建立画像并确认读取模拟账本。'},
                     'snapshot': self.bank.snapshot(user_id), 'reply': '请先完成画像并主动确认读取模拟账本，再让我拆解并草拟多步任务。未执行任何操作。',
                     'trace': [{'engine': 'ARGOS', 'detail': '未取得读取授权，未拆解任务。'}]}
-        result = self.plan(user_id, message)
+        split = planner.decompose(message) if planner is not None else {'mode': 'rules', 'steps': None, 'reason': None}
+        result = self.plan(user_id, message, split['mode'], split['steps'])
         mission, summary = result['mission'], result['mission']['summary']
         if any(step['tool'] == 'guard' for step in mission['steps']):
             return {'mode': 'mission', 'intent': {'action': 'clarify', 'question': mission['steps'][0]['note']}, 'mission': mission,
@@ -581,9 +589,16 @@ class AgentOps:
             parts.append(f"{summary['blocked']} 步被守诺拦下")
         if summary['clarify']:
             parts.append(f"{summary['clarify']} 步需要你补充")
-        reply = '【多步任务单】' + '，'.join(parts) + ('。只读步骤已直接查询；其余步骤尚未执行，勾选授权后按顺序逐项重新核验。' if summary['actionable'] else '。只读步骤已直接查询，没有需要授权的写操作。')
-        trace = [{'engine': 'METIS', 'detail': f"按连接词与标点拆成 {len(mission['steps'])} 个分句，每句映射到一个已注册工具；无法唯一理解的分句改为澄清，不猜测。"},
+        reads = sum(step['tier'] == 0 and step['status'] == 'done' for step in mission['steps'])
+        tail = ('只读的 ' + str(reads) + ' 步已直接查询；') if reads else ''
+        tail += '其余写操作尚未执行，勾选授权后按顺序逐项重新核验。' if summary['actionable'] else '没有需要你授权的写操作，未执行任何改动。'
+        reply = '【多步任务单】' + '，'.join(parts) + '。' + tail
+        how = {'llm': '大模型把口语改写成规范子请求，每步都指回你原话中的片段，金额、尾号、收款人与动作须能在原话中找到',
+               'rules_fallback': f"模型拆分未通过原话核对（{split['reason']}），已改用本地规则按连接词与标点拆分",
+               'rules': '按连接词与标点拆分（本次未调用模型）'}[split['mode']]
+        trace = [{'engine': 'METIS', 'detail': f"{how}，共 {len(mission['steps'])} 步；每步映射到一个已注册工具，无法唯一理解的改为澄清，不猜测。"},
                  {'engine': 'ARGOS', 'detail': '整句先过注入与历史引用拦截；资金步骤按本单累计影响核验余额、底线与 30 天路径。'},
                  {'engine': 'KAIROS', 'detail': '执行时严格按顺序；任一步未通过，后续步骤暂停，已完成步骤保留回执。'}]
-        return {'mode': 'mission', 'intent': {'action': 'mission'}, 'mission': mission,
+        reply = {'llm': '', 'rules_fallback': '【模型拆分未通过核对，已降级本地规则】', 'rules': ''}[split['mode']] + reply
+        return {'mode': 'mission', 'splitMode': split['mode'], 'intent': {'action': 'mission'}, 'mission': mission,
                 'snapshot': result['snapshot'], 'reply': reply, 'trace': trace}
