@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   let adapter = null, data = null, identity = '', loadedIdentity = '', loading = false, busy = false;
-  let sequence = 0, mutationSequence = 0, selectedDay = 0, selectedSubscription = '', message = '', failed = false;
+  let autoKey = '', sequence = 0, mutationSequence = 0, selectedDay = 0, selectedSubscription = '', message = '', failed = false;
   const mount = () => document.getElementById('actionMount');
   const preview = () => document.getElementById('actionPreview');
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -122,6 +122,8 @@
     if (!adapter) return;
     resetForContext(); const gating=gate(), root=mount();
     if (gating) { data=null; loadedIdentity=''; if (loading || busy) { ++sequence; ++mutationSequence; loading=false; busy=false; } if (root) root.innerHTML=heading()+emptyPanel(gating[0],gating[1],!ctx().completed && ctx().serverMode); renderPreview(gating); return; }
+    // 账户版本一变（建立画像、转账、任务单执行后）就自动重读一次，首页卡片不再停在空状态。
+    if (!current() && !loading && !busy && !failed && autoKey !== contextKey(ctx())) { autoKey=contextKey(ctx()); setTimeout(refresh, 0); }
     if (root) {
       root.setAttribute('aria-busy',String(loading || busy));
       root.innerHTML=heading()+(current() ? metrics()+`<section class="ac-panel ac-priorities"><div class="ac-section-head"><div><p class="ac-eyebrow">从这一件开始</p><h2>有依据的下一步</h2></div></div>${actionCards(false)}</section>`+chart()+upcoming()+subscriptions()+spending()+footer() : emptyPanel(loading ? '正在读取当前账户…' : failed ? '这次没有读到行动单' : '准备你的现金行动单',loading ? '核对最新账本、到期事项与取消回执。' : failed ? '请刷新重试。读取成功前，旧行动和旧报告均不可使用。' : '根据当前账户的服务端快照生成。'));

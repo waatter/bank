@@ -111,8 +111,8 @@ def _clarify(question="请重新说明完整的收款人、准确金额和转账
     return {"action": "clarify", "question": question}
 
 
-def _safety_clarification(message):
-    """Shared gate: a model cannot reinterpret denial or missing conversation state."""
+def _safety_guard(message):
+    """Whole-message gate shared by single intents and multi-step missions."""
     text = re.sub(r"\s+", "", message)
     if re.search(
         r"(?:无需|不用|不必|跳过|绕过|免于|免除|自动|直接).{0,20}确认"
@@ -124,6 +124,15 @@ def _safety_clarification(message):
     # Corrections and references need history even if an embedded substring looks executable.
     if re.search(r"刚才|刚刚|上次|上一|之前|先前|前面|那笔|这笔|那个账户|这个账户|原来那|说错|不对|改成|改为|更正|修改|还是|重新转", text):
         return _clarify("当前消息没有上一笔操作的上下文，请重新完整说明事项；未更正或取消任何草案。")
+    return None
+
+
+def _safety_clarification(message):
+    """Shared gate: a model cannot reinterpret denial or missing conversation state."""
+    guarded = _safety_guard(message)
+    if guarded:
+        return guarded
+    text = re.sub(r"\s+", "", message)
     if _TRANSFER_LANGUAGE.search(text) and re.search(
         r"不|没|别|莫|勿|禁止|拒绝|取消|撤销|撤回|停止|作废"
         r"|(?:给|向)(?:他|她|它|他们|她们|对方|那个人|这个人)(?:转|汇)"
@@ -428,7 +437,10 @@ def _unique_registered_payee(payees, name):
     return matches[0] if len(matches) == 1 else None
 
 
-def agent_response(service, user_id, message, planner):
+def agent_response(service, user_id, message, planner, ops=None):
+    if ops is not None and _safety_guard(message) is None and ops.wants_mission(message, ops.split(message)):
+        # Compound requests and card or wealth tools become a mission: drafted steps only.
+        return ops.respond(user_id, message)
     result = planner.understand(message)
     intent = result["intent"]
     action = intent["action"]
