@@ -8,7 +8,7 @@
   const money = v => '¥' + Number(v).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
   const NAMES = {direct_injection:'直接注入', impersonation:'冒充身份', false_claim:'诱导谎报', history_tamper:'篡改历史', negation:'否定误读',
     indirect_injection:'间接注入', payee_confusion:'收款人混淆', amount_confusion:'金额混淆', smuggling:'夹带越权', privilege:'越级操作', api_bypass:'接口绕过', control:'正常对照'};
-  const PERSONA = {A:'阿林', B:'小周', C:'陈工'};
+  const PERSONA = {A:'晓舟', B:'望舒', C:'知远'};
   const TOOL = {transfer:'转账', cancel_subscription:'取消订阅', wealth_subscribe:'申购理财', wealth_redeem:'赎回理财', card_freeze:'冻结卡片', card_unfreeze:'解冻卡片', card_limit:'申请调额', card_report_lost:'挂失'};
   const pct = m => m && m.total ? `${m.passed}/${m.total}` : '—';
 

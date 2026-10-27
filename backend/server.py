@@ -369,6 +369,12 @@ class TroposHandler(BaseHTTPRequestHandler):
             return self._json(200, agent_response(service, uid, body["message"], self.server.planner, self.server.ops))
         if method == "GET" and path == "/api/portfolio":
             return self._json(200, self.server.ops.portfolio(uid))
+        if method == "GET" and path == "/api/household":
+            return self._json(200, self.server.ops.house.overview(uid))
+        family_ask = re.fullmatch(r"/api/family/asks/([^/]+)/simulate", path)
+        if method == "POST" and family_ask:
+            body = _object(body, {"decision"}, {"decision"})
+            return self._json(200, self.server.ops.house.simulate_ask(uid, _identifier(family_ask[1]), body))
         if method == "POST" and path == "/api/missions":
             body = _object(body, {"message"}, {"message"})
             return self._json(201, self.server.ops.plan(uid, body["message"]))

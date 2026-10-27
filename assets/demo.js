@@ -40,7 +40,7 @@ const injectionTx = { time: '10/15 09:12', merchant: '未知商户退款', cat: 
 
 const PERSONAS = {
   A: {
-    name: '阿林', initial: '林', color: '#cfe4da', tag: '灵活收入', tone: 'protect',
+    name: '晓舟', meaning: '晓是清晨，舟是小船：收入像潮水，先让船稳住。', initial: '舟', color: '#cfe4da', tag: '灵活收入', tone: 'protect',
     desc: '自由设计师，工资到账日不固定；房租、信用卡和课程尾款是近期的刚性支出。',
     balance: 20000, reserve: 8000, daily: 110, income: 6500, salaryDay: 12,
     buffer: '现金缓冲约 1.6 个月',
@@ -81,7 +81,7 @@ const PERSONAS = {
     ],
   },
   B: {
-    name: '小周', initial: '周', color: '#f4d4ca', tag: '多笔分期', tone: 'recover',
+    name: '望舒', meaning: '望舒是古人对月亮的称呼：夜里也有光，从分期里慢慢舒展开。', initial: '舒', color: '#f4d4ca', tag: '多笔分期', tone: 'recover',
     desc: '信用卡与多个平台分期叠加，最近常在深夜刷直播间；每月账单多且分散。',
     balance: 20000, reserve: 6000, daily: 130, income: 11000, salaryDay: 12,
     buffer: '现金缓冲约 0.9 个月',
@@ -127,7 +127,7 @@ const PERSONAS = {
     ],
   },
   C: {
-    name: '陈工', initial: '陈', color: '#d8e0ee', tag: '储备充足', tone: 'grow',
+    name: '知远', meaning: '知远：看得远，算得清，按计划一步步走。', initial: '远', color: '#d8e0ee', tag: '储备充足', tone: 'grow',
     desc: '收入稳定，另有 ¥30,000 独立应急金；三个月后有一次家庭旅行。',
     balance: 20000, reserve: 8000, daily: 90, income: 14000, salaryDay: 10,
     buffer: '另有独立应急金 ¥30,000',
@@ -415,9 +415,9 @@ function modal({ title, body, ok = '确认', cancel = '取消', okClass = 'solid
 /* ------------------------------------------------------------------ 三扇窗：每位用户的时刻、口吻与风景 */
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 const MOOD = { high: ['需要多照顾一点', 'bad'], mid: ['留点心就好', 'warn'], low: ['挺稳的', 'ok'] };
-// 阿林：收入不定，最想知道「稳不稳」——清晨，留白，一次只给一个结论。
-// 小周：深夜下单、分期叠加，怕被评判——夜里，暖灯，温和不催促。
-// 陈工：工程师，要精确和掌控——正午，网格，数字先行。
+// 晓舟：收入不定，最想知道「稳不稳」——清晨，留白，一次只给一个结论。
+// 望舒：深夜下单、分期叠加，怕被评判——夜里，暖灯，温和不催促。
+// 知远：工程师，要精确和掌控——正午，网格，数字先行。
 const TONE = {
   A: {
     clock: [7, 40], scene: 'dawn', place: '清晨',
@@ -533,7 +533,7 @@ async function switchPersona(k, silent = false) {
 }
 function renderPersonaSwitch() {
   $('#personaSwitch').innerHTML = Object.entries(PERSONAS).map(([k, p]) =>
-    `<button role="tab" aria-selected="${k === state.persona}" class="win ${k} ${k === state.persona ? 'active' : ''}" data-persona="${k}" title="${p.name}的窗：${TONE[k].place}">
+    `<button role="tab" aria-selected="${k === state.persona}" class="win ${k} ${k === state.persona ? 'active' : ''}" data-persona="${k}" title="${p.name} · ${TONE[k].place}：${p.meaning}">
       <i></i><span>${p.name}<small>${TONE[k].place}</small></span></button>`).join('');
 }
 
@@ -567,6 +567,7 @@ function renderConsole() {
     ${modes.map(([n, v]) => `<div class="mode"><span>${n}</span><div class="track"><div class="fill" style="width:${v}%"></div></div><b>${v}%</b></div>`).join('')}
     <div class="tags"><span>30 天要付 ${money(obligations(p))}</span><span>${p.buffer}</span>
       ${st.salaryReceived ? '<span>本期工资已模拟到账</span>' : st.shocked ? `<span class="hot">工资延到 ${md(cp.salaryDay)}</span>` : `<span>工资预计 ${md(cp.salaryDay)}</span>`}</div>
+    <p class="fine name-meaning">${esc(p.name)} · ${esc(p.meaning)}</p>
     <p class="fine">你确认的目标：${esc(p.goal.name)}。画像变化不会替你授权转账。</p>
     <button class="btn sm" data-act="go" data-view="profile">查看依据与更新记录</button>
     <div class="partners">${Object.entries(PARTNER_LINES).map(([k, line]) => `<div class="partner">${PAL[k]}<div><b>${ENG[k].zh}<small>${k}</small></b><span>${line}</span></div></div>`).join('')}</div>`;

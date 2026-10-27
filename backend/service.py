@@ -528,7 +528,7 @@ class BankService:
             for tx in ids:
                 db.execute('DELETE FROM entries WHERE transaction_id=?', (tx,))
             # Optional v2 planning tables share this reset transaction.
-            for table in ('life_scenes', 'life_state', 'life_plan_receipts', 'shopping_searches', 'shopping_checkouts', 'shopping_orders', 'cards', 'missions'):
+            for table in ('life_scenes', 'life_state', 'life_plan_receipts', 'shopping_searches', 'shopping_checkouts', 'shopping_orders', 'cards', 'missions', 'household'):
                 if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone():
                     db.execute('DELETE FROM ' + table + ' WHERE user_id=?', (user_id,))
             for table in ['profiles','authorizations','accounts','counterparties','transactions','idempotency','proposals','plans','events','audit','profile_updates']:

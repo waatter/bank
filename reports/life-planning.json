@@ -1,6 +1,6 @@
 {
   "benchmark": "TROPOS METIS-LIFE-2 known synthetic mechanism regression",
-  "generated_at": "2026-10-22T09:48:40.165741+00:00",
+  "generated_at": "2026-10-27T15:46:18.949034+00:00",
   "seed": 20261021,
   "random_sampling": false,
   "seed_use": "稳定合成场景标识；没有随机抽样",
@@ -41,24 +41,38 @@
       "combined"
     ]
   },
-  "source_sha256": "ad52331b99768a3a5f81cef3946c96171e5279704196642ad115bc3fa83a9b27",
+  "source_sha256": "325d28ef5cf07579f57215ca767e2da8957056d248917d41aee455e8300bbf51",
   "source_files_sha256": {
     "backend/life_planner.py": "1ca62e103ba1f712d0bb4295d33c619dc5be3bab9830c763ad888a2b7d153912",
     "backend/life_service.py": "17b815b18da86bca7f4d1182638b84ed9b2efaeffd59894856154a9d906d648d",
-    "backend/service.py": "d30589f53099183f4d4552d41847a94788d7e275ff71dc6e605bfaad303c02b7",
-    "backend/fixtures.json": "caa90b2f815ebece61f0d669773264663a89aec0c38626fc2303f10fd0a21b47",
+    "backend/service.py": "99da7597d9a0b0ea2f7e6bf041a505405d7c35f47dbfffcc2d88c94ca60bece7",
+    "backend/fixtures.json": "b04b50c8ee53c95899de565bc28d3f3b60a4661ea9caefbcd0c8c48dc3cfe50d",
     "eval/life_benchmark.py": "7db6281c837e9d75ca22f5aeaf7a402becf5f32ed5676e072736759b4daa7d84"
   },
   "catalogue_sha256": "dce09193a1f21e29d84b503591fddad608eb575b129bb61d86852e0d3556eb54",
   "runtime": {
-    "seconds": 1.076,
-    "python": "3.12.2",
-    "platform": "macOS-26.6.1-arm64-arm-64bit"
+    "seconds": 1.659,
+    "python": "3.13.16",
+    "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39"
   },
   "git": {
-    "revision": "b7cb3bc6e32c42119d642bd3127014d0ce042566",
-    "dirty": false,
-    "status": [],
+    "revision": "6738cbe6c0ec388c3e9913cd507aff7b27e13083",
+    "dirty": true,
+    "status": [
+      "M README.md",
+      " M assets/demo.css",
+      " M assets/demo.js",
+      " M assets/director.js",
+      " M assets/guard-ui.js",
+      " M backend/fixtures.json",
+      " M \"docs/TROPOS_3.1_\\350\\265\\233\\351\\242\\230\\345\\257\\271\\347\\205\\247\\344\\270\\216\\346\\274\\224\\347\\244\\272.md\"",
+      " M \"docs/\\344\\272\\211\\345\\206\\240\\350\\267\\257\\347\\272\\277\\344\\270\\216\\345\\212\\250\\346\\200\\201\\347\\224\\273\\345\\203\\217.md\"",
+      " M \"docs/\\345\\276\\200\\345\\261\\212\\350\\216\\267\\345\\245\\226\\344\\272\\247\\345\\223\\201\\345\\257\\271\\346\\240\\207\\344\\270\\216\\345\\242\\236\\345\\274\\272\\350\\256\\241\\345\\210\\222.md\"",
+      " M index.html",
+      " M reports/life-planning.json",
+      " M reports/life-planning.md",
+      " M tests/backend-client.cjs"
+    ],
     "status_available": true
   },
   "summary": {
@@ -573,7 +587,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -1392,7 +1406,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -2211,7 +2225,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -3030,7 +3044,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -3849,7 +3863,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -4668,7 +4682,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -5487,7 +5501,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -6306,7 +6320,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -7155,7 +7169,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -8073,7 +8087,7 @@
           "user": {
             "id": "demo_A",
             "persona": "A",
-            "name": "阿林",
+            "name": "晓舟",
             "revision": 1
           }
         }
@@ -9003,7 +9017,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -9852,7 +9866,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -10701,7 +10715,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -11550,7 +11564,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -12399,7 +12413,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -13248,7 +13262,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -14097,7 +14111,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -14946,7 +14960,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -15825,7 +15839,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -16773,7 +16787,7 @@
           "user": {
             "id": "demo_B",
             "persona": "B",
-            "name": "小周",
+            "name": "望舒",
             "revision": 1
           }
         }
@@ -17657,7 +17671,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -18460,7 +18474,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -19263,7 +19277,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -20066,7 +20080,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -20869,7 +20883,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -21672,7 +21686,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -22475,7 +22489,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -23278,7 +23292,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -24111,7 +24125,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }
@@ -25013,7 +25027,7 @@
           "user": {
             "id": "demo_C",
             "persona": "C",
-            "name": "陈工",
+            "name": "知远",
             "revision": 1
           }
         }

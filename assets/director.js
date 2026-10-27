@@ -38,7 +38,7 @@
   async function modalOK() { for (let i = 0; i < 30 && $('#modal').hidden; i++) await sleep(100); $('#modalActions [data-r="1"]')?.click(); await sleep(900); }
 
   const STEPS = [
-    {title: '一扇窗看懂 30 天', line: '这是阿林的窗。山是每天的余额，水面是她自己定的安全线。收入不稳定的人，最需要的不是报表，而是一眼看出“这个月稳不稳”。',
+    {title: '一扇窗看懂 30 天', line: '这是晓舟的窗。山是每天的余额，水面是她自己定的安全线。收入不稳定的人，最需要的不是报表，而是一眼看出“这个月稳不稳”。',
       run: async () => { tab('home'); window.scrollTo({top: 0, behavior: 'smooth'}); }},
     {title: '一句话办完一串事', line: '她只说了一句话：卡好像丢了先冻结、给妈妈转 300、剩下的存起来。智能体把它拆成四步，每步对应一个真实工具，并标出权限等级。',
       run: async () => { await say($('#missionEntry .btn')?.dataset.text || '我的信用卡好像丢了，先冻结；再给妈妈转 300，剩下的存进目标储蓄'); focus(lastMission()); }},
@@ -52,7 +52,7 @@
       run: async () => { tab('safe', 'guard'); await sleep(1200); focus('[data-guard-id="smug-stack"]'); await sleep(900); $('[data-guard-run="smug-stack"]')?.click(); await sleep(1800); focus('[data-guard-id="smug-stack"]'); }},
     {title: '54 次攻击的回归', line: '43 条对话攻击、11 条直接调接口的绕过、9 条正常对照，每次改代码都会重跑。我们也写明了它不能证明什么：这是开发者编写的回归集，不是安全认证。',
       run: async () => { window.scrollTo({top: 0, behavior: 'smooth'}); focus('.gd-score'); }},
-    {title: '卡与理财也走同一扇门', line: '卡片和理财页上的每个按钮，都只是替用户“说一句话”。阿林的收入不稳定，所以 R2 以上的产品会被适当性拦下；没有绕过守诺的捷径。',
+    {title: '卡与理财也走同一扇门', line: '卡片和理财页上的每个按钮，都只是替用户“说一句话”。晓舟的收入不稳定，所以 R2 以上的产品会被适当性拦下；没有绕过守诺的捷径。',
       run: async () => { tab('act', 'wallet'); await sleep(1400); focus('.wcards'); }},
     {title: '收入延期，计划跟着变', line: '最后来一场雨：工资晚到 15 天。窗外的山被水没过；之前生成、还没执行的草案全部失效，必须按新的现金路径重新规划。',
       run: async () => { tab('home'); await sleep(400); window.scrollTo({top: 0, behavior: 'smooth'}); await sleep(500); $('#shockBtn')?.click(); await sleep(400); if (!$('#modal').hidden) await modalOK(); await sleep(1200); }},

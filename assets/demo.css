@@ -1,12 +1,12 @@
 /* TROPOS 工作台 · 三扇窗
-   界面随「知己」的画像而变：阿林看到清晨（安稳、留白），小周看到深夜（柔和、不评判），
-   陈工看到正午（精确、数字优先）。所有颜色、字体与圆角都来自 body[data-persona] 上的变量。 */
+   界面随「知己」的画像而变：晓舟看到清晨（安稳、留白），望舒看到深夜（柔和、不评判），
+   知远看到正午（精确、数字优先）。所有颜色、字体与圆角都来自 body[data-persona] 上的变量。 */
 :root{
   --serif:"Noto Serif SC","Songti SC","STSong","Source Han Serif SC","SimSun",serif;
   --kai:"LXGW WenKai Screen","Kaiti SC","STKaiti","KaiTi","楷体",serif;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
 }
-/* 清晨 · 阿林 */
+/* 清晨 · 晓舟 */
 body[data-persona="A"]{
   --bg:#e8edeb;--bg2:#dde5e2;--surface:#f7f9f8;--surface2:#edf2f0;
   --ink:#1d2b2e;--ink2:#4c5b5e;--mute:#7d8a8b;--faint:#aab5b5;
@@ -21,7 +21,7 @@ body[data-persona="A"]{
   --glow:radial-gradient(1100px 520px at 80% -10%,rgba(242,201,166,.45),transparent 65%);
   --sky-ink:#1d2b2e;--sky-ink2:#3f4f52;--sky-mute:#5d6d70;
 }
-/* 深夜 · 小周 */
+/* 深夜 · 望舒 */
 body[data-persona="B"]{
   --bg:#141a2e;--bg2:#1a2140;--surface:#1e2746;--surface2:#262f52;
   --ink:#f1eadb;--ink2:#cbc4b6;--mute:#9097ae;--faint:#656d89;
@@ -37,7 +37,7 @@ body[data-persona="B"]{
   --sky-ink:#f4ecdc;--sky-ink2:#cfc7b8;--sky-mute:#9aa1bb;
   color-scheme:dark;
 }
-/* 正午 · 陈工 */
+/* 正午 · 知远 */
 body[data-persona="C"]{
   --bg:#eef1f5;--bg2:#e2e7ee;--surface:#ffffff;--surface2:#f3f5f8;
   --ink:#0e1a2b;--ink2:#3d4b5d;--mute:#6a7788;--faint:#a3aebb;

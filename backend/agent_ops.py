@@ -18,6 +18,7 @@ import secrets
 import time
 from decimal import Decimal
 
+from .household import HOUSEHOLD_TOOLS, Household
 from .model import _money, _safety_guard, rule_intent
 from .service import BankError, cents, now, uid, yuan
 
@@ -35,6 +36,7 @@ TOOLS = {
     'transfer': (2, '转账'), 'cancel_subscription': (2, '取消订阅'),
     'wealth_subscribe': (2, '申购理财'), 'wealth_redeem': (2, '赎回理财'),
     'card_limit': (2, '申请调整额度'), 'card_report_lost': (3, '挂失银行卡'),
+    **HOUSEHOLD_TOOLS,
 }
 
 # 合成卡片：每位用户的卡号后四位与额度，均为演示数据。
@@ -98,6 +100,7 @@ class AgentOps:
         with bank._db(True) as db:
             db.execute('CREATE TABLE IF NOT EXISTS cards(user_id TEXT, id TEXT, content TEXT, PRIMARY KEY(user_id,id))')
             db.execute('CREATE TABLE IF NOT EXISTS missions(id TEXT PRIMARY KEY, user_id TEXT NOT NULL, content TEXT NOT NULL)')
+        self.house = Household(bank)
 
     # ------------------------------------------------------------------ 卡片与理财状态
     def _cards(self, db, user_id):
@@ -174,6 +177,9 @@ class AgentOps:
         if named_subs and re.search(r"取消|退订|停掉|关掉|不要了", text):
             # “健身房月卡”是订阅，不是银行卡：点名的订阅优先于卡片规则。
             return ('cancel_subscription', {'subs': [x['id'] for x in named_subs]})
+        household = self.house.classify(text, self.house.state(db, user_id), self._amount_or_remaining, parse_amount)
+        if household:
+            return household
         if '卡' in text and re.search(r"好像|可能|似乎|不确定|不知道", text) and re.search(r"丢|被盗|找不到", text) and not re.search(r"挂失", text):
             # 不确定是否丢失时不挂失（不可逆）；先查看卡片，冻结需用户明说。
             return ('card_status', {'uncertainLoss': True})
@@ -256,8 +262,12 @@ class AgentOps:
         text = re.sub(r"\s+", "", message)
         if re.search(r"卡.*(挂失|冻结|解冻|锁|额度|限额|丢)|(挂失|冻结|解冻|额度|限额).*卡|理财|基金|活期宝|债基|赎回|申购|剩下的|目标储蓄|存进|存到|存入", text):
             return True
+        if re.search(r"亲情|代付|荷包|小金库|存钱罐|记一笔|记账|记个账|帮我付", text):
+            return True
         if re.search(r"买|下单|购物|双十一|双11|分期|花呗", text):
             return False  # 购物仍走“先别买”的单一链路
+        if re.search(r"预算", text):
+            return True
         actionable = [c for c in clauses if re.search(r"转|汇|取消|退订|冻结|挂失|解冻|存|账单|订阅|会员", c)]
         return len(actionable) >= 2
 
@@ -291,6 +301,11 @@ class AgentOps:
                 'title': title, 'args': args, 'checks': [], 'status': 'ready', 'impact': 0, 'clause': clause}
         if tool == 'clarify':
             step.update(title='需要你补充', status='needs_clarification', note=args['question'], options=args.get('options', []))
+            return step
+        if tool in HOUSEHOLD_TOOLS:
+            self.house.step(self, db, user_id, step, deduction, saved)
+            if step['status'] == 'ready' and step['checks'] and not all(c['ok'] for c in step['checks']):
+                step['status'] = 'blocked'
             return step
         if tier == 0:
             step['status'] = 'done'
@@ -424,7 +439,7 @@ class AgentOps:
                 step['source'] = source
                 if step['status'] == 'ready':
                     deduction += step.get('impact', 0)
-                    if step['tool'] == 'wealth_subscribe' or (step['tool'] == 'transfer' and step['args']['to'] == 'goal'):
+                    if step['tool'] in ('wealth_subscribe', 'pocket_deposit') or (step['tool'] == 'transfer' and step['args']['to'] == 'goal'):
                         saved += step['impact']
                 steps.append(step)
             if len(clauses) > 8:
@@ -499,6 +514,8 @@ class AgentOps:
 
     def _execute(self, db, user_id, step, phrase):
         tool, key = step['tool'], 'mission:' + step['id']
+        if tool in HOUSEHOLD_TOOLS:
+            return self.house.execute(self, db, user_id, step, key)
         if tool in ('transfer', 'wealth_subscribe'):
             amount = cents(step['amount'], True)
             checks = self._fund_checks(db, user_id, 0, amount, step['args'].get('when', 'now'))
