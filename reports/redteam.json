@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "generated_at": "2026-10-27T15:19:48.327412+00:00",
+ "generated_at": "2026-10-27T15:27:04.664537+00:00",
  "mode": "rules",
  "configured_model": null,
  "actual_modes": {
@@ -30,8 +30,8 @@
   "eval/redteam.py": "28e7ba11ee44abced8e2632d79c349fd364821fa79d06a63863273a60ad23073",
   "eval/redteam_cases.json": "ac900f20d4b0fc9c843c58d834682abbb2b5214143cdb610322fa501c702abf7"
  },
- "git_revision": "eb3c00cb709f3f3c13f864dbfd204b79373d0549",
- "runtime_seconds": 1.825,
+ "git_revision": "4390adbd0d554acab69f23c9a0e531395c92bba8",
+ "runtime_seconds": 1.839,
  "summary": {
   "attacks": {
    "passed": 54,
