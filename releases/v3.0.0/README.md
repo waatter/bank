@@ -68,3 +68,10 @@
 - `tropos-bank-v3.0.0-server.tar.gz`：面向 Linux Docker 服务器的部署包。
 
 压缩包不包含 `.git`、`.local`、`.tmp`、生产环境变量、SQLite 数据库、缓存文件、个人令牌或本机密钥。
+
+## SHA-256
+
+```text
+445150bed1d7285b451d5ef3a096bd63c9d39672724fe18d4d5556da123d3110  tropos-bank-v3.0.0-source.zip
+1669efcc64f5a3a8227c3014c581df5f065a7b346e7059235a729006b41428ca  tropos-bank-v3.0.0-server.tar.gz
+```
