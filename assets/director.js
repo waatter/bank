@@ -54,6 +54,8 @@
       run: async () => { window.scrollTo({top: 0, behavior: 'smooth'}); focus('.gd-score'); }},
     {title: '卡与理财也走同一扇门', line: '卡片和理财页上的每个按钮，都只是替用户“说一句话”。晓舟的收入不稳定，所以 R2 以上的产品会被适当性拦下；没有绕过守诺的捷径。',
       run: async () => { tab('act', 'wallet'); await sleep(1400); focus('.wcards'); }},
+    {title: '一家人的钱',line: '亲情付让家人在你定的额度和类目里花钱，每一笔都等你点头。弟弟的教材在额度内可以批；妈妈为晓舟开通的亲情付，可以请她代付房租差额，对方同意后才到账。直播间保健品这类高风险商户，守诺会直接拦下。',
+      run: async () => { tab('act', 'family'); await sleep(1400); focus('.hh-list'); await sleep(1600); await say('同意弟弟的教材代付，再让妈妈帮我付房租差额500'); focus(lastMission()); }},
     {title: '收入延期，计划跟着变', line: '最后来一场雨：工资晚到 15 天。窗外的山被水没过；之前生成、还没执行的草案全部失效，必须按新的现金路径重新规划。',
       run: async () => { tab('home'); await sleep(400); window.scrollTo({top: 0, behavior: 'smooth'}); await sleep(500); $('#shockBtn')?.click(); await sleep(400); if (!$('#modal').hidden) await modalOK(); await sleep(1200); }},
   ];
@@ -62,7 +64,7 @@
   function draw() {
     if (!panel) return;
     const step = STEPS[index];
-    panel.innerHTML = `<div class="dr-head"><span>演示 ${index + 1}/${STEPS.length}</span><button type="button" data-dr="close" aria-label="退出演示">×</button></div>${step ? `<h3>${esc(step.title)}</h3><p>${esc(step.line)}</p>` : '<h3>3 分钟看懂 TROPOS</h3><p>九步脚本只通过真实点击驱动界面；每一步的讲解显示在这里。</p>'}<div class="dr-actions"><button type="button" class="btn sm" data-dr="prev"${index <= 0 || running ? ' disabled' : ''}>上一句</button><button type="button" class="btn sm solid" data-dr="next"${running || index >= STEPS.length - 1 ? ' disabled' : ''}>${running ? '进行中…' : index < 0 ? '开始' : '下一步'}</button></div><div class="dr-bar"><i style="width:${((index + 1) / STEPS.length) * 100}%"></i></div>`;
+    panel.innerHTML = `<div class="dr-head"><span>演示 ${index + 1}/${STEPS.length}</span><button type="button" data-dr="close" aria-label="退出演示">×</button></div>${step ? `<h3>${esc(step.title)}</h3><p>${esc(step.line)}</p>` : '<h3>3 分钟看懂 TROPOS</h3><p>十步脚本只通过真实点击驱动界面；每一步的讲解显示在这里。</p>'}<div class="dr-actions"><button type="button" class="btn sm" data-dr="prev"${index <= 0 || running ? ' disabled' : ''}>上一句</button><button type="button" class="btn sm solid" data-dr="next"${running || index >= STEPS.length - 1 ? ' disabled' : ''}>${running ? '进行中…' : index < 0 ? '开始' : '下一步'}</button></div><div class="dr-bar"><i style="width:${((index + 1) / STEPS.length) * 100}%"></i></div>`;
   }
   async function next() {
     if (running || index >= STEPS.length - 1) return;

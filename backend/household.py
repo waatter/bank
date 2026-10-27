@@ -30,7 +30,7 @@ FAMILY = {
     'A': {'members': [{'id': 'f_brother', 'name': '晓帆', 'relation': '弟弟', 'monthlyCap': 800, 'used': 420,
                        'categories': ['餐饮', '学习', '交通'], 'status': 'active'}],
           'incoming': [{'id': 'in_mom', 'name': '妈妈', 'relation': '妈妈', 'monthlyCap': 1000, 'used': 300,
-                        'note': '妈妈为你开通的亲情付，可用于房租与生活缴费'}],
+                        'note': '可用于房租与生活缴费，每笔需妈妈同意'}],
           'requests': [{'id': 'rq_a1', 'member': 'f_brother', 'amount': 300, 'merchant': '大学书店', 'category': '学习', 'memo': '下学期教材'}]},
     'B': {'members': [{'id': 'f_mom', 'name': '妈妈', 'relation': '妈妈', 'monthlyCap': 500, 'used': 120,
                        'categories': ['日常', '医疗', '餐饮'], 'status': 'active'}],
