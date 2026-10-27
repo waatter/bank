@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-27T15:51:31.263263+00:00",
+  "generated_at": "2026-10-27T16:34:51.005278+00:00",
   "requested_mode": "rules",
   "actual_modes": {
     "rules": 41
@@ -13,15 +13,15 @@
   "dataset_origin": "人工编写的固定合成中文功能用例；无真实用户消息、训练集或生产采样。",
   "case_sha256": "667dc21465c991cc726618ff15715f9b18611bdbfe8c9f7b92fcc6c74e72ecd3",
   "source_sha256": {
-    "backend/model.py": "4506a20f2457f7ea39959144b01b7a29ed9973d0a8cd608e435f210f1f50db76",
+    "backend/model.py": "a0a1031bf56b414f786dd647e6c422a72dfc0c29c9e97615aca45557618e1d43",
     "backend/service.py": "bc96f24ede010ec5f3885344c37169ef1bcc69377c8d662fa71c00863a6da8cd",
     "backend/fixtures.json": "b04b50c8ee53c95899de565bc28d3f3b60a4661ea9caefbcd0c8c48dc3cfe50d",
     "eval/intent_benchmark.py": "bd83bd78c5077e503574ecc866288e6f6fc21d00a4554348d1057a056935c7e4"
   },
   "source_changed_during_run": [],
-  "git_revision": "6738cbe6c0ec388c3e9913cd507aff7b27e13083",
+  "git_revision": "03fceb9b412893dc8c6da4557b623ab6f10473db",
   "working_tree_dirty": true,
-  "runtime_seconds": 0.928,
+  "runtime_seconds": 0.98,
   "summary": {
     "cases": 41,
     "action": {

@@ -236,7 +236,8 @@ class ModelDecompositionTest(unittest.TestCase):
             'ungrounded_number': [{'source': '房租2000给张阿姨打过去', 'request': '给张阿姨转20000元'}],
             'ungrounded_source': [{'source': '给王磊（表弟）转2000', 'request': '给王磊（表弟）转2000元'}],
             'ungrounded_action': [{'source': '那个健身卡月费太浪费了停掉吧', 'request': '挂失信用卡'}],
-            'ungrounded_payee': [{'source': '房租2000给张阿姨打过去', 'request': '给妈妈转2000元'}],
+            'ungrounded_person': [{'source': '房租2000给张阿姨打过去', 'request': '给妈妈转2000元'}],
+            'ungrounded_payee': [{'source': '房租2000给张阿姨打过去', 'request': '给张大爷转2000元'}],
         }
         for reason, steps in cases.items():
             with self.subTest(reason=reason):
@@ -250,3 +251,13 @@ class ModelDecompositionTest(unittest.TestCase):
         result = self.respond([{'source': '别冻结信用卡', 'request': '冻结信用卡'}, {'source': '看看账单', 'request': '查看账单'}])
         self.assertEqual(result['splitMode'], 'rules_fallback')
         self.assertNotIn('card_freeze', [s['tool'] for s in result['mission']['steps'] if s['status'] == 'ready'])
+
+
+class TransferPhrasingTest(unittest.TestCase):
+    def test_transfer_to_multi_character_payee(self):
+        """“转账给妈妈5000元”曾因 f-string 里的 {1,30} 被当成元组而只认一个字的收款人。"""
+        from backend.model import rule_intent
+        for text, to in [('转账给妈妈5000元', '妈妈'), ('转账给王磊（表弟）100元', '王磊（表弟）'), ('转给张阿姨2000元', '张阿姨')]:
+            with self.subTest(text=text):
+                intent = rule_intent(text)
+                self.assertEqual((intent['action'], intent.get('to')), ('transfer', to))

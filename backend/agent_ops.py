@@ -427,6 +427,13 @@ class AgentOps:
                     # “借记卡丢了，帮我挂失”：省略宾语时沿用上一句提到的卡。
                     clause = card_ref + clause
                 tool, args = self.classify(db, user_id, clause, snap['subscriptions'], cards)
+                if decomposed and source != clause:
+                    # 模型改写与原话各自理解一遍：改写丢了信息就用原话；两者都理解成写操作却不一致，改为澄清。
+                    s_tool, s_args = self.classify(db, user_id, source, snap['subscriptions'], cards)
+                    if tool == 'clarify' and s_tool != 'clarify':
+                        tool, args, clause = s_tool, s_args, source
+                    elif TOOLS.get(tool, (0,))[0] > 0 and TOOLS.get(s_tool, (0,))[0] > 0 and (s_tool, s_args) != (tool, args):
+                        tool, args = 'clarify', {'question': f"对「{source}」的理解前后不一致，请换个说法再说一次；未生成可执行步骤。"}
                 if any(st['tool'] == tool and st['args'] == args for st in steps if tool != 'clarify'):
                     continue
                 if tool == 'cancel_subscription':

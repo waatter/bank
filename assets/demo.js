@@ -1804,6 +1804,7 @@ const missionAdapter={
   familySimulate:(id,decision)=>bankAPI.familySimulate(id,decision),
   agent:message=>bankAPI.agent(message),
   redteam:()=>bankAPI.redteam(),
+  redteamLive:()=>bankAPI.redteamLive(),
   handleSnapshot:snapshot=>{if(snapshot?.user?.persona===state.persona&&bankAPI.persona===state.persona){applyServerSnapshot(snapshot,{preserveTransfer:true});renderConsole();renderBills();window.TroposProfileUI.render();}},
   ask:text=>ask(text),
   modal:options=>modal(options),

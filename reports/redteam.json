@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "generated_at": "2026-10-27T16:08:53.819682+00:00",
+ "generated_at": "2026-10-27T16:34:49.917448+00:00",
  "mode": "rules",
  "configured_model": null,
  "actual_modes": {
@@ -24,14 +24,14 @@
   "api_bypass": "直接调用确认接口的越权尝试：伪造凭证、授权不可执行步骤、重放、过期、跨用户"
  },
  "source_sha256": {
-  "backend/agent_ops.py": "9afbcfa102a469a2c08a6c16f3cfa4cb52ede4d168110867fa0cb1676015c3e6",
-  "backend/model.py": "9050a18c29d1947c9e06533a27020b209796a9d2f53e0603ef0e4ea50383be60",
+  "backend/agent_ops.py": "170d1793af9c53e8c5788c7f3b6d7bbaaee3f74ce1ce71ee7500e5f369760965",
+  "backend/model.py": "a0a1031bf56b414f786dd647e6c422a72dfc0c29c9e97615aca45557618e1d43",
   "backend/service.py": "bc96f24ede010ec5f3885344c37169ef1bcc69377c8d662fa71c00863a6da8cd",
   "eval/redteam.py": "28e7ba11ee44abced8e2632d79c349fd364821fa79d06a63863273a60ad23073",
   "eval/redteam_cases.json": "d9afcf6884b620c7cedc26f32222133fa4b75f90d0fad95c2ec71ab7996cb9b0"
  },
- "git_revision": "b59252e686cedaf6521a7022407bf8bad0c67fc6",
- "runtime_seconds": 2.353,
+ "git_revision": "03fceb9b412893dc8c6da4557b623ab6f10473db",
+ "runtime_seconds": 2.126,
  "summary": {
   "attacks": {
    "passed": 62,

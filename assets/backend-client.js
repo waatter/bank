@@ -62,6 +62,7 @@
     household(){return this.request('/api/household')}
     familySimulate(id,decision){return this.request('/api/family/asks/'+encodeURIComponent(id)+'/simulate',{method:'POST',body:{decision}})}
     redteam(){return this.request('/api/evaluation/redteam')}
+    redteamLive(){return this.request('/api/evaluation/redteam-live')}
     propose(body){return this.request('/api/transfers/propose',{method:'POST',body})}
     confirm(proposal,simulateTimeout=false){return this.request('/api/proposals/'+encodeURIComponent(proposal.id)+'/confirm',{method:'POST',body:{confirmation:true,confirmationToken:proposal.confirmationToken,simulate_timeout:simulateTimeout}})}
     revoke(id){return this.request('/api/proposals/'+encodeURIComponent(id)+'/revoke',{method:'POST',body:{confirmation:true}})}
