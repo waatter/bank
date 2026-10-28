@@ -40,9 +40,9 @@
   const STEPS = [
     {title: '一扇窗看懂 30 天', line: '这是晓舟的窗。山是每天的余额，水面是她自己定的安全线。收入不稳定的人，最需要的不是报表，而是一眼看出“这个月稳不稳”。',
       run: async () => { tab('home'); window.scrollTo({top: 0, behavior: 'smooth'}); }},
-    {title: '一句话办完一串事', line: '她只说了一句话：卡好像丢了先冻结、给妈妈转 300、剩下的存起来。智能体把它拆成四步，每步对应一个真实工具，并标出权限等级。',
+    {title: '一句话办完一串事', line: '她只说了一句话：卡好像丢了先冻结、给妈妈转 300、剩下的存起来。智能体把它拆成几步，每步对应一个真实工具，并标出权限等级。',
       run: async () => { await say($('#missionEntry .btn')?.dataset.text || '我的信用卡好像丢了，先冻结；再给妈妈转 300，剩下的存进目标储蓄'); focus(lastMission()); }},
-    {title: '没把握的事不替你做', line: '注意第一步：她说的是“好像丢了”，所以没有挂失（不可撤回），只查看卡片，建议先冻结。“剩下的”也不是全部余额，而是扣掉前面步骤后，守住安全线和 30 天现金路径的上限。',
+    {title: '没把握的事不替你做', line: '注意卡片这一步：她说的是“好像丢了”，所以没有挂失（不可撤回），只做随时能解冻的冻结。“剩下的”也不是全部余额，而是扣掉前面步骤后，守住安全线和 30 天现金路径的上限。',
       run: async () => { const m = lastMission(); focus(m?.querySelector('.ms-step')); }},
     {title: '逐步授权，按序执行', line: '只执行她勾选的步骤。服务端在同一个事务里逐步重新核验；任一步不通过，后面全部暂停。每一步都有可查询的回执。',
       run: async () => { const m = lastMission(); m?.querySelector('[data-mission-confirm]')?.click(); await modalOK(); focus(lastMission()); }},

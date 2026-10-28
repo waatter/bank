@@ -362,7 +362,7 @@ class IntentPlanner:
         if not guarded and _TRANSFER_LANGUAGE.search(message) and local_intent["action"] == "clarify":
             guarded = local_intent
         if guarded:
-            return {"mode": "rules", "intent": guarded,
+            return {"mode": "rules", "intent": guarded, "guarded": True,
                     "trace": [{"engine": "METIS", "detail": "单条消息安全检查要求澄清，未调用模型或生成转账草案。"}]}
         if not self.config.api_key:
             return {"mode": "rules", "intent": rule_intent(message),
@@ -595,7 +595,12 @@ def agent_response(service, user_id, message, planner, ops=None):
         result["reply"] = "可以在「先别买」中填写商品和价格，查看对未来现金的影响。冷静期守护需要你主动开启，系统不会代你下单。"
     else:
         # Do not publish a model-authored arbitrary question that might claim execution.
-        result["reply"] = "请明确希望查询的事项；如需转账，请提供收款人、金额和转账时间，草拟后仍需单独确认。"
+        if result.pop("guarded", False):
+            # Only locally written gate questions are shown; they say why nothing was drafted.
+            result["reply"] = "守诺拦下了这句话：" + intent["question"] + "未生成任何草案，未扣款。"
+            result["trace"].append({"engine": "ARGOS", "detail": "命中跳过确认、伪造指令、引用不存在的历史或否定句规则；整句不进入理解与草拟。"})
+        else:
+            result["reply"] = "请明确希望查询的事项；如需转账，请提供收款人、金额和转账时间，草拟后仍需单独确认。"
     if result["mode"] == "rules":
         result["reply"] = "【本地规则模式】" + result["reply"]
     elif result["mode"] == "rules_fallback":
