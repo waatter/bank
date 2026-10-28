@@ -1,0 +1,1171 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-27T13:43:30.608230+00:00",
+  "targets": [
+    {
+      "url": "http://127.0.0.1:8769/",
+      "checks": [
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/api/health"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/api/health"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/api/health"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 11.1 ms；阈值 3000 ms",
+          "path": "/api/health"
+        },
+        {
+          "check": "health_contract",
+          "status": "pass",
+          "detail": "ok / sandbox / simulated-persona-session",
+          "path": "/api/health"
+        },
+        {
+          "check": "version_3",
+          "status": "pass",
+          "detail": "要求 3.x.x 版本",
+          "path": "/api/health"
+        },
+        {
+          "check": "model_mode",
+          "status": "pass",
+          "detail": "要求 modelMode=rules；仅健康声明，不是模型实测",
+          "path": "/api/health"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.3 ms；阈值 3000 ms",
+          "path": "/"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/demo.html"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/demo.html"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/demo.html"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.0 ms；阈值 3000 ms",
+          "path": "/demo.html"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/study.html"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/study.html"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/study.html"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 4.5 ms；阈值 3000 ms",
+          "path": "/study.html"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/tropos-mark.svg"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/tropos-mark.svg"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/tropos-mark.svg"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.4 ms；阈值 3000 ms",
+          "path": "/assets/tropos-mark.svg"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/home.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/home.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/home.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 2.3 ms；阈值 3000 ms",
+          "path": "/assets/home.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/typography.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/typography.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/typography.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.7 ms；阈值 3000 ms",
+          "path": "/assets/typography.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/home.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/home.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/home.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.2 ms；阈值 3000 ms",
+          "path": "/assets/home.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/demo.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/demo.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/demo.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.2 ms；阈值 3000 ms",
+          "path": "/assets/demo.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/profile-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/profile-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/profile-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.2 ms；阈值 3000 ms",
+          "path": "/assets/profile-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/life-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/life-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/life-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.2 ms；阈值 3000 ms",
+          "path": "/assets/life-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/action-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/action-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/action-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.4 ms；阈值 3000 ms",
+          "path": "/assets/action-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/shopping-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/shopping-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/shopping-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.0 ms；阈值 3000 ms",
+          "path": "/assets/shopping-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/personal-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/personal-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/personal-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.5 ms；阈值 3000 ms",
+          "path": "/assets/personal-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/chat-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/chat-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/chat-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.5 ms；阈值 3000 ms",
+          "path": "/assets/chat-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/connection-ui.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/connection-ui.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/connection-ui.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.0 ms；阈值 3000 ms",
+          "path": "/assets/connection-ui.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/profile-engine.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/profile-engine.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/profile-engine.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.1 ms；阈值 3000 ms",
+          "path": "/assets/profile-engine.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/profile-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/profile-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/profile-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.2 ms；阈值 3000 ms",
+          "path": "/assets/profile-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/backend-client.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/backend-client.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/backend-client.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 0.8 ms；阈值 3000 ms",
+          "path": "/assets/backend-client.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/life-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/life-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/life-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.3 ms；阈值 3000 ms",
+          "path": "/assets/life-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/action-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/action-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/action-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.2 ms；阈值 3000 ms",
+          "path": "/assets/action-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/shopping-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/shopping-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/shopping-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 2.3 ms；阈值 3000 ms",
+          "path": "/assets/shopping-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/personal-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/personal-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/personal-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.8 ms；阈值 3000 ms",
+          "path": "/assets/personal-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/chat-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/chat-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/chat-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.6 ms；阈值 3000 ms",
+          "path": "/assets/chat-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/connection-ui.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/connection-ui.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/connection-ui.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.1 ms；阈值 3000 ms",
+          "path": "/assets/connection-ui.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/demo.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/demo.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/demo.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 1.9 ms；阈值 3000 ms",
+          "path": "/assets/demo.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/study.css"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/study.css"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/study.css"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 4.8 ms；阈值 3000 ms",
+          "path": "/assets/study.css"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/study.js"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/study.js"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/study.js"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 2.0 ms；阈值 3000 ms",
+          "path": "/assets/study.js"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/fonts/noto-sans-sc-ui.woff2"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/fonts/noto-sans-sc-ui.woff2"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/fonts/noto-sans-sc-ui.woff2"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 20.9 ms；阈值 3000 ms",
+          "path": "/assets/fonts/noto-sans-sc-ui.woff2"
+        },
+        {
+          "check": "font_signature",
+          "status": "pass",
+          "detail": "WOFF2 文件签名",
+          "path": "/assets/fonts/noto-sans-sc-ui.woff2"
+        },
+        {
+          "check": "http",
+          "status": "pass",
+          "detail": "200；完整响应；GET，无凭据",
+          "path": "/assets/fonts/manrope-latin.woff2"
+        },
+        {
+          "check": "content_type",
+          "status": "pass",
+          "detail": "按资源类型核对 MIME",
+          "path": "/assets/fonts/manrope-latin.woff2"
+        },
+        {
+          "check": "cache",
+          "status": "pass",
+          "detail": "要求 Cache-Control: no-store 且 Age 缺省或为 0",
+          "path": "/assets/fonts/manrope-latin.woff2"
+        },
+        {
+          "check": "latency",
+          "status": "pass",
+          "detail": "单次完整响应 3.3 ms；阈值 3000 ms",
+          "path": "/assets/fonts/manrope-latin.woff2"
+        },
+        {
+          "check": "font_signature",
+          "status": "pass",
+          "detail": "WOFF2 文件签名",
+          "path": "/assets/fonts/manrope-latin.woff2"
+        },
+        {
+          "check": "tls",
+          "status": "untested",
+          "detail": "仅用于字面 127/8 回环 HTTP；未验证公网 HTTPS"
+        },
+        {
+          "check": "browser_runtime",
+          "status": "untested",
+          "detail": "未执行 JavaScript；不建立会话，不调用其它 API，业务连接与渲染待人工验收"
+        },
+        {
+          "check": "mobile_network",
+          "status": "untested",
+          "detail": "无 VPN 的真人手机 Wi-Fi/蜂窝、韩国跨境链路稳定性待实测"
+        },
+        {
+          "check": "origin_connection",
+          "status": "untested",
+          "detail": "未提供控制台本机 --origin-url；公网 health 不能定位源站/代理问题"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/api/health",
+          "method": "GET",
+          "status": 200,
+          "bytes": 143,
+          "ttfb_ms": 11.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 11.1
+        },
+        {
+          "path": "/",
+          "method": "GET",
+          "status": 200,
+          "bytes": 14910,
+          "ttfb_ms": 1.2,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.3
+        },
+        {
+          "path": "/demo.html",
+          "method": "GET",
+          "status": 200,
+          "bytes": 17904,
+          "ttfb_ms": 1.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.0
+        },
+        {
+          "path": "/study.html",
+          "method": "GET",
+          "status": 200,
+          "bytes": 5040,
+          "ttfb_ms": 4.5,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 4.5
+        },
+        {
+          "path": "/assets/tropos-mark.svg",
+          "method": "GET",
+          "status": 200,
+          "bytes": 717,
+          "ttfb_ms": 1.3,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.4
+        },
+        {
+          "path": "/assets/home.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 29752,
+          "ttfb_ms": 2.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 2.3
+        },
+        {
+          "path": "/assets/typography.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 1523,
+          "ttfb_ms": 1.7,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.7
+        },
+        {
+          "path": "/assets/home.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 11466,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.2
+        },
+        {
+          "path": "/assets/demo.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 40204,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.2
+        },
+        {
+          "path": "/assets/profile-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 16687,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.2
+        },
+        {
+          "path": "/assets/life-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 9292,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.2
+        },
+        {
+          "path": "/assets/action-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 13045,
+          "ttfb_ms": 1.3,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.4
+        },
+        {
+          "path": "/assets/shopping-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 7224,
+          "ttfb_ms": 1.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.0
+        },
+        {
+          "path": "/assets/personal-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 4561,
+          "ttfb_ms": 1.4,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.5
+        },
+        {
+          "path": "/assets/chat-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 3453,
+          "ttfb_ms": 1.4,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.5
+        },
+        {
+          "path": "/assets/connection-ui.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 1024,
+          "ttfb_ms": 1.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.0
+        },
+        {
+          "path": "/assets/profile-engine.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 14865,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.1
+        },
+        {
+          "path": "/assets/profile-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 34945,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.2
+        },
+        {
+          "path": "/assets/backend-client.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 13203,
+          "ttfb_ms": 0.7,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 0.8
+        },
+        {
+          "path": "/assets/life-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 34903,
+          "ttfb_ms": 1.3,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.3
+        },
+        {
+          "path": "/assets/action-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 28746,
+          "ttfb_ms": 1.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.2
+        },
+        {
+          "path": "/assets/shopping-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 18974,
+          "ttfb_ms": 2.3,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 2.3
+        },
+        {
+          "path": "/assets/personal-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 7878,
+          "ttfb_ms": 1.6,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.8
+        },
+        {
+          "path": "/assets/chat-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 16155,
+          "ttfb_ms": 1.5,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.6
+        },
+        {
+          "path": "/assets/connection-ui.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 2904,
+          "ttfb_ms": 1.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.1
+        },
+        {
+          "path": "/assets/demo.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 156937,
+          "ttfb_ms": 1.4,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 1.9
+        },
+        {
+          "path": "/assets/study.css",
+          "method": "GET",
+          "status": 200,
+          "bytes": 3591,
+          "ttfb_ms": 4.7,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 4.8
+        },
+        {
+          "path": "/assets/study.js",
+          "method": "GET",
+          "status": 200,
+          "bytes": 15537,
+          "ttfb_ms": 2.0,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 2.0
+        },
+        {
+          "path": "/assets/fonts/noto-sans-sc-ui.woff2",
+          "method": "GET",
+          "status": 200,
+          "bytes": 1029776,
+          "ttfb_ms": 20.1,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 20.9
+        },
+        {
+          "path": "/assets/fonts/manrope-latin.woff2",
+          "method": "GET",
+          "status": 200,
+          "bytes": 28712,
+          "ttfb_ms": 3.2,
+          "no_store": true,
+          "cache_fresh": true,
+          "mime_ok": true,
+          "elapsed_ms": 3.3
+        }
+      ],
+      "limits": {
+        "max_requests": 96,
+        "max_bytes": 4194304,
+        "max_total_bytes": 25165824,
+        "timeout": 10,
+        "total_timeout": 30.0,
+        "slow_ms": 3000
+      },
+      "expected_mode": "rules",
+      "total_bytes": 1584071,
+      "role": "public"
+    }
+  ],
+  "deployment": [
+    {
+      "check": "docker_version",
+      "status": "pass",
+      "detail": "Dockerfile 包含 VERSION 和页面"
+    },
+    {
+      "check": "docker_user_health",
+      "status": "pass",
+      "detail": "非 root 用户及回环 health 声明"
+    },
+    {
+      "check": "readonly_sqlite_tmpfs",
+      "status": "pass",
+      "detail": "模板：回环监听、只读根、/tmp tmpfs、独立 SQLite 可写目录；运行权限尚未验证"
+    },
+    {
+      "check": "caddy_proxy",
+      "status": "pass",
+      "detail": "模板：保持原有 Host/Origin 边界及健康依赖"
+    },
+    {
+      "check": "build_context",
+      "status": "pass",
+      "detail": "模板使用隔离 build-context 和默认拒绝的打包清单；上传前仍需实物检查"
+    },
+    {
+      "check": "context_sources",
+      "status": "pass",
+      "detail": "白名单源文件齐全且无符号链接；含运行必需的两份 backend JSON 与字体许可"
+    },
+    {
+      "check": "staged_context",
+      "status": "untested",
+      "detail": "未生成 deploy/build-context；上传包及实际构建上下文未测"
+    },
+    {
+      "check": "docker_runtime",
+      "status": "untested",
+      "detail": "未调用 Docker；镜像构建、Caddy 实际配置、SQLite 写权限/重启持久化须在控制台验收"
+    }
+  ],
+  "summary": {
+    "pass": 131,
+    "fail": 0,
+    "untested": 6
+  }
+}

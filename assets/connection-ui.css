@@ -1,0 +1,5 @@
+#connectionNotice[hidden]{display:none!important}
+.connection-notice{position:sticky;top:0;z-index:120;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line2);background:var(--surface,#f7f9f8);color:var(--ink,#1d2b2e);box-shadow:0 3px 14px #00000008}
+.connection-notice p{margin:0;font-size:12px;line-height:1.8;max-width:850px}
+.connection-notice>div{display:flex;gap:10px;flex:none}.connection-notice button{min-height:44px;border:1px solid var(--line2,#c7d4ce);border-radius:9px;padding:8px 12px;background:var(--soft,#d6e6e2);color:var(--ink,#1d2b2e);font:inherit;font-size:12px;cursor:pointer}.connection-notice button:disabled{opacity:.6;cursor:wait}.connection-notice button:focus-visible{outline:3px solid var(--accent,#3d7a73);outline-offset:3px}
+@media(max-width:650px){.connection-notice{padding:12px 15px;align-items:flex-start;flex-direction:column;gap:8px}.connection-notice>div{width:100%;flex-wrap:wrap}.connection-notice button{flex:1}}

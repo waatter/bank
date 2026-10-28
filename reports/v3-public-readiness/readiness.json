@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-27T13:43:31.007545+00:00",
+  "targets": [
+    {
+      "url": "https://demo.troposagent.com/",
+      "checks": [
+        {
+          "check": "http",
+          "status": "fail",
+          "detail": "读取失败（SSLEOFError）；无正文或敏感头记录",
+          "path": "/api/health"
+        },
+        {
+          "check": "http",
+          "status": "fail",
+          "detail": "读取失败（SSLEOFError）；无正文或敏感头记录",
+          "path": "/"
+        },
+        {
+          "check": "http",
+          "status": "fail",
+          "detail": "读取失败（SSLEOFError）；无正文或敏感头记录",
+          "path": "/demo.html"
+        },
+        {
+          "check": "http",
+          "status": "fail",
+          "detail": "读取失败（SSLEOFError）；无正文或敏感头记录",
+          "path": "/study.html"
+        },
+        {
+          "check": "tls",
+          "status": "fail",
+          "detail": "所有 HTTPS 请求均使用系统信任链及主机名验证；不跟随重定向"
+        },
+        {
+          "check": "browser_runtime",
+          "status": "untested",
+          "detail": "未执行 JavaScript；不建立会话，不调用其它 API，业务连接与渲染待人工验收"
+        },
+        {
+          "check": "mobile_network",
+          "status": "untested",
+          "detail": "无 VPN 的真人手机 Wi-Fi/蜂窝、韩国跨境链路稳定性待实测"
+        },
+        {
+          "check": "origin_connection",
+          "status": "untested",
+          "detail": "未提供控制台本机 --origin-url；公网 health 不能定位源站/代理问题"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/api/health",
+          "method": "GET",
+          "status": null,
+          "bytes": 0,
+          "elapsed_ms": 5040.2
+        },
+        {
+          "path": "/",
+          "method": "GET",
+          "status": null,
+          "bytes": 0,
+          "elapsed_ms": 5010.6
+        },
+        {
+          "path": "/demo.html",
+          "method": "GET",
+          "status": null,
+          "bytes": 0,
+          "elapsed_ms": 5016.7
+        },
+        {
+          "path": "/study.html",
+          "method": "GET",
+          "status": null,
+          "bytes": 0,
+          "elapsed_ms": 5009.4
+        }
+      ],
+      "limits": {
+        "max_requests": 96,
+        "max_bytes": 4194304,
+        "max_total_bytes": 25165824,
+        "timeout": 8.0,
+        "total_timeout": 25.0,
+        "slow_ms": 3000
+      },
+      "expected_mode": "rules",
+      "total_bytes": 0,
+      "role": "public"
+    }
+  ],
+  "deployment": [
+    {
+      "check": "docker_version",
+      "status": "pass",
+      "detail": "Dockerfile 包含 VERSION 和页面"
+    },
+    {
+      "check": "docker_user_health",
+      "status": "pass",
+      "detail": "非 root 用户及回环 health 声明"
+    },
+    {
+      "check": "readonly_sqlite_tmpfs",
+      "status": "pass",
+      "detail": "模板：回环监听、只读根、/tmp tmpfs、独立 SQLite 可写目录；运行权限尚未验证"
+    },
+    {
+      "check": "caddy_proxy",
+      "status": "pass",
+      "detail": "模板：保持原有 Host/Origin 边界及健康依赖"
+    },
+    {
+      "check": "build_context",
+      "status": "pass",
+      "detail": "模板使用隔离 build-context 和默认拒绝的打包清单；上传前仍需实物检查"
+    },
+    {
+      "check": "context_sources",
+      "status": "pass",
+      "detail": "白名单源文件齐全且无符号链接；含运行必需的两份 backend JSON 与字体许可"
+    },
+    {
+      "check": "staged_context",
+      "status": "untested",
+      "detail": "未生成 deploy/build-context；上传包及实际构建上下文未测"
+    },
+    {
+      "check": "docker_runtime",
+      "status": "untested",
+      "detail": "未调用 Docker；镜像构建、Caddy 实际配置、SQLite 写权限/重启持久化须在控制台验收"
+    }
+  ],
+  "summary": {
+    "pass": 6,
+    "fail": 5,
+    "untested": 5
+  }
+}

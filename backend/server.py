@@ -21,6 +21,8 @@ from pathlib import Path
 from .model import IntentPlanner, ModelConfig, agent_response, strict_json
 from .life_service import LifeService
 from .shopping import ShoppingService
+from .subscription_service import SubscriptionService
+from .conversation import ConversationService
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,6 +37,15 @@ STATIC_FILES = {
     "/assets/life-ui.js": "assets/life-ui.js", "/assets/life-ui.css": "assets/life-ui.css",
     "/assets/action-ui.js": "assets/action-ui.js", "/assets/action-ui.css": "assets/action-ui.css",
     "/assets/shopping-ui.js": "assets/shopping-ui.js", "/assets/shopping-ui.css": "assets/shopping-ui.css",
+    "/assets/home.js": "assets/home.js", "/assets/home.css": "assets/home.css",
+    "/assets/typography.css": "assets/typography.css",
+    "/assets/tropos-mark.svg": "assets/tropos-mark.svg",
+    "/assets/fonts/noto-sans-sc-ui.woff2": "assets/fonts/noto-sans-sc-ui.woff2",
+    "/assets/fonts/manrope-latin.woff2": "assets/fonts/manrope-latin.woff2",
+    "/assets/personal-ui.js": "assets/personal-ui.js", "/assets/personal-ui.css": "assets/personal-ui.css",
+    "/assets/chat-ui.js": "assets/chat-ui.js", "/assets/chat-ui.css": "assets/chat-ui.css",
+    "/assets/connection-ui.js": "assets/connection-ui.js", "/assets/connection-ui.css": "assets/connection-ui.css",
+    "/study.html": "study.html", "/assets/study.js": "assets/study.js", "/assets/study.css": "assets/study.css",
 }
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
@@ -69,6 +80,7 @@ def _identifier(text):
 class TroposServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
+    request_queue_size = 64
 
     def __init__(self, address, service, planner=None, root=ROOT, *, access_token=None,
                  allowed_hosts=(), allow_unauthenticated_lan=False):
@@ -103,6 +115,8 @@ class TroposServer(ThreadingHTTPServer):
         self.life = LifeService(service)
         self.shopping = ShoppingService(service)
         self.planner = planner if planner is not None else IntentPlanner()
+        self.subscriptions = SubscriptionService(service)
+        self.conversations = ConversationService(service, self.planner, self.subscriptions)
         self.root = Path(root).resolve()
         if ":" in host:
             self.address_family = socket.AF_INET6
@@ -135,7 +149,7 @@ class TroposHandler(BaseHTTPRequestHandler):
         self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
         # Existing prototype uses inline SVG/HTML and fonts; credentials stay server-side.
         script = "script-src 'self'" + (" 'nonce-" + nonce + "'" if nonce else "")
-        self.send_header("Content-Security-Policy", "default-src 'self'; " + script + "; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; " + script + "; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         self.end_headers()
 
     def _json(self, status, value):
@@ -227,7 +241,7 @@ class TroposHandler(BaseHTTPRequestHandler):
         if not file.is_relative_to(self.server.root) or not file.is_file():
             raise HttpError(404, "NOT_FOUND", "页面不存在。")
         extension = file.suffix
-        types = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8"}
+        types = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".woff2": "font/woff2"}
         raw = file.read_bytes()
         nonce = secrets.token_urlsafe(20) if extension == ".html" else None
         if nonce:
@@ -359,10 +373,41 @@ class TroposHandler(BaseHTTPRequestHandler):
         if method == "PUT" and path == "/api/profile":
             return self._json(200, service.save_profile(uid, body))
         if method == "POST" and path == "/api/agent":
-            body = _object(body, {"message"}, {"message"})
+            body = _object(body, {"message", "conversationId", "requestKey", "conversationVersion"}, {"message"})
             if not isinstance(body["message"], str) or not 1 <= len(body["message"].strip()) <= 2000:
                 raise HttpError(400, "INVALID_MESSAGE", "请输入 1 至 2000 字的请求。")
+            if set(body) - {"message"}:
+                if "requestKey" not in body:
+                    raise HttpError(400, "TURN_KEY_REQUIRED", "请保留本条消息凭证后再继续办理。")
+                return self._json(200, self.server.conversations.turn(uid, body["message"],
+                                  conversation_id=body.get("conversationId"), request_key=body["requestKey"],
+                                  version=body.get("conversationVersion")))
             return self._json(200, agent_response(service, uid, body["message"], self.server.planner))
+        match = re.fullmatch(r"/api/conversations/([^/]+)", path)
+        if method == "GET" and match:
+            return self._json(200, self.server.conversations.get(uid, _identifier(match[1])))
+        match = re.fullmatch(r"/api/subscription-proposals/([^/]+)(?:/(confirm|revoke))?", path)
+        if match:
+            proposal_id, action = _identifier(match[1]), match[2]
+            if method == "GET" and action is None:
+                return self._json(200, self.server.subscriptions.get(uid, proposal_id))
+            if method == "POST" and action == "confirm":
+                body = _object(body, {"confirmation", "confirmationToken", "simulate_timeout"}, {"confirmation", "confirmationToken"})
+                _confirmed(body)
+                if not isinstance(body['confirmationToken'], str) or not 1 <= len(body['confirmationToken']) <= 256:
+                    raise HttpError(400, 'INVALID_CONFIRMATION_TOKEN', '请重新读取订阅取消方案。')
+                if 'simulate_timeout' in body and not isinstance(body['simulate_timeout'], bool):
+                    raise HttpError(400, 'INVALID_TIMEOUT_FLAG', '超时演示选项必须是布尔值。')
+                result = self.server.subscriptions.confirm(uid, proposal_id, body)
+                if result.get("status") == "UNKNOWN":
+                    return self._json(202, result)
+                from .model import deterministic_plan
+                result['plan'] = deterministic_plan(result['snapshot'])
+                return self._json(200, result)
+            if method == "POST" and action == "revoke":
+                body = _object(body, {"confirmation"}, {"confirmation"})
+                _confirmed(body)
+                return self._json(200, self.server.subscriptions.revoke(uid, proposal_id))
         if method == "POST" and path == "/api/transfers/propose":
             body = _object(body, {"to", "amount", "when", "memo"}, {"to", "amount"})
             return self._json(201, service.propose_transfer(uid, body))

@@ -19,7 +19,8 @@ SYSTEM_PROMPT = """你是 TROPOS 合成银行演示的意图理解器。只输�
 transfer 格式 {"action":"transfer","to":"收款人名称","amount":100.00,"when":"now","memo":""}。
 when 只能 now 或 salary；金额单位为元，最多两位小数。仅使用用户直接提供的信息。
 你每次只收到一条消息，没有聊天历史或上一笔草案的上下文。不得凭空恢复历史。
-否定、取消、撤销、更正、改金额、上一笔/刚才/他/她等指代均须 clarify，即使消息内也出现完整转账文字。
+涉及转账的否定、取消、撤销、更正、改金额、上一笔/刚才/他/她等指代均须 clarify，即使消息内也出现完整转账文字。
+只读的账单查询与按当前事实重算预算可以识别为 bills/plan，不据此修改或执行金融事项。
 只接受当前消息中完整、肯定、明确的单笔新草拟请求；多笔请求、历史陈述和无法确定的条件须 clarify。
 金额必须理解完整表达：1,000元是1000元，1.2万元是12000元；不得截取数字前缀、取绝对值或四舍五入。
 零、负数、超过分精度或含糊金额须 clarify。明确的工资到账后/等下次工资到了再转均用 salary。
@@ -98,7 +99,7 @@ def validate_intent(value):
     return {"action": action, "to": recipient.strip(), "amount": float(decimal), "when": when, "memo": memo}
 
 
-_TRANSFER_LANGUAGE = re.compile(r"转账|转给|汇给|汇款|(?:给|向).{1,40}?(?:转|汇)")
+_TRANSFER_LANGUAGE = re.compile(r"转账|转给|汇给|汇款|(?:给|向).{1,40}?(?:转|汇)|(?:往|向).{0,20}目标储蓄.{0,8}(?:放|存)|存.{1,30}到.{0,12}目标储蓄|收款人是.{1,25}[，,](?:现在|今天)转")
 _CN_DIGITS = dict(zip("零〇一二两三四五六七八九", (0, 0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9)))
 _NUMBER_CHARS = "0-9零〇一二两三四五六七八九十百千万亿点.,+−-"
 _SALARY_CONDITION = re.compile(
@@ -122,7 +123,8 @@ def _safety_clarification(message):
         r"|(?:已经|已)(?:转账|汇款|付款|扣款)(?:成功|完成)?", text, re.I):
         return _clarify("操作需要你单独确认；请说明需要查询或草拟的完整事项。")
     # Corrections and references need history even if an embedded substring looks executable.
-    if re.search(r"刚才|刚刚|上次|上一|之前|先前|前面|那笔|这笔|那个账户|这个账户|原来那|说错|不对|改成|改为|更正|修改|还是|重新转", text):
+    readonly = not _TRANSFER_LANGUAGE.search(text) and re.search(r"账单|信用卡|尾款|预算|重算|再算|安排|开销|建议|计划", text)
+    if not readonly and re.search(r"刚才|刚刚|上次|上一|之前|先前|前面|那笔|这笔|那个账户|这个账户|原来那|说错|不对|改成|改为|更正|修改|还是|重新转", text):
         return _clarify("当前消息没有上一笔操作的上下文，请重新完整说明事项；未更正或取消任何草案。")
     if _TRANSFER_LANGUAGE.search(text) and re.search(
         r"不|没|别|莫|勿|禁止|拒绝|取消|撤销|撤回|停止|作废"
@@ -194,6 +196,32 @@ def _number(token):
 
 def _money(text):
     # Full consumption is essential: neither commas nor unsupported units may end a number early.
+    # Colloquial money has explicit currency place values. Never interpret an
+    # ambiguous integer such as 一百五 as 150, or silently round its precision.
+    text = text.strip()
+    digit = r"[0-9零〇一二两三四五六七八九]"
+    fractional = re.fullmatch(rf"(?:(?P<jiao>{digit})(?:角|毛)(?P<last>{digit})?(?:分(?:钱)?)?|(?P<fen>{digit})分(?:钱)?)", text)
+    if fractional:
+        val = lambda v: Decimal(str(int(v) if v.isascii() else _CN_DIGITS[v]))
+        return (val(fractional['jiao'])/10 + (val(fractional['last'])/100 if fractional['last'] else 0)
+                if fractional['jiao'] else val(fractional['fen'])/100)
+    colloquial = re.fullmatch(rf"(?P<whole>[{_NUMBER_CHARS}]+)(?P<unit>块钱|块|元|圆)(?P<tail>.+)", text)
+    if colloquial:
+        whole, tail = _number(colloquial['whole']), colloquial['tail']
+        if whole < 0 or whole != whole.to_integral_value():
+            raise ValueError('mixed_money_notation')
+        # 零一分 explicitly states 0 jiao, 1 fen. Bare digits after 元 remain
+        # invalid; 块五 is an established currency expression for five jiao.
+        if re.fullmatch(rf"[零〇]{digit}分", tail):
+            tail = tail[1:]
+        if re.fullmatch(digit, tail) and colloquial['unit'].startswith('块'):
+            tail += '角'
+        if not re.fullmatch(rf"(?:{digit}(?:角|毛)(?:{digit}(?:分)?)?|{digit}分(?:钱)?)", tail):
+            raise ValueError('invalid_fraction')
+        part = _money(tail)
+        if not 0 <= part < 1:
+            raise ValueError('invalid_fraction')
+        return whole + part
     match = re.fullmatch(
         rf"(?:人民币|[¥￥])?\s*(?P<whole>[{_NUMBER_CHARS}]+)"
         rf"(?:(?:元|圆|块钱|块)(?:(?P<jiao>[{_NUMBER_CHARS}]+)角)?(?:(?P<fen>[{_NUMBER_CHARS}]+)分)?)?"
@@ -216,6 +244,29 @@ def _rule_transfer(text):
     memo_match = re.search(r"(?:备注|附言)(?:为|是)?\s*[:：]?\s*(.+)$", text)
     memo = memo_match[1].strip().rstrip("。") if memo_match else ""
     request = text[:memo_match.start()].rstrip(" ,，;；") if memo_match else text
+    # Permit a small set of fully consumed, non-executing draft/time phrases.
+    # Unknown suffixes, multiple transfers and unsupported dates still fail.
+    suffix = r"[，,](?:今天就办|今天的|今天|现在|先把方案给我)[。！!]?\s*$"
+    for _ in range(3):
+        request = re.sub(suffix, "", request)
+    request = request.rstrip('。！!')
+    request = re.sub(r"试试$", "", request)
+    goal = re.fullmatch(r"(?:我想)?(?:往|向)(?:本人|我自己|自己)?的?目标储蓄(?:子账户|账户)?(?:放|存)(.+)", request)
+    if not goal:
+        goal = re.fullmatch(r"(?:今天|现在)?存(.+)到(?:本人|我自己|自己)?的?目标储蓄(?:子账户|账户)?", request)
+    if goal:
+        try:
+            return validate_intent({'action':'transfer','to':'目标储蓄','amount':float(_money(goal[1])), 'when':'now','memo':memo})
+        except (ValueError, InvalidOperation, OverflowError, ModelFailure):
+            return _clarify()
+    form = re.fullmatch(r"(?P<to>[^，,]{1,30}?)(?:那儿|那里)?(?:还差|应付)(?P<amount>[^，,]+)[，,](?:请|帮我)(?:填|填个|准备|准备个)(?:今天的|现在的)?转账单", request)
+    if not form:
+        form = re.fullmatch(r"[^，,]{0,15}?(?:我该出|我应付|我要付)(?P<amount>[^，,]+)[，,]收款人是(?P<to>[^，,]{1,30})[，,](?:现在|今天)转", request)
+    if form:
+        try:
+            return validate_intent({'action':'transfer','to':form['to'],'amount':float(_money(form['amount'])), 'when':'now','memo':memo})
+        except (ValueError, InvalidOperation, OverflowError, ModelFailure):
+            return _clarify()
     # The remainder is parsed in full, so second transfers, unsupported schedules and
     # unrecognized number suffixes cannot silently become a smaller first transfer.
     match = re.search(r"(?:给|向)\s*([^\s，。,:：]{1,30}?)\s*(?:转账|转|汇款|汇)\s*(.+)$", request)
@@ -225,7 +276,7 @@ def _rule_transfer(text):
         return _clarify()
     prefix = re.sub(r"[\s,，。:：]", "", request[:match.start()])
     prefix = _SALARY_CONDITION.sub("", prefix)
-    if not re.fullmatch(r"(?:请|帮我|麻烦|我想|帮忙|现在|立即|马上|先|再|您好|你好|为我|能否|可以|草拟)*", prefix):
+    if not re.fullmatch(r"(?:请|帮我|麻烦|我想|帮忙|今天|现在|立即|马上|先|再|您好|你好|为我|能否|可以|草拟)*", prefix):
         return _clarify("请明确说明单笔新转账的收款人、金额及现在或工资到账后的时间。")
     try:
         amount = _money(match[2])
@@ -247,7 +298,9 @@ def rule_intent(message):
         return {"action": "subscriptions"}
     if re.search(r"买|下单|购物|双十一", text):
         return {"action": "purchase"}
-    if re.search(r"账单|还款|房租|水电", text):
+    if re.search(r"重算|再算|重新排|算算.{0,20}安排|安排.{0,20}算|预算|开销.{0,15}建议", text):
+        return {"action": "plan"}
+    if re.search(r"账单|还款|房租|水电|信用卡|尾款", text):
         return {"action": "bills"}
     if re.search(r"计划|安排|打理|现金|存钱|安全线|工资|收入", text):
         return {"action": "plan"}
@@ -424,6 +477,8 @@ def _unique_registered_payee(payees, name):
     matches = [payee for payee in payees if name in {
         payee.get("id"), payee.get("name"), payee.get("alias"),
         str(payee.get("name")) + "（" + str(payee.get("alias")) + "）",
+        str(payee.get("alias")) + str(payee.get("name")),
+        str(payee.get("name")) + str(payee.get("alias")),
     }]
     return matches[0] if len(matches) == 1 else None
 

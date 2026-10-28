@@ -1,0 +1,25 @@
+{
+  "created_at": "2026-10-27T13:50:30.039735+00:00",
+  "url": "http://127.0.0.1:8769/demo.html",
+  "version": "3.0.0",
+  "evidence_type": "internal_browser_mobile_emulation",
+  "viewport": "390x844 @2 touch/mobile",
+  "checks": {
+    "horizontal_overflow": false,
+    "cross_origin_runtime_resources": 0,
+    "offline_notice": "网络已断开。以下可能是上次读取的状态；恢复后请先核对原办理记录。",
+    "online_notice": "连接已恢复。此前未确认的办理结果，仍需按原凭证核对。",
+    "restoration": "GET /api/health only; no automatic financial POST"
+  },
+  "study": {
+    "width": 390,
+    "consent_initial_checked": false,
+    "record_kind_initial": "",
+    "cross_origin_resources": 0,
+    "participant_records_created": 0
+  },
+  "limitations": [
+    "这不是实际手机、蜂窝网络或中国大陆无VPN连接测试。",
+    "断网状态的逻辑安全另由connection-ui.cjs验证。"
+  ]
+}

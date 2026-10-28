@@ -1,0 +1,283 @@
+{
+  "schema": "TROPOS-USER-TRIAL-REPORT-1",
+  "status": "not_conducted",
+  "status_label": "未开展 / 尚无符合口径的已结束真人任务",
+  "n_input_sessions": 0,
+  "n_eligible_sessions": 0,
+  "n_real_participants": 0,
+  "n_consented_participant_ids": 0,
+  "n_repeat_sessions": 0,
+  "excluded_sessions": [],
+  "tasks": [
+    {
+      "id": "profile_correction",
+      "n_eligible_sessions": 0,
+      "n_started": 0,
+      "n_ended": 0,
+      "n_in_progress": 0,
+      "n_not_started": 0,
+      "n_completed": 0,
+      "completion_denominator": 0,
+      "completion_rate": null,
+      "help_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "duration": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "misunderstanding_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "comprehension": {
+        "n_correct": 0,
+        "n_incorrect": 0,
+        "denominator": 0,
+        "n_missing": 0,
+        "correct_rate": null
+      },
+      "n_feedback_observed": 0
+    },
+    {
+      "id": "expected_vs_received",
+      "n_eligible_sessions": 0,
+      "n_started": 0,
+      "n_ended": 0,
+      "n_in_progress": 0,
+      "n_not_started": 0,
+      "n_completed": 0,
+      "completion_denominator": 0,
+      "completion_rate": null,
+      "help_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "duration": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "misunderstanding_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "comprehension": {
+        "n_correct": 0,
+        "n_incorrect": 0,
+        "denominator": 0,
+        "n_missing": 0,
+        "correct_rate": null
+      },
+      "n_feedback_observed": 0
+    },
+    {
+      "id": "transfer_correction",
+      "n_eligible_sessions": 0,
+      "n_started": 0,
+      "n_ended": 0,
+      "n_in_progress": 0,
+      "n_not_started": 0,
+      "n_completed": 0,
+      "completion_denominator": 0,
+      "completion_rate": null,
+      "help_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "duration": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "misunderstanding_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "comprehension": {
+        "n_correct": 0,
+        "n_incorrect": 0,
+        "denominator": 0,
+        "n_missing": 0,
+        "correct_rate": null
+      },
+      "n_feedback_observed": 0
+    },
+    {
+      "id": "cancellation_impact",
+      "n_eligible_sessions": 0,
+      "n_started": 0,
+      "n_ended": 0,
+      "n_in_progress": 0,
+      "n_not_started": 0,
+      "n_completed": 0,
+      "completion_denominator": 0,
+      "completion_rate": null,
+      "help_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "duration": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "misunderstanding_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "comprehension": {
+        "n_correct": 0,
+        "n_incorrect": 0,
+        "denominator": 0,
+        "n_missing": 0,
+        "correct_rate": null
+      },
+      "n_feedback_observed": 0
+    },
+    {
+      "id": "cancellation_confirmation",
+      "n_eligible_sessions": 0,
+      "n_started": 0,
+      "n_ended": 0,
+      "n_in_progress": 0,
+      "n_not_started": 0,
+      "n_completed": 0,
+      "completion_denominator": 0,
+      "completion_rate": null,
+      "help_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "duration": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "misunderstanding_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "comprehension": {
+        "n_correct": 0,
+        "n_incorrect": 0,
+        "denominator": 0,
+        "n_missing": 0,
+        "correct_rate": null
+      },
+      "n_feedback_observed": 0
+    },
+    {
+      "id": "timeout_recovery",
+      "n_eligible_sessions": 0,
+      "n_started": 0,
+      "n_ended": 0,
+      "n_in_progress": 0,
+      "n_not_started": 0,
+      "n_completed": 0,
+      "completion_denominator": 0,
+      "completion_rate": null,
+      "help_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "duration": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "misunderstanding_count": {
+        "raw": [],
+        "n_observed": 0,
+        "n_missing": 0,
+        "sum": null,
+        "mean": null,
+        "median": null
+      },
+      "comprehension": {
+        "n_correct": 0,
+        "n_incorrect": 0,
+        "denominator": 0,
+        "n_missing": 0,
+        "correct_rate": null
+      },
+      "n_feedback_observed": 0
+    }
+  ],
+  "environment_counts": {
+    "device": {},
+    "network": {},
+    "vpn": {}
+  },
+  "limitations": [
+    "真人身份与设备网络均未技术认证；自动操作不得标为真人。",
+    "未开始、未结束与未采集不按零分；次数为原始计数，不推断总体表现。",
+    "重复参与者按编号去重人数，任务按场次统计；重复场次不是独立样本。",
+    "耗时是原始秒数（含求助与切页），不推断实际网络延迟；设备休眠或校时可能影响计时。",
+    "校验无法证明文件未被外部修改；保留原导出，不覆盖或静默修订。"
+  ]
+}

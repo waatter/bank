@@ -84,8 +84,8 @@ let passed=0;
 async function check(name,run) {await run();passed++;console.log('PASS '+name);}
 (async()=>{
   await check('consent and HTTP gates do not read the ledger',async()=>{
-    const h=harness({completed:false});await h.start();assert.equal(h.calls.load,0);await h.ui.refresh();h.ui.render();assert.equal(h.calls.load,0);assert.match(h.root.innerHTML,/先确认你的财务画像/);await h.root.click('data-life-action','profile');assert.equal(h.calls.openProfile,1);
-    const file=harness({serverMode:false});await file.start();await file.ui.refresh();assert.equal(file.calls.load,0);assert.match(file.root.innerHTML,/HTTP 服务/);
+    const h=harness({completed:false});await h.start();assert.equal(h.calls.load,0);await h.ui.refresh();h.ui.render();assert.equal(h.calls.load,0);assert.ok(h.root.button('data-life-action','profile'));await h.root.click('data-life-action','profile');assert.equal(h.calls.openProfile,1);
+    const file=harness({serverMode:false});await file.start();await file.ui.refresh();assert.equal(file.calls.load,0);assert.ok(!file.root.buttons().some(b=>['analyze','adopt'].includes(b.dataset.lifeAction)));
   });
   await check('init, render, refresh, eight categories and escaped user strings',async()=>{
     const h=harness();await h.start();assert.equal(h.calls.load,1);h.ui.init(h.adapter);h.ui.render();assert.equal(h.calls.load,1);

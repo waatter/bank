@@ -1,0 +1,19 @@
+{
+  "created_at": "2026-10-27T13:58:27.121277+00:00",
+  "branch": "codex/v3.0.0",
+  "python": {
+    "command": "python3 -m unittest discover -s tests -p 'test_*.py' -q",
+    "tests": 379,
+    "failures": 0,
+    "duration_seconds": 50.235
+  },
+  "node": {
+    "command": "node --test tests/*.cjs",
+    "tests": 100,
+    "failures": 0
+  },
+  "limits": [
+    "合成数据与内部工程测试，不是真人试用。",
+    "node总数包含若干内嵌断言组的脚本，不能与脚本内计数相加。"
+  ]
+}
