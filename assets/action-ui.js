@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   let adapter = null, data = null, identity = '', loadedIdentity = '', loading = false, busy = false;
-  let sequence = 0, mutationSequence = 0, selectedDay = 0, selectedSubscription = '', message = '', failed = false;
+  let autoKey = '', sequence = 0, mutationSequence = 0, selectedDay = 0, selectedSubscription = '', message = '', failed = false;
   const mount = () => document.getElementById('actionMount');
   const preview = () => document.getElementById('actionPreview');
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -62,7 +62,7 @@
   }
   function heading() {
     const a = data && data.account || {}, b = data && data.basis || {};
-    return `<header class="ac-heading"><div><p class="ac-eyebrow">CASH / 下一步</p><h1>今天先做哪件事</h1><p class="ac-intro">把未来的支出排开，给今天一个清楚的选择。</p><p class="ac-meta">${data ? `账户 ${esc(a.name || a.persona)} <span>${esc(a.persona)}</span> · 基准日 ${esc(b.baseDate || '2026-10-20')} · 未来 ${count(b.horizonDays || 30)} 天` : `当前账户 ${esc(ctx().persona || '未选择')} · 基准日 2026-10-20`}</p></div><div class="ac-toolbar">${button('refresh',loading ? '正在更新…' : '刷新数据')}${data ? button('download','下载我的现金行动单','',true) : ''}</div></header>${data ? `<p class="ac-version">服务端版本 ${esc(data.version || '未提供')} · 账户修订 ${esc(a.revision == null ? '未提供' : a.revision)} · 生成时间 ${esc(data.generatedAt || '未提供')}</p>` : ''}${message ? `<p class="ac-status${failed ? ' ac-status-error' : ''}" role="status">${esc(message)}</p>` : ''}`;
+    return `<header class="ac-heading"><div><p class="ac-eyebrow">现金 · 下一步</p><h1>今天先做哪件事</h1><p class="ac-intro">把未来的支出排开，给今天一个清楚的选择。</p><p class="ac-meta">${data ? `账户 ${esc(a.name || a.persona)} <span>${esc(a.persona)}</span> · 基准日 ${esc(b.baseDate || '2026-10-20')} · 未来 ${count(b.horizonDays || 30)} 天` : `当前账户 ${esc(ctx().persona || '未选择')} · 基准日 2026-10-20`}</p></div><div class="ac-toolbar">${button('refresh',loading ? '正在更新…' : '刷新数据')}${data ? button('download','下载我的现金行动单','',true) : ''}</div></header>${data ? `<p class="ac-version">服务端版本 ${esc(data.version || '未提供')} · 账户修订 ${esc(a.revision == null ? '未提供' : a.revision)} · 生成时间 ${esc(data.generatedAt || '未提供')}</p>` : ''}${message ? `<p class="ac-status${failed ? ' ac-status-error' : ''}" role="status">${esc(message)}</p>` : ''}`;
   }
   function metrics() {
     const l = data.liquidity || {}, o = data.outcomes || {};
@@ -122,6 +122,8 @@
     if (!adapter) return;
     resetForContext(); const gating=gate(), root=mount();
     if (gating) { data=null; loadedIdentity=''; if (loading || busy) { ++sequence; ++mutationSequence; loading=false; busy=false; } if (root) root.innerHTML=heading()+emptyPanel(gating[0],gating[1],!ctx().completed && ctx().serverMode); renderPreview(gating); return; }
+    // 账户版本一变（建立画像、转账、任务单执行后）就自动重读一次，首页卡片不再停在空状态。
+    if (!current() && !loading && !busy && !failed && autoKey !== contextKey(ctx())) { autoKey=contextKey(ctx()); setTimeout(refresh, 0); }
     if (root) {
       root.setAttribute('aria-busy',String(loading || busy));
       root.innerHTML=heading()+(current() ? metrics()+`<section class="ac-panel ac-priorities"><div class="ac-section-head"><div><p class="ac-eyebrow">从这一件开始</p><h2>有依据的下一步</h2></div></div>${actionCards(false)}</section>`+chart()+upcoming()+subscriptions()+spending()+footer() : emptyPanel(loading ? '正在读取当前账户…' : failed ? '这次没有读到行动单' : '准备你的现金行动单',loading ? '核对最新账本、到期事项与取消回执。' : failed ? '请刷新重试。读取成功前，旧行动和旧报告均不可使用。' : '根据当前账户的服务端快照生成。'));

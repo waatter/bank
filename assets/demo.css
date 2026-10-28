@@ -1,12 +1,13 @@
 /* TROPOS 工作台 · 三扇窗
-   界面随「知己」的画像而变：阿林看到清晨（安稳、留白），小周看到深夜（柔和、不评判），
-   陈工看到正午（精确、数字优先）。所有颜色、字体与圆角都来自 body[data-persona] 上的变量。 */
+   界面随「知己」的画像而变：晓舟看到清晨（安稳、留白），望舒看到深夜（柔和、不评判），
+   知远看到正午（精确、数字优先）。所有颜色、字体与圆角都来自 body[data-persona] 上的变量。 */
 :root{
   --serif:"Noto Serif SC","Songti SC","STSong","Source Han Serif SC","SimSun",serif;
+  --num:"MiSans VF",-apple-system,"PingFang SC",sans-serif;
   --kai:"LXGW WenKai Screen","Kaiti SC","STKaiti","KaiTi","楷体",serif;
-  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --sans:"MiSans VF",-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
 }
-/* 清晨 · 阿林 */
+/* 清晨 · 晓舟 */
 body[data-persona="A"]{
   --bg:#e8edeb;--bg2:#dde5e2;--surface:#f7f9f8;--surface2:#edf2f0;
   --ink:#1d2b2e;--ink2:#4c5b5e;--mute:#7d8a8b;--faint:#aab5b5;
@@ -15,13 +16,13 @@ body[data-persona="A"]{
   --ok:#3d7a73;--warn:#b2803a;--bad:#b5503f;
   --e-ethos:#3d7a73;--e-metis:#4a6788;--e-kairos:#b2803a;--e-argos:#b5503f;
   --display:var(--serif);--display-w:600;--display-track:.02em;
-  --ui:var(--sans);--voice:var(--serif);
+  --ui:var(--sans);--voice:var(--sans);
   --r-l:22px;--r-m:14px;--r-s:10px;
   --shadow:0 18px 40px -30px rgba(29,43,46,.45);
   --glow:radial-gradient(1100px 520px at 80% -10%,rgba(242,201,166,.45),transparent 65%);
   --sky-ink:#1d2b2e;--sky-ink2:#3f4f52;--sky-mute:#5d6d70;
 }
-/* 深夜 · 小周 */
+/* 深夜 · 望舒 */
 body[data-persona="B"]{
   --bg:#141a2e;--bg2:#1a2140;--surface:#1e2746;--surface2:#262f52;
   --ink:#f1eadb;--ink2:#cbc4b6;--mute:#9097ae;--faint:#656d89;
@@ -37,7 +38,7 @@ body[data-persona="B"]{
   --sky-ink:#f4ecdc;--sky-ink2:#cfc7b8;--sky-mute:#9aa1bb;
   color-scheme:dark;
 }
-/* 正午 · 陈工 */
+/* 正午 · 知远 */
 body[data-persona="C"]{
   --bg:#eef1f5;--bg2:#e2e7ee;--surface:#ffffff;--surface2:#f3f5f8;
   --ink:#0e1a2b;--ink2:#3d4b5d;--mute:#6a7788;--faint:#a3aebb;
@@ -54,7 +55,7 @@ body[data-persona="C"]{
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.75 var(--ui);background:var(--glow),var(--bg);transition:background-color .6s,color .4s}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.75 var(--ui);font-weight:380;-webkit-font-smoothing:antialiased;background:var(--glow),var(--bg);transition:background-color .6s,color .4s}
 body[data-persona="B"]{font-size:16px}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -166,7 +167,7 @@ body[data-persona="C"] .window .mullion{display:none}
 .sill>div{padding:16px 20px 15px;border-left:1px solid var(--line)}
 .sill>div:first-child{border-left:0;padding-left:2px}
 .sill label{display:block;font-size:13px;color:var(--mute)}
-.sill .v{font:var(--display-w) 26px/1.35 var(--display);letter-spacing:-.01em;margin-top:2px;font-variant-numeric:tabular-nums;transition:color .4s}
+.sill .v{font:600 26px/1.35 var(--num);letter-spacing:-.01em;margin-top:2px;font-variant-numeric:tabular-nums;transition:color .4s}
 body[data-persona="C"] .sill .v{font-weight:650;font-size:28px}
 .sill small{font-size:12.5px;color:var(--mute)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 2px 0;font-size:12.5px;color:var(--mute)}
@@ -268,7 +269,7 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .cool-hero .sub-voice{font:clamp(20px,2.4vw,26px)/1.5 var(--voice);color:var(--ink2);margin:10px 0 16px}
 .mini{display:flex;flex-wrap:wrap;gap:30px;margin-top:22px}
 .mini div{font-size:13px;color:var(--mute)}
-.mini b{display:block;font:var(--display-w) 28px/1.25 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.mini b{display:block;font:600 28px/1.25 var(--num);color:var(--ink);font-variant-numeric:tabular-nums}
 .you .mood{display:flex;align-items:center;gap:14px;margin:6px 0 14px}
 .you .mood b{display:block;font:var(--display-w) 20px/1.4 var(--display)}
 .you .mood span{font-size:13px;color:var(--mute)}
@@ -366,7 +367,7 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .note{padding:16px 16px 14px;border-radius:var(--r-m);background:var(--surface);box-shadow:var(--shadow);font-size:13px;color:var(--ink2);border-top:3px solid var(--warn)}
 .note b{display:block;font-weight:600;font-size:15px;color:var(--ink)}
-.note .timer{display:block;font:var(--display-w) 20px/1.4 var(--display);color:var(--warn);margin:8px 0;font-variant-numeric:tabular-nums}
+.note .timer{display:block;font:600 20px/1.4 var(--num);color:var(--warn);margin:8px 0;font-variant-numeric:tabular-nums}
 .note .timer.done{color:var(--ok)}
 .note.skipped{border-top-color:var(--ok)}
 .why-list{display:grid;gap:16px;margin:0;padding:0;list-style:none;counter-reset:w}
@@ -379,7 +380,7 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .figures>div{padding:16px 20px 15px;border-left:1px solid var(--line)}
 .figures>div:first-child{border-left:0;padding-left:2px}
 .figures label{display:block;font-size:13px;color:var(--mute)}
-.figures .v{font:var(--display-w) 25px/1.35 var(--display);font-variant-numeric:tabular-nums}
+.figures .v{font:600 25px/1.35 var(--num);font-variant-numeric:tabular-nums}
 .figures small{font-size:12.5px;color:var(--mute)}
 .ledger-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:34px;align-items:start}
 .ribbon{display:flex;height:8px;border-radius:8px;overflow:hidden;gap:2px;margin:4px 0 10px}
@@ -434,7 +435,7 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .proc div{opacity:0;transition:opacity .3s}
 .proc div.on{opacity:1}
 .stub{position:relative;margin-top:14px;padding:16px 18px;border-radius:var(--r-s);background:var(--surface);border-top:1px dashed var(--line2)}
-.stub .amt{font:var(--display-w) 26px var(--display);font-variant-numeric:tabular-nums}
+.stub .amt{font:600 26px var(--num);font-variant-numeric:tabular-nums}
 .stub dl{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:8px 0 0;font-size:12.5px}
 .stub dt{color:var(--mute)}
 .stub dd{margin:0;word-break:break-all;color:var(--ink2)}

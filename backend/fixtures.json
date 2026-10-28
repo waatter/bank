@@ -1,8 +1,8 @@
 {
   "personas": {
     "A": {
-      "name": "阿林",
-      "initial": "林",
+      "name": "晓舟",
+      "initial": "舟",
       "color": "#cfe4da",
       "tag": "灵活收入",
       "tone": "protect",
@@ -195,8 +195,8 @@
       ]
     },
     "B": {
-      "name": "小周",
-      "initial": "周",
+      "name": "望舒",
+      "initial": "舒",
       "color": "#f4d4ca",
       "tag": "多笔分期",
       "tone": "recover",
@@ -430,8 +430,8 @@
       ]
     },
     "C": {
-      "name": "陈工",
-      "initial": "陈",
+      "name": "知远",
+      "initial": "远",
       "color": "#d8e0ee",
       "tag": "储备充足",
       "tone": "grow",

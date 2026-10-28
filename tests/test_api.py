@@ -259,6 +259,29 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(result["snapshot"]["balance"], snapshot["balance"])
         self.assertEqual(self.request("POST", "/api/agent", {"message": "x" * 2001}, token)[0], 400)
 
+    def test_mission_round_trip_over_http(self):
+        token, snapshot = self.login()
+        status, result, _ = self.request("POST", "/api/agent", {"message": "给妈妈转100元，然后冻结信用卡"}, token)
+        self.assertEqual(status, 200)
+        mission = result["mission"]
+        self.assertEqual([s["tool"] for s in mission["steps"]], ["transfer", "card_freeze"])
+        self.assertEqual(result["snapshot"]["balance"], snapshot["balance"])
+        path = f'/api/missions/{mission["id"]}/confirm'
+        approve = [s["id"] for s in mission["steps"]]
+        self.assertEqual(self.request("POST", path, {"token": mission["token"], "approve": approve, "confirmation": False}, token)[0], 400)
+        self.assertEqual(self.request("POST", path, {"token": mission["token"], "approve": approve, "confirmation": True, "extra": 1}, token)[0], 400)
+        status, done, _ = self.request("POST", path, {"token": mission["token"], "approve": approve, "confirmation": True}, token)
+        self.assertEqual(status, 200)
+        self.assertEqual([s["status"] for s in done["mission"]["steps"]], ["done", "done"])
+        self.assertEqual(done["snapshot"]["balance"], snapshot["balance"] - 100)
+        status, portfolio, _ = self.request("GET", "/api/portfolio", token=token)
+        self.assertEqual(status, 200)
+        self.assertIn("frozen", [c["status"] for c in portfolio["cards"]])
+        self.assertEqual(self.request("GET", "/api/portfolio")[0], 401)
+        status, planned, _ = self.request("POST", "/api/missions", {"message": "看看我的卡，再看看理财"}, token)
+        self.assertEqual(status, 201)
+        self.assertEqual(planned["mission"]["summary"]["actionable"], 0)
+
     def test_events_and_subscription_cancellation_require_confirmation(self):
         token, snapshot = self.login()
         subscription = snapshot["subscriptions"][0]

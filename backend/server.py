@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from .model import IntentPlanner, ModelConfig, agent_response, strict_json
+from .agent_ops import AgentOps
 from .life_service import LifeService
 from .shopping import ShoppingService
 
@@ -35,6 +36,8 @@ STATIC_FILES = {
     "/assets/life-ui.js": "assets/life-ui.js", "/assets/life-ui.css": "assets/life-ui.css",
     "/assets/action-ui.js": "assets/action-ui.js", "/assets/action-ui.css": "assets/action-ui.css",
     "/assets/shopping-ui.js": "assets/shopping-ui.js", "/assets/shopping-ui.css": "assets/shopping-ui.css",
+    "/assets/mission-ui.js": "assets/mission-ui.js", "/assets/mission-ui.css": "assets/mission-ui.css",
+    "/assets/guard-ui.js": "assets/guard-ui.js", "/assets/director.js": "assets/director.js",
 }
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
@@ -102,6 +105,7 @@ class TroposServer(ThreadingHTTPServer):
         self.service = service
         self.life = LifeService(service)
         self.shopping = ShoppingService(service)
+        self.ops = AgentOps(service)
         self.planner = planner if planner is not None else IntentPlanner()
         self.root = Path(root).resolve()
         if ":" in host:
@@ -362,7 +366,23 @@ class TroposHandler(BaseHTTPRequestHandler):
             body = _object(body, {"message"}, {"message"})
             if not isinstance(body["message"], str) or not 1 <= len(body["message"].strip()) <= 2000:
                 raise HttpError(400, "INVALID_MESSAGE", "请输入 1 至 2000 字的请求。")
-            return self._json(200, agent_response(service, uid, body["message"], self.server.planner))
+            return self._json(200, agent_response(service, uid, body["message"], self.server.planner, self.server.ops))
+        if method == "GET" and path == "/api/portfolio":
+            return self._json(200, self.server.ops.portfolio(uid))
+        if method == "GET" and path == "/api/household":
+            return self._json(200, self.server.ops.house.overview(uid))
+        family_ask = re.fullmatch(r"/api/family/asks/([^/]+)/simulate", path)
+        if method == "POST" and family_ask:
+            body = _object(body, {"decision"}, {"decision"})
+            return self._json(200, self.server.ops.house.simulate_ask(uid, _identifier(family_ask[1]), body))
+        if method == "POST" and path == "/api/missions":
+            body = _object(body, {"message"}, {"message"})
+            return self._json(201, self.server.ops.plan(uid, body["message"]))
+        mission = re.fullmatch(r"/api/missions/([^/]+)/confirm", path)
+        if method == "POST" and mission:
+            body = _object(body, {"confirmation", "token", "approve", "phrases"}, {"confirmation", "token", "approve"})
+            _confirmed(body)
+            return self._json(200, self.server.ops.confirm(uid, _identifier(mission[1]), body))
         if method == "POST" and path == "/api/transfers/propose":
             body = _object(body, {"to", "amount", "when", "memo"}, {"to", "amount"})
             return self._json(201, service.propose_transfer(uid, body))
@@ -408,8 +428,8 @@ class TroposHandler(BaseHTTPRequestHandler):
             body = _object(body, {"confirmation"}, {"confirmation"})
             _confirmed(body)
             return self._json(200, service.reset(uid))
-        if method == "GET" and path in {"/api/evaluation/latest", "/api/evaluation/intents"}:
-            filename = "intent-rules.json" if path == "/api/evaluation/intents" else "evaluation.json"
+        if method == "GET" and path in {"/api/evaluation/latest", "/api/evaluation/intents", "/api/evaluation/redteam", "/api/evaluation/redteam-live"}:
+            filename = {"/api/evaluation/intents": "intent-rules.json", "/api/evaluation/redteam": "redteam.json", "/api/evaluation/redteam-live": "redteam-live.json"}.get(path, "evaluation.json")
             report = self.server.root / "reports" / filename
             if not report.is_file() or report.stat().st_size > 2000000:
                 raise HttpError(404, "EVALUATION_NOT_FOUND", "尚未生成评估报告。")

@@ -48,7 +48,7 @@
     });
   }
   function header() {
-    return `<header class="life-header"><div><p class="life-eyebrow">ASSETS & LIFE / 把钱放回生活</p><h1>生活的下一步，留出余地。</h1><p class="life-intro">把想做的事摆在一起，看清未来 30 天的现金安排。先比较，再决定。</p></div><button type="button" class="life-button" data-life-action="refresh"${disabled()}>${loading ? '正在更新…' : '刷新数据'}</button></header><div data-life-status class="life-status ${messageError ? 'life-status-error' : ''}" role="status" aria-live="polite" ${message ? '' : 'hidden'}>${esc(message)}</div>`;
+    return `<header class="life-header"><div><p class="life-eyebrow">资产与生活 · 把钱放回生活</p><h1>生活的下一步，留出余地。</h1><p class="life-intro">把想做的事摆在一起，看清未来 30 天的现金安排。先比较，再决定。</p></div><button type="button" class="life-button" data-life-action="refresh"${disabled()}>${loading ? '正在更新…' : '刷新数据'}</button></header><div data-life-status class="life-status ${messageError ? 'life-status-error' : ''}" role="status" aria-live="polite" ${message ? '' : 'hidden'}>${esc(message)}</div>`;
   }
   function assets() {
     const s = state.snapshot || {}, f = analysis && analysis.financial || {};

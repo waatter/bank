@@ -56,6 +56,13 @@
     profile(profile){return this.request('/api/profile',{method:'PUT',body:profile})}
     proposals(){return this.request('/api/proposals')}
     agent(message){return this.request('/api/agent',{method:'POST',body:{message}})}
+    mission(message){return this.request('/api/missions',{method:'POST',body:{message}})}
+    confirmMission(mission,approve,phrases){return this.request('/api/missions/'+encodeURIComponent(mission.id)+'/confirm',{method:'POST',body:{confirmation:true,token:mission.token,approve,phrases}})}
+    portfolio(){return this.request('/api/portfolio')}
+    household(){return this.request('/api/household')}
+    familySimulate(id,decision){return this.request('/api/family/asks/'+encodeURIComponent(id)+'/simulate',{method:'POST',body:{decision}})}
+    redteam(){return this.request('/api/evaluation/redteam')}
+    redteamLive(){return this.request('/api/evaluation/redteam-live')}
     propose(body){return this.request('/api/transfers/propose',{method:'POST',body})}
     confirm(proposal,simulateTimeout=false){return this.request('/api/proposals/'+encodeURIComponent(proposal.id)+'/confirm',{method:'POST',body:{confirmation:true,confirmationToken:proposal.confirmationToken,simulate_timeout:simulateTimeout}})}
     revoke(id){return this.request('/api/proposals/'+encodeURIComponent(id)+'/revoke',{method:'POST',body:{confirmation:true}})}

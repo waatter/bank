@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-22T09:48:43.050278+00:00",
+  "generated_at": "2026-10-28T05:03:00.178712+00:00",
   "requested_mode": "rules",
   "actual_modes": {
     "rules": 41
@@ -13,15 +13,15 @@
   "dataset_origin": "人工编写的固定合成中文功能用例；无真实用户消息、训练集或生产采样。",
   "case_sha256": "667dc21465c991cc726618ff15715f9b18611bdbfe8c9f7b92fcc6c74e72ecd3",
   "source_sha256": {
-    "backend/model.py": "814cffdccd7f9d408b6e5432ab0bcd40db00fe6a2cb87bb1abc6970f69e15b8e",
-    "backend/service.py": "d30589f53099183f4d4552d41847a94788d7e275ff71dc6e605bfaad303c02b7",
-    "backend/fixtures.json": "caa90b2f815ebece61f0d669773264663a89aec0c38626fc2303f10fd0a21b47",
-    "eval/intent_benchmark.py": "827a7d4d50ee13d02d2f3865c5d83f359e4603cae451ef10cf171d6ae61c5881"
+    "backend/model.py": "d84ebf788b73fb2bbbdda6401f353c3caa004c387d08fc19d8aca09e6ee15ca0",
+    "backend/service.py": "bc96f24ede010ec5f3885344c37169ef1bcc69377c8d662fa71c00863a6da8cd",
+    "backend/fixtures.json": "b04b50c8ee53c95899de565bc28d3f3b60a4661ea9caefbcd0c8c48dc3cfe50d",
+    "eval/intent_benchmark.py": "bd83bd78c5077e503574ecc866288e6f6fc21d00a4554348d1057a056935c7e4"
   },
   "source_changed_during_run": [],
-  "git_revision": "b7cb3bc6e32c42119d642bd3127014d0ce042566",
+  "git_revision": "85ef5a90b70049d3efe8c28f693ce2c3569234b9",
   "working_tree_dirty": true,
-  "runtime_seconds": 0.451,
+  "runtime_seconds": 1.053,
   "summary": {
     "cases": 41,
     "action": {
