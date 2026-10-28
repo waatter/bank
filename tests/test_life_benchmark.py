@@ -116,7 +116,7 @@ class FaultDetectionTests(unittest.TestCase):
             self.assertEqual(verify_policy(snapshot, scenes, settings, policy)['errors'], [])
 
     def test_unexpected_failure_is_retained_as_incomplete(self):
-        template = json.loads(CATALOGUE.read_text())[0]
+        template = json.loads(CATALOGUE.read_text(encoding='utf-8'))[0]
         with patch('eval.life_benchmark.analyze', side_effect=RuntimeError('injected outage')):
             result = run_case('A', 'injected', [template])
         self.assertTrue(result['incomplete'])

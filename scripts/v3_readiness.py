@@ -460,10 +460,10 @@ def deployment_checks(root):
     def add(name, ok, detail):
         checks.append({'check': name, 'status': PASS if ok else FAIL, 'detail': detail})
     try:
-        docker = (root / 'Dockerfile').read_text()
-        compose = (root / 'deploy/docker-compose.yml').read_text()
-        caddy = (root / 'deploy/Caddyfile').read_text()
-        ignore = (root / 'deploy/build-context.dockerignore').read_text()
+        docker = (root / 'Dockerfile').read_text(encoding='utf-8')
+        compose = (root / 'deploy/docker-compose.yml').read_text(encoding='utf-8')
+        caddy = (root / 'deploy/Caddyfile').read_text(encoding='utf-8')
+        ignore = (root / 'deploy/build-context.dockerignore').read_text(encoding='utf-8')
     except OSError:
         add('deployment_files', False, '部署模板缺失或不可读')
         return checks
@@ -499,7 +499,7 @@ def deployment_checks(root):
         expected = set(sources) | {Path('.dockerignore')}
         safe = safe and bool(sources)
         safe = safe and all((staged / p).is_file() and not (staged / p).is_symlink() for p in expected)
-        safe = safe and (staged / '.dockerignore').read_text() == ignore
+        safe = safe and (staged / '.dockerignore').read_text(encoding='utf-8') == ignore
         add('staged_context', safe, '隔离构建目录实物白名单/必需文件检查；不读取未知文件内容')
     else:
         checks.append({'check': 'staged_context', 'status': UNTESTED, 'detail': '未生成 deploy/build-context；上传包及实际构建上下文未测'})

@@ -3,6 +3,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import json
 import http.client
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -14,6 +15,7 @@ import uuid
 from eval.user_trial import TASK_IDS, load_record, markdown, summarize, validate_record
 
 ROOT = Path(__file__).resolve().parents[1]
+UTF8_ENV = {**os.environ, 'PYTHONIOENCODING': 'utf-8'}
 
 
 def fixture(kind='internal_acceptance', device='desktop', participant='P001', ended=True):
@@ -190,22 +192,22 @@ class SummaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output=Path(directory)/'not-conducted.md'
             cmd=[sys.executable,'-m','eval.user_trial','--output',str(output)]
-            r=subprocess.run(cmd,cwd=ROOT,capture_output=True,text=True)
+            r=subprocess.run(cmd,cwd=ROOT,capture_output=True,text=True,encoding='utf-8',env=UTF8_ENV)
             self.assertEqual(r.returncode,0,r.stderr)
-            data=json.loads(output.with_suffix('.json').read_text())
+            data=json.loads(output.with_suffix('.json').read_text(encoding='utf-8'))
             self.assertEqual(data['status'],'not_conducted')
             self.assertEqual(data['n_input_sessions'],0)
-            self.assertIn('未开展',output.read_text())
+            self.assertIn('未开展',output.read_text(encoding='utf-8'))
             original=output.read_bytes()
-            self.assertEqual(subprocess.run(cmd,cwd=ROOT,capture_output=True).returncode,2)
+            self.assertEqual(subprocess.run(cmd,cwd=ROOT,capture_output=True,env=UTF8_ENV).returncode,2)
             self.assertEqual(output.read_bytes(),original)
 
     def test_cli_invalid_input_fail_closed_no_feedback_in_error(self):
         with tempfile.TemporaryDirectory() as directory:
             p=Path(directory)/'bad.json'; output=Path(directory)/'report'
-            p.write_text('{"name":"PRIVATE_SENTINEL"}')
+            p.write_text('{"name":"PRIVATE_SENTINEL"}', encoding='utf-8')
             r=subprocess.run([sys.executable,str(ROOT/'eval/user_trial.py'),str(p),'--output',str(output)],
-                             cwd=ROOT,capture_output=True,text=True)
+                             cwd=ROOT,capture_output=True,text=True,encoding='utf-8',env=UTF8_ENV)
             self.assertEqual(r.returncode,2)
             self.assertNotIn('PRIVATE_SENTINEL',r.stderr+r.stdout)
             self.assertIn('fields must exactly match schema',r.stderr)
@@ -218,7 +220,8 @@ let ms=0; const clock=()=>({wall:new Date(Date.UTC(2026,9,27)+ms).toISOString(),
 const t=createTrial({session_id:'01234567-89ab-4cde-8fab-0123456789ab',participant_id:'P999',record_kind:'internal_acceptance',interaction_source:'automated_test',consent:true,environment:{device:'emulation',network:'unknown',vpn:'unknown'}},clock);
 t.start('profile_correction');ms=15125;t.end('profile_correction',{completed:false,help_count:null,misunderstanding_count:1,misunderstanding_notes:'模拟误解',comprehension_answer:'模拟错误回答',comprehension_correct:false,feedback:null});
 console.log(JSON.stringify(t.exportRecord()));"""
-        result=subprocess.run(['node','-e',js],cwd=ROOT,capture_output=True,text=True,check=True)
+        result=subprocess.run(['node','-e',js],cwd=ROOT,capture_output=True,text=True,
+                              encoding='utf-8',check=True)
         record=validate_record(json.loads(result.stdout))
         self.assertEqual(record['tasks'][0]['duration'],15.125)
         self.assertEqual(summarize([record])['n_real_participants'],0)

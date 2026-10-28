@@ -36,12 +36,12 @@ class StaticAssetsTests(unittest.TestCase):
                 assets = set()
                 for page in ['index.html', 'demo.html']:
                     parser = AssetParser()
-                    parser.feed((ROOT / page).read_text())
+                    parser.feed((ROOT / page).read_text(encoding='utf-8'))
                     assets |= {urljoin('/' + page, path) for path in parser.paths}
                 # Include nested font dependencies, not just the HTML links.
                 for path in list(assets):
                     if path.endswith('.css'):
-                        for target in re.findall(r'url\([\'"]?([^\)\'\"]+)', (ROOT / path.lstrip('/')).read_text()):
+                        for target in re.findall(r'url\([\'"]?([^\)\'\"]+)', (ROOT / path.lstrip('/')).read_text(encoding='utf-8')):
                             if not target.startswith('data:'):
                                 assets.add(urljoin(path, target))
                 types = {'.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.woff2': 'font/woff2'}

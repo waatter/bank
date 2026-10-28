@@ -5,6 +5,7 @@ No banking/model service is mocked; paid model transport is forbidden.
 """
 import concurrent.futures
 from decimal import Decimal
+import contextlib
 import http.client
 import json
 from pathlib import Path
@@ -107,14 +108,14 @@ class ConversationApiTests(unittest.TestCase):
         return '/api/proposals/' + proposal['id']
 
     def rows(self, table, user=None):
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             return db.execute('SELECT * FROM ' + table + ' WHERE user_id=? ORDER BY rowid',
                               (user or self.user,)).fetchall()
 
     def finances(self, token=None, user=None):
         snapshot = self.ok('GET', '/api/state', token=token)
         snapshot.pop('audit')  # Preparing/revoking a draft may legitimately audit it.
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             entries = db.execute('SELECT e.* FROM entries e JOIN transactions t ON t.id=e.transaction_id '
                                  'WHERE t.user_id=? ORDER BY e.id', (user or self.user,)).fetchall()
         return (snapshot, self.rows('accounts', user), self.rows('transactions', user),
@@ -278,7 +279,7 @@ class ConversationApiTests(unittest.TestCase):
         self.assertEqual(minor(paid['snapshot']['balance']), minor(before[0]['balance']) - 12345)
         self.assertEqual(len(self.rows('transactions')), len(before[2]) + 1)
         self.assertEqual(len(self.rows('authorizations')), len(before[3]) + 1)
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             count, total = db.execute('SELECT COUNT(*),SUM(amount) FROM entries WHERE transaction_id=?',
                                      (paid['transaction']['id'],)).fetchone()
         self.assertEqual((count, total), (2, 0))

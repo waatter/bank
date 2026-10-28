@@ -34,7 +34,7 @@ class LifeService:
 
     def _catalogue(self):
         path = Path(__file__).with_name('life_scenarios.json')
-        return json.loads(path.read_text()) if path.exists() else []
+        return json.loads(path.read_text(encoding='utf-8')) if path.exists() else []
 
     def _get(self, db, user_id):
         version, settings = self._state(db, user_id)

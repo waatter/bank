@@ -260,7 +260,8 @@ def _source_hashes():
 
 def _git_metadata():
     def read(arguments):
-        result = subprocess.run(['git', *arguments], cwd=ROOT, capture_output=True, text=True, check=False)
+        result = subprocess.run(['git', *arguments], cwd=ROOT, capture_output=True, text=True,
+                                encoding='utf-8', errors='replace', check=False)
         return result.stdout.strip() if result.returncode == 0 else None
     status = read(['status', '--porcelain'])
     return {'revision': read(['rev-parse', 'HEAD']), 'dirty': bool(status) if status is not None else None,
@@ -371,8 +372,8 @@ def main():
     args = parser.parse_args()
     report = benchmark()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
-    args.output.with_suffix('.md').write_text(markdown(report))
+    args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    args.output.with_suffix('.md').write_text(markdown(report), encoding='utf-8')
     print(json.dumps({'inputs': report['input_count'], 'paths': report['checked_path_count'],
                       'failures': len(report['failures']), 'output': str(args.output)}, ensure_ascii=False))
     return 1 if report['failures'] or report['input_count'] != 30 or report['checked_path_count'] != 360 else 0

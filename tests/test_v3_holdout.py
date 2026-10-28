@@ -377,7 +377,7 @@ else:
 '''
         for mode in ("frozen", "mismatch"):
             completed = subprocess.run([sys.executable, "-B", "-c", script, str(FROZEN), mode], cwd=ROOT,
-                                       text=True, capture_output=True, timeout=30)
+                                       text=True, capture_output=True, encoding='utf-8', timeout=30)
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
 
 

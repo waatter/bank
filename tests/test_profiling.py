@@ -2,6 +2,7 @@
 
 Uses only the standard library and local Node; no paid API or model calls.
 """
+import contextlib
 import copy
 import itertools
 import json
@@ -197,7 +198,8 @@ class AssessmentTests(unittest.TestCase):
         del legacy['profile']['assessment']
         vectors.extend([legacy, {}, dict(profile={'assessment': None})])
         process = subprocess.run(['node', str(ROOT / 'tests/risk-profile.cjs'), '--assess'],
-                                 input=json.dumps(vectors), text=True, capture_output=True, check=True, timeout=30)
+                                 input=json.dumps(vectors), text=True, encoding='utf-8',
+                                 capture_output=True, check=True, timeout=30)
         actual = json.loads(process.stdout)
         self.assertEqual(len(actual), len(vectors))
         for index, (data, js) in enumerate(zip(vectors, actual)):
@@ -248,7 +250,7 @@ class ProfilePersistenceTests(unittest.TestCase):
         self.assertEqual(result['balance'], self.snapshot['balance'])
         self.assertEqual(result['transactions'], self.snapshot['transactions'])
         self.assertEqual(BankService(self.path).snapshot(self.user_id)['profile']['assessment'], ASSESSMENT)
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             self.assertEqual([r[0] for r in db.execute('SELECT kind FROM authorizations')], ['read_profile'])
 
     def test_invalid_assessment_is_rejected_atomically(self):

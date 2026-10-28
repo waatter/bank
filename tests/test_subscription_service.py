@@ -1,5 +1,6 @@
 """Subscription draft safety and SQLite concurrency; standard library only."""
 import concurrent.futures
+import contextlib
 import json
 from pathlib import Path
 import sqlite3
@@ -68,12 +69,12 @@ class SubscriptionServiceTests(unittest.TestCase):
         self.assertTrue(caught.exception.message)
 
     def count(self, table, where='', values=()):
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             return db.execute('SELECT COUNT(*) FROM ' + table + (' WHERE ' + where if where else ''),
                               values).fetchone()[0]
 
     def database_rows(self):
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             tables = [row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
             return {table: db.execute('SELECT * FROM ' + table + ' ORDER BY rowid').fetchall()
                     for table in tables}

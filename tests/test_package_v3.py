@@ -32,6 +32,14 @@ class PackageTests(unittest.TestCase):
         path.write_text(body, encoding="utf-8")
         return path
 
+    def symlink(self, link, target, target_is_directory=False):
+        try:
+            link.symlink_to(target, target_is_directory=target_is_directory)
+        except OSError as error:
+            if getattr(error, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege is unavailable")
+            raise
+
     def build(self):
         return package.create_package(self.root, "dist/candidate.zip")
 
@@ -98,7 +106,7 @@ class PackageTests(unittest.TestCase):
 
         def guarded_scandir(fd):
             # Compare directory identity without opening the protected trees.
-            info = os.fstat(fd)
+            info = os.fstat(fd) if isinstance(fd, int) else Path(fd).stat()
             for name in [".local", ".tmp", "backend/.local", "backend/raw", "deploy/data"]:
                 protected = (self.root / name).stat()
                 self.assertNotEqual((info.st_dev, info.st_ino), (protected.st_dev, protected.st_ino))
@@ -145,7 +153,7 @@ class PackageTests(unittest.TestCase):
                 link.parent.mkdir(parents=True, exist_ok=True)
                 if name == "VERSION":
                     link.unlink()
-                link.symlink_to(target, target_is_directory=is_dir)
+                self.symlink(link, target, target_is_directory=is_dir)
                 try:
                     with self.assertRaisesRegex(package.PackageError, "Symlink rejected"):
                         self.build()
@@ -157,12 +165,12 @@ class PackageTests(unittest.TestCase):
 
     def test_symlink_root_and_output_parent_are_rejected(self):
         link = self.root / "linked-root"
-        link.symlink_to(self.root, target_is_directory=True)
+        self.symlink(link, self.root, target_is_directory=True)
         with self.assertRaises(OSError):
             package.create_package(link, "dist/candidate.zip")
         target = self.root / "elsewhere"
         target.mkdir()
-        (self.root / "dist").symlink_to(target, target_is_directory=True)
+        self.symlink(self.root / "dist", target, target_is_directory=True)
         with self.assertRaises(OSError):
             self.build()
         self.assertEqual(list(target.iterdir()), [])
@@ -182,7 +190,7 @@ class PackageTests(unittest.TestCase):
 
     def test_dangling_output_symlink_is_not_overwritten(self):
         self.output.parent.mkdir()
-        self.output.symlink_to(self.root / "nonexistent")
+        self.symlink(self.output, self.root / "nonexistent")
         with self.assertRaisesRegex(package.PackageError, "overwrite"):
             self.build()
         self.assertTrue(self.output.is_symlink())
@@ -228,7 +236,7 @@ class PackageTests(unittest.TestCase):
         def replace_after_collect(fd):
             result = collect(fd)
             source.unlink()
-            source.symlink_to(secret)
+            self.symlink(source, secret)
             return result
 
         with patch.object(package, "collect_files", side_effect=replace_after_collect):
@@ -241,7 +249,7 @@ class PackageTests(unittest.TestCase):
         link = package.os.link
 
         def publish(source, destination, **kwargs):
-            if destination == self.output.name:
+            if Path(destination).name == self.output.name:
                 self.output.write_bytes(b"other writer")
             return link(source, destination, **kwargs)
 

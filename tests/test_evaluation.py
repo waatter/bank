@@ -81,7 +81,7 @@ class EvaluationIntegrationTests(unittest.TestCase):
             self.assertTrue(row["safe_target_attained"])
 
     def test_unexpected_service_failure_is_retained_not_silently_skipped(self):
-        persona = json.loads(FIXTURES.read_text())["personas"]["A"]
+        persona = json.loads(FIXTURES.read_text(encoding='utf-8'))["personas"]["A"]
         with patch("backend.service.BankService.session", side_effect=RuntimeError("injected outage")):
             row = run_case("A", persona, "normal", 100, "dynamic_profile")
         self.assertTrue(row["incomplete"])

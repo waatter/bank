@@ -272,6 +272,7 @@ class ProbeTests(unittest.TestCase):
         self.assertTrue(any(r['status'] == FAIL for r in result['checks']))
 
     def test_real_backend_all_three_pages_assets_and_ledger_unchanged(self):
+        import contextlib
         import sqlite3
         from backend.model import IntentPlanner, ModelConfig
         from backend.server import create_server
@@ -279,7 +280,7 @@ class ProbeTests(unittest.TestCase):
             database = Path(directory) / 'test.sqlite3'
             server = create_server(port=0, db_path=database, planner=IntentPlanner(ModelConfig()))
             def snapshot():
-                with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as db:
+                with contextlib.closing(sqlite3.connect(database.as_uri() + '?mode=ro', uri=True)) as db:
                     return list(db.iterdump())
             before = snapshot()
             thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -332,7 +333,12 @@ class OutputAndDeploymentTests(unittest.TestCase):
             manifest = {p.as_posix() for p in context_manifest(root)}
             self.assertNotIn('assets/private.env', manifest)
             self.assertNotIn('assets/.hidden.js', manifest)
-            (root / 'assets/linked.css').symlink_to(root / 'VERSION')
+            try:
+                (root / 'assets/linked.css').symlink_to(root / 'VERSION')
+            except OSError as error:
+                if getattr(error, 'winerror', None) == 1314:
+                    self.skipTest('Windows symlink privilege is unavailable')
+                raise
             with self.assertRaises(ValueError):
                 context_manifest(root)
 

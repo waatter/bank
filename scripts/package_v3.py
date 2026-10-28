@@ -82,13 +82,53 @@ def eligible(name):
         parts[-1] == ".env.example" or PurePosixPath(name).suffix.lower() in PUBLIC_SUFFIXES)
 
 
-_DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+_DIR_FLAGS = (os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+              | getattr(os, "O_NOFOLLOW", 0))
+_FILE_READ_FLAGS = (os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+                    | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0))
+_FILE_WRITE_FLAGS = (os.O_WRONLY | os.O_CREAT | os.O_EXCL
+                     | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0))
+_SECURE_DIR_FD = (
+    os.name != "nt"
+    and hasattr(os, "O_DIRECTORY")
+    and hasattr(os, "O_NOFOLLOW")
+    and all(function in os.supports_dir_fd for function in
+            (os.open, os.mkdir, os.stat, os.unlink))
+)
+
+
+def _is_link_or_reparse(info):
+    """Treat Windows junctions/reparse points like symlinks."""
+    attributes = getattr(info, "st_file_attributes", 0)
+    reparse = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return stat.S_ISLNK(info.st_mode) or bool(attributes & reparse)
+
+
+def _checked_directory(path, create=False):
+    """Portable component walk used where openat/O_NOFOLLOW is unavailable."""
+    absolute = Path(os.path.abspath(path))
+    current = Path(absolute.anchor)
+    for component in absolute.parts[1:]:
+        child = current / component
+        if create and not os.path.lexists(child):
+            try:
+                child.mkdir()
+            except FileExistsError:
+                pass
+        info = os.lstat(child)
+        if _is_link_or_reparse(info) or not stat.S_ISDIR(info.st_mode):
+            raise OSError(f"Unsafe directory component: {child}")
+        current = child
+    return absolute
 
 
 @contextmanager
 def directory(path, create=False):
     """Walk absolute components with openat/O_NOFOLLOW, including output parents."""
     absolute = Path(os.path.abspath(path))
+    if not _SECURE_DIR_FD:
+        yield _checked_directory(absolute, create=create)
+        return
     fd = os.open(absolute.anchor, _DIR_FLAGS)
     try:
         for component in absolute.parts[1:]:
@@ -108,6 +148,32 @@ def directory(path, create=False):
 @contextmanager
 def source_file(root_fd, name):
     parts = PurePosixPath(name).parts
+    if not _SECURE_DIR_FD:
+        root = Path(root_fd)
+        parent = root
+        for part in parts[:-1]:
+            parent = parent / part
+            info = os.lstat(parent)
+            if _is_link_or_reparse(info) or not stat.S_ISDIR(info.st_mode):
+                raise OSError(f"Unsafe source directory: {name}")
+        path = parent / parts[-1]
+        before = os.lstat(path)
+        if _is_link_or_reparse(before):
+            raise OSError(f"Symlink rejected: {name}")
+        fd = os.open(path, _FILE_READ_FLAGS)
+        try:
+            opened = os.fstat(fd)
+            if not stat.S_ISREG(opened.st_mode):
+                raise PackageError(f"Not a regular source file: {name}")
+            if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
+                raise PackageError(f"Source changed while opening: {name}")
+            with os.fdopen(fd, "rb") as stream:
+                fd = None
+                yield stream
+        finally:
+            if fd is not None:
+                os.close(fd)
+        return
     parent = os.dup(root_fd)
     fd = None
     try:
@@ -115,7 +181,7 @@ def source_file(root_fd, name):
             child = os.open(part, _DIR_FLAGS, dir_fd=parent)
             os.close(parent)
             parent = child
-        fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        fd = os.open(parts[-1], _FILE_READ_FLAGS, dir_fd=parent)
         if not stat.S_ISREG(os.fstat(fd).st_mode):
             raise PackageError(f"Not a regular source file: {name}")
         with os.fdopen(fd, "rb") as stream:
@@ -130,6 +196,37 @@ def source_file(root_fd, name):
 def collect_files(root_fd):
     files = []
 
+    if not _SECURE_DIR_FD:
+        def visit_path(directory_path, prefix=""):
+            with os.scandir(directory_path) as entries:
+                entries = sorted(entries, key=lambda entry: entry.name)
+            for entry in entries:
+                name = entry.name
+                relative = f"{prefix}/{name}" if prefix else name
+                if not prefix:
+                    if name not in SOURCE_DIRS | ROOT_FILES | {"deploy"}:
+                        continue
+                elif prefix == "deploy" and name not in DEPLOY_FILES:
+                    continue
+                if excluded(PurePosixPath(relative).parts):
+                    continue
+                info = entry.stat(follow_symlinks=False)
+                if _is_link_or_reparse(info):
+                    raise PackageError(f"Symlink rejected: {relative}")
+                if stat.S_ISDIR(info.st_mode):
+                    if name in ROOT_FILES or prefix == "deploy":
+                        raise PackageError(f"Expected a regular source file: {relative}")
+                    visit_path(Path(directory_path) / name, relative)
+                elif eligible(relative):
+                    if not stat.S_ISREG(info.st_mode):
+                        raise PackageError(f"Not a regular source file: {relative}")
+                    files.append(relative)
+
+        visit_path(Path(root_fd))
+        if "VERSION" not in files:
+            raise PackageError("VERSION is required")
+        return sorted(files)
+
     def visit(fd, prefix=""):
         with os.scandir(fd) as entries:
             names = sorted(entry.name for entry in entries)
@@ -143,7 +240,7 @@ def collect_files(root_fd):
             if excluded(PurePosixPath(relative).parts):
                 continue
             info = os.stat(name, dir_fd=fd, follow_symlinks=False)
-            if stat.S_ISLNK(info.st_mode):
+            if _is_link_or_reparse(info):
                 raise PackageError(f"Symlink rejected: {relative}")
             if stat.S_ISDIR(info.st_mode):
                 if name in ROOT_FILES or prefix == "deploy":
@@ -207,6 +304,8 @@ def git_metadata(root):
 
 
 def _exists(fd, name):
+    if not _SECURE_DIR_FD:
+        return os.path.lexists(Path(fd) / name)
     try:
         os.stat(name, dir_fd=fd, follow_symlinks=False)
     except FileNotFoundError:
@@ -215,8 +314,42 @@ def _exists(fd, name):
 
 
 def _new_file(fd, name):
-    return os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
-                             0o600, dir_fd=fd), "wb")
+    if not _SECURE_DIR_FD:
+        return os.fdopen(os.open(Path(fd) / name, _FILE_WRITE_FLAGS, 0o600), "wb")
+    return os.fdopen(os.open(name, _FILE_WRITE_FLAGS, 0o600, dir_fd=fd), "wb")
+
+
+def _open_output(fd, name):
+    if not _SECURE_DIR_FD:
+        return os.fdopen(os.open(Path(fd) / name, _FILE_READ_FLAGS), "rb")
+    return os.fdopen(os.open(name, _FILE_READ_FLAGS, dir_fd=fd), "rb")
+
+
+def _publish_link(fd, source, destination):
+    if not _SECURE_DIR_FD:
+        os.link(Path(fd) / source, Path(fd) / destination)
+        return
+    os.link(source, destination, src_dir_fd=fd, dst_dir_fd=fd,
+            follow_symlinks=False)
+
+
+def _entry_stat(fd, name):
+    if not _SECURE_DIR_FD:
+        return os.lstat(Path(fd) / name)
+    return os.stat(name, dir_fd=fd, follow_symlinks=False)
+
+
+def _unlink(fd, name):
+    if not _SECURE_DIR_FD:
+        os.unlink(Path(fd) / name)
+        return
+    os.unlink(name, dir_fd=fd)
+
+
+def _fsync_directory(fd):
+    # Windows cannot fsync a directory handle opened through pathlib.
+    if _SECURE_DIR_FD:
+        os.fsync(fd)
 
 
 def _zip_info(name, executable=False):
@@ -279,7 +412,9 @@ def create_package(root, output):
                             sha256 = hashlib.sha256()
                             object_hash = hashlib.new("sha256" if len(git.get("head") or "") == 64 else "sha1")
                             object_hash.update(f"blob {before.st_size}\0".encode())
-                            executable = bool(before.st_mode & 0o111)
+                            # Windows does not preserve POSIX execute bits; shell entrypoints
+                            # must still be executable after extracting the release on Linux.
+                            executable = bool(before.st_mode & 0o111) or name.endswith(".sh")
                             size = 0
                             captured_version = bytearray() if name == "VERSION" else None
                             with archive.open(_zip_info(name, executable), "w", force_zip64=True) as member:
@@ -308,7 +443,7 @@ def create_package(root, output):
                 target.flush()
                 os.fsync(target.fileno())
             digest = hashlib.sha256()
-            with os.fdopen(os.open(temporary, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=output_fd), "rb") as stream:
+            with _open_output(output_fd, temporary) as stream:
                 for block in iter(lambda: stream.read(1024 * 1024), b""):
                     digest.update(block)
             with _new_file(output_fd, temporary_sum) as stream:
@@ -316,27 +451,25 @@ def create_package(root, output):
                 stream.flush()
                 os.fsync(stream.fileno())
             # Hard links provide atomic, exclusive publication, even for non-cooperating writers.
-            os.link(temporary_sum, checksum_name, src_dir_fd=output_fd, dst_dir_fd=output_fd,
-                    follow_symlinks=False)
+            _publish_link(output_fd, temporary_sum, checksum_name)
             checksum_published = True
-            os.fsync(output_fd)
-            os.link(temporary, output.name, src_dir_fd=output_fd, dst_dir_fd=output_fd,
-                    follow_symlinks=False)
+            _fsync_directory(output_fd)
+            _publish_link(output_fd, temporary, output.name)
             zip_published = True
-            os.fsync(output_fd)
+            _fsync_directory(output_fd)
         finally:
             if checksum_published and not zip_published:
                 # Only remove the checksum this invocation created, never another writer's file.
                 try:
-                    published = os.stat(checksum_name, dir_fd=output_fd, follow_symlinks=False)
-                    staged = os.stat(temporary_sum, dir_fd=output_fd, follow_symlinks=False)
+                    published = _entry_stat(output_fd, checksum_name)
+                    staged = _entry_stat(output_fd, temporary_sum)
                     if (published.st_dev, published.st_ino) == (staged.st_dev, staged.st_ino):
-                        os.unlink(checksum_name, dir_fd=output_fd)
+                        _unlink(output_fd, checksum_name)
                 except FileNotFoundError:
                     pass
             for name in (temporary, temporary_sum):
                 try:
-                    os.unlink(name, dir_fd=output_fd)
+                    _unlink(output_fd, name)
                 except FileNotFoundError:
                     pass
     return output

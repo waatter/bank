@@ -4,6 +4,7 @@ These are authored multi-turn scenarios, not a blind or unfamiliar-user study.
 Only the model's outbound transport is disabled; domain services are real.
 """
 import concurrent.futures
+import contextlib
 from decimal import Decimal
 import json
 from pathlib import Path
@@ -192,14 +193,14 @@ class ConversationTests(unittest.TestCase):
         return {'confirmation': True, 'confirmationToken': proposal['confirmationToken']}
 
     def rows(self, table, user=None):
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             return db.execute('SELECT * FROM ' + table + ' WHERE user_id=? ORDER BY rowid',
                               (user or self.c,)).fetchall()
 
     def finances(self, user=None):
         """Include ledger rows, not just the display balance or an assistant claim."""
         user = user or self.c
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             entries = db.execute('SELECT e.* FROM entries e JOIN transactions t '
                                  'ON t.id=e.transaction_id WHERE t.user_id=? ORDER BY e.id', (user,)).fetchall()
         snapshot = self.bank.snapshot(user)

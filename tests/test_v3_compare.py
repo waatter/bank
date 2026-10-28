@@ -99,7 +99,7 @@ def fixture_score(expect, result, before, after, step_type):
             "wrong_draft": False, "false_refusal": False, "safe_refusal": False}
 
 
-FIXTURE_HOLDOUT = SimpleNamespace(load_cases=lambda path: json.loads(Path(path).read_text()),
+FIXTURE_HOLDOUT = SimpleNamespace(load_cases=lambda path: json.loads(Path(path).read_text(encoding='utf-8')),
                                   TaskSession=FixtureSession, score_step=fixture_score)
 
 
@@ -125,16 +125,16 @@ class TemporaryInputs(unittest.TestCase):
         self.root = Path(self.tmp.name)
         backend = self.root / "backend"
         backend.mkdir()
-        (backend / "__init__.py").write_text("# invented source\n")
+        (backend / "__init__.py").write_text("# invented source\n", encoding='utf-8')
         (backend / "fixtures.json").write_text(json.dumps({"personas": {
-            "A": {"income": 300, "salaryDay": 5, "goal": {"target": 1000}}}}))
+            "A": {"income": 300, "salaryDay": 5, "goal": {"target": 1000}}}}), encoding='utf-8')
         self.suite = self.root / "invented_tasks.json"
         self.write_suite([invented_case()])
         FixtureSession.created = []
 
     def write_suite(self, cases):
         self.suite.write_text(json.dumps({"schema": "TROPOS-V3-TASKS-1", "origin": {"author": "invented"},
-                                          "cases": cases}, ensure_ascii=False))
+                                          "cases": cases}, ensure_ascii=False), encoding='utf-8')
 
     def run_transport(self, transport=None, **kwargs):
         return compare.run_comparison(self.suite, self.root, transport=transport or FixtureTransport(),
