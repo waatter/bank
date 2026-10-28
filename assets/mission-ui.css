@@ -210,3 +210,4 @@ body[data-persona="C"] .bg-form{border-radius:var(--r-m)}
 
 .gd-live-score b{display:block;font:600 40px/1.1 var(--num);color:var(--e-metis)}.gd-live-score span{display:block;margin-top:6px;font-size:14px}.gd-live-score small{display:block;font-size:12px;color:var(--mute);max-width:240px}
 @media(max-width:1100px){.gd-score{grid-template-columns:1fr 1fr 1fr}.gd-how{grid-column:1/-1}}
+@media(max-width:640px){.gd-score{grid-template-columns:1fr 1fr}.gd-live-score small{max-width:none}}
