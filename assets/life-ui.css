@@ -1,7 +1,7 @@
 /* TROPOS · 资产与生活。沿用三扇窗的字体、颜色与圆角。 */
 #lifeMount{min-width:0}
 .life-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin:16px 0 26px}
-.life-eyebrow{margin:0 0 8px;color:var(--accent);font-size:11px;letter-spacing:.18em;font-weight:600}
+.life-eyebrow{margin:0 0 8px;color:var(--accent);font-size:11px;letter-spacing:.06em;font-weight:600}
 .life-intro{color:var(--ink2);max-width:650px;margin:10px 0 0}
 .life-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
 .life-button{border:1px solid var(--line2);background:var(--surface);color:var(--ink);min-height:39px;padding:8px 16px;border-radius:var(--r-s);font:inherit;font-size:13px;cursor:pointer}

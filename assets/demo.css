@@ -1,11 +1,10 @@
-/* TROPOS 工作台 · 三扇窗
-   界面随「知己」的画像而变：晓舟看到清晨（安稳、留白），望舒看到深夜（柔和、不评判），
-   知远看到正午（精确、数字优先）。所有颜色、字体与圆角都来自 body[data-persona] 上的变量。 */
+/* TROPOS 工作台 · 账户主题
+   三种演示账户保留不同的色彩、留白与圆角，字体与核心信息层级保持一致。 */
 :root{
-  --serif:"Noto Serif SC","Songti SC","STSong","Source Han Serif SC","SimSun",serif;
-  --num:"MiSans VF",-apple-system,"PingFang SC",sans-serif;
-  --kai:"LXGW WenKai Screen","Kaiti SC","STKaiti","KaiTi","楷体",serif;
-  --sans:"MiSans VF",-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --serif:"Songti SC","Noto Serif CJK SC","STSong","SimSun",serif;
+  --kai:var(--serif);
+  --num:var(--font-number,"PingFang SC",sans-serif);
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
 }
 /* 清晨 · 晓舟 */
 body[data-persona="A"]{
@@ -15,7 +14,7 @@ body[data-persona="A"]{
   --accent:#3d7a73;--accent-ink:#f4faf8;--soft:#d6e6e2;
   --ok:#3d7a73;--warn:#b2803a;--bad:#b5503f;
   --e-ethos:#3d7a73;--e-metis:#4a6788;--e-kairos:#b2803a;--e-argos:#b5503f;
-  --display:var(--serif);--display-w:600;--display-track:.02em;
+  --display:var(--sans);--display-w:620;--display-track:-.015em;
   --ui:var(--sans);--voice:var(--sans);
   --r-l:22px;--r-m:14px;--r-s:10px;
   --shadow:0 18px 40px -30px rgba(29,43,46,.45);
@@ -30,8 +29,8 @@ body[data-persona="B"]{
   --accent:#f0b46a;--accent-ink:#2a1c08;--soft:rgba(240,180,106,.14);
   --ok:#9ccaa9;--warn:#f0b46a;--bad:#ee9c8f;
   --e-ethos:#9ccabf;--e-metis:#aabbe4;--e-kairos:#f0b46a;--e-argos:#ee9c8f;
-  --display:var(--kai);--display-w:400;--display-track:.04em;
-  --ui:var(--sans);--voice:var(--kai);
+  --display:var(--sans);--display-w:620;--display-track:-.015em;
+  --ui:var(--sans);--voice:var(--sans);
   --r-l:28px;--r-m:18px;--r-s:12px;
   --shadow:0 24px 50px -30px rgba(0,0,0,.7);
   --glow:radial-gradient(900px 520px at 85% -10%,rgba(240,180,106,.12),transparent 65%);
@@ -70,7 +69,10 @@ a{color:inherit;text-decoration:none}
 
 /* ---------- 顶栏 ---------- */
 .top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:28px;padding:14px clamp(16px,4vw,48px);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.brand{font:700 18px/1 var(--serif);letter-spacing:.24em;white-space:nowrap}
+.brand{display:inline-flex;align-items:center;gap:9px;margin-right:2px;white-space:nowrap}
+.brand-mark{width:34px;height:34px;display:block}
+.brand-name{font:650 15px/1 var(--sans);letter-spacing:.16em;color:var(--ink)}
+.brand-name .version-mark{margin-left:7px}
 .tabs{display:flex;gap:22px;margin-right:auto}
 .tabs button{position:relative;display:flex;align-items:center;gap:6px;padding:8px 0;border:0;background:none;color:var(--mute);font-size:14.5px;white-space:nowrap;transition:color .2s}
 .tabs button:hover{color:var(--ink)}
@@ -517,7 +519,7 @@ body[data-persona="C"] .composer button{border-radius:var(--r-s)}
 .server-proposal ul{padding-left:18px;font-size:13px;color:var(--ink2)}
 .server-proposal>.btn{margin:4px 6px 4px 0}
 .server-result{margin-top:14px;overflow-wrap:anywhere}
-.version-mark{font:11px var(--sans);color:var(--accent);border:1px solid var(--line2);border-radius:5px;padding:2px 4px;vertical-align:middle;letter-spacing:0}
+.version-mark{font:600 10px/1 var(--sans);color:var(--accent);border:1px solid var(--line2);border-radius:4px;padding:3px 4px;vertical-align:middle;letter-spacing:.02em}
 .life-entry{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:24px 0}
 .life-entry h2{margin:8px 0}.life-entry p{color:var(--ink2);max-width:48em}.life-entry>.btn{flex:none}
 @media(max-width:640px){.life-entry{align-items:stretch;flex-direction:column;gap:16px}.life-entry>.btn{width:100%}}

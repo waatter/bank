@@ -211,6 +211,29 @@ class ModelTests(unittest.TestCase):
                 intent = IntentPlanner(ModelConfig()).understand(f"给妈妈转{amount}")["intent"]
                 self.assertEqual(intent["action"], "clarify")
 
+    def test_currency_place_values_and_draft_only_forms(self):
+        from backend.model import rule_intent
+        for phrase, amount in {'一分钱': .01, '七毛二': .72,
+                               '二百三十四块五毛六': 234.56,
+                               '一百零七块零九分': 107.09, '五十块三': 50.3}.items():
+            with self.subTest(phrase=phrase):
+                intent = rule_intent('今天给妈妈转' + phrase)
+                self.assertEqual(intent['action'], 'transfer')
+                self.assertEqual(intent['amount'], amount)
+        for phrase in ['100元0.5', '三百五', '十毛', '五块十二分', '一分钱再给房东转五元']:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(rule_intent('给妈妈转' + phrase)['action'], 'clarify')
+        for phrase in ['往自己的目标储蓄账户存六十块，先把方案给我',
+                       '今天存六十块到自己的目标储蓄账户']:
+            self.assertEqual(rule_intent(phrase)['amount'], 60)
+        self.assertEqual(rule_intent('明天给妈妈转一分钱')['action'], 'clarify')
+
+    def test_read_only_budget_precedence_does_not_authorize_transfers(self):
+        from backend.model import rule_intent
+        self.assertEqual(rule_intent('把刚才的账单按当前事实重算预算，不执行')['action'], 'plan')
+        self.assertEqual(rule_intent('这笔课程尾款是哪天，不用帮我付')['action'], 'bills')
+        self.assertEqual(rule_intent('把刚才那笔给妈妈转一百元改成二百元')['action'], 'clarify')
+
     def test_salary_condition_and_explicit_memo(self):
         for prefix in ["工资到账后", "发薪后", "等下次工资到了再"]:
             with self.subTest(prefix=prefix):

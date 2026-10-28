@@ -261,3 +261,30 @@ class TransferPhrasingTest(unittest.TestCase):
             with self.subTest(text=text):
                 intent = rule_intent(text)
                 self.assertEqual((intent['action'], intent.get('to')), ('transfer', to))
+
+
+class ConversationMissionTest(unittest.TestCase):
+    """Missions inside the multi-turn conversation: no token in history, no edits by follow-up."""
+
+    def test_mission_turn_and_followup_correction(self):
+        from backend.conversation import ConversationService
+        from backend.subscription_service import SubscriptionService
+        with tempfile.TemporaryDirectory() as directory:
+            bank = BankService(Path(directory) / 'test.sqlite3')
+            ops = AgentOps(bank)
+            session = bank.session('C')
+            uid = session['snapshot']['user']['id']
+            bank.save_profile(uid, dict(session['snapshot']['profile'], readConsent=True))
+            conv = ConversationService(bank, IntentPlanner(ModelConfig()), SubscriptionService(bank), ops)
+            first = conv.turn(uid, '给妈妈转100元，然后冻结信用卡', request_key='m1')
+            self.assertEqual([s['tool'] for s in first['mission']['steps']], ['transfer', 'card_freeze'])
+            with bank._db() as db:
+                stored = db.execute('SELECT response FROM conversation_requests WHERE request_key=?', ('m1',)).fetchone()[0]
+            self.assertNotIn(first['mission']['token'], stored)
+            restored = conv.get(uid, first['conversation']['id'])['currentResult']
+            self.assertEqual(restored['mission']['id'], first['mission']['id'])
+            follow = conv.turn(uid, '改成200元', conversation_id=first['conversation']['id'], request_key='m2',
+                               version=first['conversation']['version'])
+            self.assertIn('不能用一句话修改', follow['reply'])
+            self.assertNotIn('proposal', follow)
+            self.assertEqual(bank.snapshot(uid)['balance'], 20000)

@@ -4,17 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TROPOS 3.1 · 一句话办完一串事</title>
-  <!-- 霞鹜文楷 / 思源宋体：开源字体，经 jsdelivr 加载；离线时回落到系统楷体与宋体 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/misans-vf-4web@1.1.1/dist/result.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaigbscreen.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/400.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/600.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.2.8/700.css">
+  <link rel="icon" href="assets/tropos-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/demo.css">
   <link rel="stylesheet" href="assets/profile-ui.css">
   <link rel="stylesheet" href="assets/life-ui.css">
   <link rel="stylesheet" href="assets/action-ui.css">
   <link rel="stylesheet" href="assets/shopping-ui.css">
+  <link rel="stylesheet" href="assets/personal-ui.css">
+  <link rel="stylesheet" href="assets/chat-ui.css">
+  <link rel="stylesheet" href="assets/connection-ui.css">
+  <link rel="stylesheet" href="assets/typography.css">
   <link rel="stylesheet" href="assets/mission-ui.css">
 </head>
 <body data-persona="A" data-view="console">
@@ -46,11 +45,12 @@
 </svg>
 
 <header class="top">
-  <a class="brand" href="index.html" title="回到项目介绍">TROPOS <small class="version-mark">3.1</small></a>
-  <span class="pill" id="runtimeStatus">本地交互样例</span>
+  <a class="brand" href="index.html" title="回到项目介绍"><img class="brand-mark" src="assets/tropos-mark.svg" alt=""><span class="brand-name">TROPOS<small class="version-mark">3.1</small></span></a>
+  <span class="pill" id="runtimeStatus">演示沙箱 · 合成数据</span>
   <button type="button" class="btn sm dr-open" data-dr="open">3 分钟演示</button>
   <nav class="tabs" aria-label="页面">
-    <button class="active" data-view="console" data-group="home"><svg class="ic"><use href="#i-window"/></svg>窗</button>
+    <button class="active" data-view="personal" data-group="me"><svg class="ic"><use href="#i-users"/></svg>我的安排</button>
+    <button data-view="console" data-group="home"><svg class="ic"><use href="#i-window"/></svg>银行助手</button>
     <button data-view="actions" data-group="act"><svg class="ic"><use href="#i-check"/></svg>办事</button>
     <button data-view="life" data-group="plan"><svg class="ic"><use href="#i-heart"/></svg>规划<em>双十一</em></button>
     <button data-view="bills" data-group="book"><svg class="ic"><use href="#i-book"/></svg>账本<em class="count" id="auditCount">0</em></button>
@@ -61,6 +61,7 @@
 
 <main class="content">
   <nav class="subtabs" id="subtabs" aria-label="子页面" hidden></nav>
+  <section class="view" id="view-personal"><div id="personalMount"></div></section>
   <section class="view" id="view-actions"><div id="actionMount"></div></section>
   <section class="view" id="view-shopping"><div id="shoppingMount"></div></section>
   <section class="view" id="view-wallet"><div id="walletMount"></div></section>
@@ -69,7 +70,7 @@
   <section class="view" id="view-budget"><div id="budgetMount"></div></section>
   <section class="view" id="view-life"><div id="lifeMount"></div></section>
   <section class="view" id="view-profile"><div id="profileMount"></div></section>
-  <section class="view" id="view-evaluation"><div class="page-title"><h1>让结果经得起核验。</h1><p class="lead">同一批合成账户、同一组事件、同一个安全网关。这里展示实际运行保存的规则对照与任务检查，不代表模型能力或真实用户收益。</p></div><article class="panel" id="evaluationReport"></article><article class="panel proposal-history" id="intentEvaluationReport"></article></section>
+  <section class="view" id="view-evaluation"><div class="page-title"><h1>每个结果，都能看到怎么算出来的。</h1><p class="lead">我们用同一组模拟账户和突发变化，比较不同安排，并公开检查结果。它只说明这批演示数据的表现，不代表真实用户收益，也不能说明系统听懂了所有说法。</p></div><article class="panel" id="evaluationReport"></article><article class="panel proposal-history" id="intentEvaluationReport"></article></section>
   <!-- ============ 窗 ============ -->
   <section class="view active" id="view-console">
     <div class="window" id="window">
@@ -83,20 +84,22 @@
     <div id="actionPreview"></div>
     <div id="consoleNudge"></div>
     <article class="panel life-entry mission-entry" id="missionEntry"></article>
+    <article class="panel life-entry"><div><span class="pill">生活与现金</span><h2>计划可以改变，现金安排也应随之调整。</h2><p>把工作、家庭、搬家或购物计划放进同一张现金日历，比较收入变化时各方案的影响。</p></div><button class="btn solid" data-act="go" data-view="life">规划一项生活计划</button></article>
 
     <div class="desk">
       <article class="panel chat">
-        <div class="block-head"><div><h2>跟 TROPOS 说</h2><p id="chatHint"></p></div></div>
+        <div class="block-head"><div><h2>说说你想安排的事</h2><p id="chatHint"></p></div><button class="btn sm" data-act="recoverChat">恢复办理记录</button></div>
         <div class="chat-log" id="chatLog" aria-live="polite"></div>
         <div class="suggest" id="suggest"></div>
         <form class="composer" id="composer">
-          <input id="chatInput" autocomplete="off" aria-label="想做的事">
+          <input id="chatInput" autocomplete="off" aria-label="描述你想安排的事">
           <button type="submit" aria-label="发送"><svg class="ic"><use href="#i-arrow-up"/></svg></button>
         </form>
+        <label class="checkbox chat-timeout"><input type="checkbox" id="chatTimeout">演示取消结果超时，并用原凭证查询回执</label>
       </article>
       <div class="desk-side">
         <article class="panel">
-          <div class="block-head"><div><h2>接下来 30 天</h2><p>依赖工资的事，会等工资到了再做</p></div></div>
+          <div class="block-head"><div><h2>未来 30 天</h2><p>收入尚未到账前，不将其计入可用现金</p></div></div>
           <div class="days" id="queue"></div>
         </article>
         <article class="panel portrait" id="portrait"></article>
@@ -111,20 +114,20 @@
   <section class="view" id="view-cool">
     <div class="cool-hero">
       <div>
-        <h1>先别买。</h1>
-        <p class="sub-voice">想清楚，再付款。</p>
-        <p class="lead">把想买的东西写成一张申请单：为什么想要，有没有更便宜的替代。TROPOS 替你算清这笔钱会挤掉什么，再参考本地模拟的不同观点。每一步都由你决定。</p>
+        <h1>付款之前，先看清影响。</h1>
+        <p class="sub-voice">比较成本，再作决定。</p>
+        <p class="lead">输入商品、价格与付款方式，查看它对近期现金安排的影响。系统会比较替代选择，并提供本地规则生成的参考意见；购买与否始终由你决定。</p>
         <div class="mini">
-          <div>距双十一<b><span class="d11"></span> 天</b></div>
-          <div>避免的拟支出<b class="ok-t" id="savedTotal">¥0</b></div>
-          <div>冷静中 / 已放下<b id="coolCount">0 / 0</b></div>
+          <div>评估范围<b>未来 30 天</b></div>
+          <div>暂缓的计划支出<b class="ok-t" id="savedTotal">¥0</b></div>
+          <div>等待确认 / 已取消<b id="coolCount">0 / 0</b></div>
         </div>
       </div>
       <div class="panel you" id="riskCard"></div>
     </div>
 
     <div class="form-sheet">
-      <div class="form-title"><h2>购物申请单</h2><span id="formNo"></span></div>
+      <div class="form-title"><h2>消费决策评估</h2><span id="formNo"></span></div>
       <div class="form-grid">
         <form id="applyForm">
           <div class="presets" id="presets"></div>
@@ -140,7 +143,7 @@
               </select>
             </label>
           </div>
-          <label class="f"><span>为什么想买<small>写得越具体越好</small></span><textarea id="pReason" rows="3" maxlength="140"></textarea></label>
+          <label class="f"><span>购买目的<small>可补充使用场景或时间要求</small></span><textarea id="pReason" rows="3" maxlength="140"></textarea></label>
           <div class="f2">
             <label class="f"><span>更便宜的替代品</span><input id="pAlt" placeholder="没有就留空" maxlength="30"></label>
             <label class="f"><span>替代品价格</span><input id="pAltPrice" type="number" min="0" step="1"></label>
@@ -148,8 +151,8 @@
           <label class="f"><span>每周大概用几次</span>
             <div class="range"><input id="pUse" type="range" min="0" max="35" value="5"><output id="pUseOut">5 次/周</output></div>
           </label>
-          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>陪审意见由本地规则生成，没有真实陌生人参与；信息不会发送给他人。</span></div>
-          <button class="btn solid" type="submit" style="width:100%"><svg class="ic"><use href="#i-hourglass"/></svg>递交审批</button>
+          <div class="share"><svg class="ic"><use href="#i-lock"/></svg><span>参考意见由本地规则生成，没有真实用户参与；商品与账户信息不会发送给他人。</span></div>
+          <button class="btn solid" type="submit" style="width:100%"><svg class="ic"><use href="#i-target"/></svg>评估现金影响</button>
         </form>
         <div class="approvals" id="flow"></div>
       </div>
@@ -196,14 +199,14 @@
   <!-- ============ 转账 ============ -->
   <section class="view" id="view-transfer">
     <div class="page-title">
-      <h1>转一笔钱</h1>
-      <p class="lead">像寄一封信：守诺逐项盖邮戳，确认收款人、金额、转完后的日子和这是不是你本人的意思，最后由你封口。同一封信只寄一次。</p>
+      <h1>安全地完成每笔转账。</h1>
+      <p class="lead">先核对收款人、金额、时点与转账后的现金余量，再由你确认。若结果暂时未知，系统会查询原交易凭证，不会直接重复提交。</p>
     </div>
     <div class="envelope-grid">
       <div class="envelope">
-        <div class="block-head"><div><h2>信封</h2><p>只改动这个页面里的沙箱账本</p></div></div>
+        <div class="block-head"><div><h2>转账信息</h2><p>本页面只操作演示沙箱账户</p></div></div>
         <form id="tfForm">
-          <label class="f"><span>转给谁<small>名字、备注或关系都行</small></span><input id="tfTo" value="王磊" autocomplete="off"></label>
+          <label class="f"><span>收款人<small>选择已登记收款人；同名时需核对账户</small></span><input id="tfTo" value="王磊" autocomplete="off"></label>
           <div class="payees" id="payees"></div>
           <div class="f2">
             <label class="f"><span>金额（元）</span><input id="tfAmt" type="number" min="0.01" step="0.01" value="500" inputmode="decimal"></label>
@@ -212,12 +215,12 @@
             </label>
           </div>
           <label class="f"><span>附言</span><input id="tfMemo" value="聚餐 AA" autocomplete="off" maxlength="60"></label>
-          <label class="checkbox"><input type="checkbox" id="tfTimeout">演示：银行接口超时，看会不会重复扣款</label>
-          <button class="btn solid" type="submit"><svg class="ic"><use href="#i-shield"/></svg>请守诺检查</button>
+          <label class="checkbox"><input type="checkbox" id="tfTimeout">模拟接口超时，验证系统是否避免重复转账</label>
+          <button class="btn solid" type="submit"><svg class="ic"><use href="#i-shield"/></svg>先检查这笔转账</button>
         </form>
       </div>
       <article class="panel">
-        <div class="block-head"><div><h2>邮戳</h2><p>少盖一枚，钱都不会动</p></div></div>
+        <div class="block-head"><div><h2>转账前检查</h2><p>检查通过后，请再核对一次并确认</p></div></div>
         <div class="marks" id="checks"></div>
         <div id="tfConfirm"></div>
       </article>
@@ -255,6 +258,9 @@
 <script src="assets/mission-ui.js"></script>
 <script src="assets/guard-ui.js"></script>
 <script src="assets/director.js"></script>
+<script src="assets/personal-ui.js"></script>
+<script src="assets/chat-ui.js"></script>
+<script src="assets/connection-ui.js"></script>
 <script src="assets/demo.js"></script>
 </body>
 </html>

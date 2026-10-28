@@ -5,6 +5,7 @@ transactions are display-only; every operation made through this service has bal
 ledger entries. Sessions are local demo sessions, not production identity verification.
 """
 import contextlib
+import contextvars
 import datetime as dt
 from decimal import Decimal, InvalidOperation
 import hashlib
@@ -14,6 +15,11 @@ import secrets
 import sqlite3
 import time
 import uuid
+
+from .profiling import assess_profile, validate_assessment
+
+
+_ACTIVE_DATABASES = contextvars.ContextVar('tropos_active_databases', default={})
 
 
 class BankError(Exception):
@@ -82,9 +88,18 @@ class BankService:
 
     @contextlib.contextmanager
     def _db(self, write=False):
+        key = str(Path(self.db_path).resolve())
+        active = _ACTIVE_DATABASES.get()
+        if key in active:
+            db, writable = active[key]
+            if write and not writable:
+                raise RuntimeError('Cannot promote a read transaction into a write transaction')
+            yield db
+            return
         db = sqlite3.connect(self.db_path, timeout=15)
         db.row_factory = sqlite3.Row
         db.execute('PRAGMA foreign_keys=ON')
+        token = _ACTIVE_DATABASES.set(dict(active, **{key: (db, write)}))
         try:
             db.execute('BEGIN IMMEDIATE' if write else 'BEGIN')
             yield db
@@ -93,6 +108,7 @@ class BankService:
             db.rollback()
             raise
         finally:
+            _ACTIVE_DATABASES.reset(token)
             db.close()
 
     def _user(self, db, user_id):
@@ -211,14 +227,24 @@ class BankService:
         user, st = self._user(db, user_id)
         p = self.fixtures['personas'][user['persona']]
         cash = self._cash(db, user_id)
+        profile = self._profile(db, user_id)
+        balance = yuan(self._balance(db, user_id))
+        bills = p['bills'] + st['extraBills']
+        # Reuse facts from this transaction; the pure assessor never reads a snapshot.
+        risk_profile = assess_profile(
+            profile=profile, balance=balance, income=p['income'],
+            debt=sum(-bill['amount'] for bill in bills if bill['kind'] in ['还款', '分期', '贷款']),
+            daily=cash['daily'], min=cash['min'], free=cash['free'],
+            shocked=st['shocked'], salaryReceived=st['salaryReceived'])
         tx = [json.loads(row[0]) for row in db.execute('SELECT content FROM transactions WHERE user_id=? ORDER BY rowid DESC', (user_id,))]
         history = [dict(t, id='fixture_' + str(i), status='historical', receipt=None) for i, t in enumerate(p['tx'])]
-        return {'user': {k: user[k] for k in ['id','persona','name','revision']}, 'profile': self._profile(db, user_id),
-                'balance': yuan(self._balance(db, user_id)), 'goalFunded': yuan(self._balance(db, user_id, 'goal')),
+        return {'user': {k: user[k] for k in ['id','persona','name','revision']}, 'profile': profile,
+                'balance': balance, 'goalFunded': yuan(self._balance(db, user_id, 'goal')),
                 'shocked': st['shocked'], 'replan': st['replan'], 'salaryReceived': st['salaryReceived'],
-                'bills': p['bills'] + st['extraBills'], 'plans': [json.loads(r[0]) for r in db.execute('SELECT content FROM plans WHERE user_id=?', (user_id,))],
+                'bills': bills, 'plans': [json.loads(r[0]) for r in db.execute('SELECT content FROM plans WHERE user_id=?', (user_id,))],
                 'subscriptions': st['subs'], 'transactions': tx + history, 'cash': cash,
                 'policy': self._policy(db, user_id, cash),
+                'riskProfile': risk_profile,
                 'audit': [json.loads(r[0]) for r in db.execute('SELECT content FROM audit WHERE user_id=? ORDER BY id DESC LIMIT 200', (user_id,))],
                 'profileUpdates': [json.loads(r[0]) for r in db.execute('SELECT content FROM profile_updates WHERE user_id=? ORDER BY id DESC LIMIT 100', (user_id,))]}
 
@@ -266,6 +292,11 @@ class BankService:
             raise BankError(400, 'INVALID_PROFILE', '现金预留不能为负数。')
         clean = {k: profile[k] for k in ['goalType','goalName','incomeStability','style','automation','readConsent']}
         clean.update(goalName=clean['goalName'].strip(), target=yuan(target), reserve=yuan(reserve))
+        if 'assessment' in profile:
+            try:
+                clean['assessment'] = validate_assessment(profile['assessment'])
+            except ValueError as error:
+                raise BankError(400, 'INVALID_PROFILE', str(error)) from error
         with self._db(True) as db:
             self._user(db, user_id)
             before = self._summary(db, user_id)
@@ -352,40 +383,48 @@ class BankService:
             at = time.time()
             rows = db.execute('SELECT content FROM proposals WHERE user_id=? ORDER BY rowid DESC LIMIT ?',
                               (user_id, limit)).fetchall()
-            recovered = []
-            for row in rows:
-                proposal = json.loads(row[0])
-                token = proposal.pop('confirmationToken', None)
-                proposal.update(canConfirm=False, invalidReason=None, checks=[])
-                transaction = db.execute('SELECT content FROM transactions WHERE user_id=? AND idem_key=?',
-                                         (user_id, proposal['id'])).fetchone()
-                # A committed receipt remains authoritative even after expiry or
-                # later account changes. Recovery never turns it into a new action.
-                if transaction:
-                    tx = json.loads(transaction[0])
-                    proposal.update(status='executed', transactionId=tx['id'], transaction=tx)
-                elif proposal['status'] == 'revoked':
-                    proposal['invalidReason'] = 'REVOKED'
-                elif not consent:
-                    proposal.update(status='blocked', invalidReason='CONSENT_REQUIRED')
-                elif proposal['revision'] != user['revision']:
-                    proposal.update(status='stale', invalidReason='STALE_APPROVAL')
-                elif not self._life_approval_current(db, user_id, proposal):
-                    proposal.update(status='stale', invalidReason='STALE_LIFE_PLAN')
-                elif proposal['expiresAt'] < at:
-                    proposal.update(status='expired', invalidReason='APPROVAL_EXPIRED')
-                elif proposal['status'] == 'settled':
-                    proposal.update(status='blocked', invalidReason='TRANSACTION_NOT_FOUND')
-                else:
-                    checks = self._checks(db, user_id, cents(proposal['amount'], True), proposal['when'])
-                    proposal['checks'] = checks
-                    if all(check['ok'] for check in checks) and token:
-                        proposal.update(status='pending_confirmation', canConfirm=True, confirmationToken=token)
-                    else:
-                        status = 'waiting_condition' if proposal['when'] == 'salary' and not checks[-1]['ok'] else 'blocked'
-                        proposal.update(status=status, invalidReason='TRANSFER_BLOCKED' if token else 'INVALID_APPROVAL')
-                recovered.append(proposal)
+            recovered = [self._present_proposal(db, user_id, json.loads(row[0]), user, consent, at) for row in rows]
             return {'proposals': recovered, 'snapshot': self._snapshot(db, user_id)}
+
+    def proposal(self, user_id, proposal_id):
+        """Recover one owned proposal, including those older than the recent list."""
+        with self._db() as db:
+            user, _ = self._user(db, user_id)
+            consent = self._profile(db, user_id).get('readConsent') is True
+            proposal = self._present_proposal(db, user_id, self._proposal(db, user_id, proposal_id), user, consent, time.time())
+            return {'proposal': proposal, 'snapshot': self._snapshot(db, user_id)}
+
+    def _present_proposal(self, db, user_id, proposal, user, consent, at):
+        token = proposal.pop('confirmationToken', None)
+        proposal.update(canConfirm=False, invalidReason=None, checks=[])
+        transaction = db.execute('SELECT content FROM transactions WHERE user_id=? AND idem_key=?',
+                                 (user_id, proposal['id'])).fetchone()
+        # A committed receipt remains authoritative even after expiry or
+        # later account changes. Recovery never turns it into a new action.
+        if transaction:
+            tx = json.loads(transaction[0])
+            proposal.update(status='executed', transactionId=tx['id'], transaction=tx)
+        elif proposal['status'] == 'revoked':
+            proposal['invalidReason'] = 'REVOKED'
+        elif not consent:
+            proposal.update(status='blocked', invalidReason='CONSENT_REQUIRED')
+        elif proposal['revision'] != user['revision']:
+            proposal.update(status='stale', invalidReason='STALE_APPROVAL')
+        elif not self._life_approval_current(db, user_id, proposal):
+            proposal.update(status='stale', invalidReason='STALE_LIFE_PLAN')
+        elif proposal['expiresAt'] < at:
+            proposal.update(status='expired', invalidReason='APPROVAL_EXPIRED')
+        elif proposal['status'] == 'settled':
+            proposal.update(status='blocked', invalidReason='TRANSACTION_NOT_FOUND')
+        else:
+            checks = self._checks(db, user_id, cents(proposal['amount'], True), proposal['when'])
+            proposal['checks'] = checks
+            if all(check['ok'] for check in checks) and token:
+                proposal.update(status='pending_confirmation', canConfirm=True, confirmationToken=token)
+            else:
+                status = 'waiting_condition' if proposal['when'] == 'salary' and not checks[-1]['ok'] else 'blocked'
+                proposal.update(status=status, invalidReason='TRANSFER_BLOCKED' if token else 'INVALID_APPROVAL')
+        return proposal
 
     def _post(self, db, user_id, key, kind, amount, merchant, destination, extra=None):
         tx_id = uid('tx')
@@ -461,21 +500,25 @@ class BankService:
             return {'transaction': json.loads(row[0]), 'snapshot': self._snapshot(db, user_id)}
 
     def cancel_subscription(self, user_id, sub_id, payload):
-        self._confirm(payload)
         with self._db(True) as db:
-            self._consent(db, user_id)
-            user, st = self._user(db, user_id)
-            sub = next((s for s in st['subs'] if s['id'] == sub_id), None)
-            if not sub:
-                raise BankError(404, 'SUBSCRIPTION_NOT_FOUND', '订阅不存在。')
-            if sub['status'] == 'cancelled':
-                return {'receipt': sub['receipt'], 'snapshot': self._snapshot(db, user_id)}
-            before = self._summary(db, user_id)
-            sub.update(status='cancelled', receipt={'id': uid('sub_receipt'), 'status': 'cancelled', 'subscriptionId': sub_id, 'at': now()})
-            self._save_state(db, user_id, st)
-            self._changed(db, user_id, before, '订阅已取消', '银行沙箱回执', sub['name'] + '未来续费已移出预测，当前余额未增加。')
-            db.execute('INSERT INTO authorizations VALUES(?,?,?,?,?,?)', (uid('auth'), user_id, user['revision'], 'cancel_subscription', json.dumps({'subscriptionId': sub_id, 'confirmation': True}), now()))
+            return self._cancel_subscription(db, user_id, sub_id, payload)
+
+    def _cancel_subscription(self, db, user_id, sub_id, payload):
+        """Shared mutation so a reviewed chat operation and receipt commit atomically."""
+        self._confirm(payload)
+        self._consent(db, user_id)
+        user, st = self._user(db, user_id)
+        sub = next((s for s in st['subs'] if s['id'] == sub_id), None)
+        if not sub:
+            raise BankError(404, 'SUBSCRIPTION_NOT_FOUND', '订阅不存在。')
+        if sub['status'] == 'cancelled':
             return {'receipt': sub['receipt'], 'snapshot': self._snapshot(db, user_id)}
+        before = self._summary(db, user_id)
+        sub.update(status='cancelled', receipt={'id': uid('sub_receipt'), 'status': 'cancelled', 'subscriptionId': sub_id, 'at': now()})
+        self._save_state(db, user_id, st)
+        self._changed(db, user_id, before, '订阅已取消', '银行沙箱回执', sub['name'] + '未来续费已移出预测，当前余额未增加。')
+        db.execute('INSERT INTO authorizations VALUES(?,?,?,?,?,?)', (uid('auth'), user_id, user['revision'], 'cancel_subscription', json.dumps({'subscriptionId': sub_id, 'confirmation': True}), now()))
+        return {'receipt': sub['receipt'], 'snapshot': self._snapshot(db, user_id)}
 
     def event(self, user_id, payload):
         if not isinstance(payload, dict) or payload.get('type') not in ['income_delayed','bill_added','salary_received']:
@@ -528,7 +571,10 @@ class BankService:
             for tx in ids:
                 db.execute('DELETE FROM entries WHERE transaction_id=?', (tx,))
             # Optional v2 planning tables share this reset transaction.
-            for table in ('life_scenes', 'life_state', 'life_plan_receipts', 'shopping_searches', 'shopping_checkouts', 'shopping_orders', 'cards', 'missions', 'household'):
+            for table in ('life_scenes', 'life_state', 'life_plan_receipts', 'shopping_searches',
+                          'shopping_checkouts', 'shopping_orders', 'subscription_proposals',
+                          'subscription_proposal_keys', 'conversations', 'conversation_requests',
+                          'cards', 'missions', 'household'):
                 if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone():
                     db.execute('DELETE FROM ' + table + ' WHERE user_id=?', (user_id,))
             for table in ['profiles','authorizations','accounts','counterparties','transactions','idempotency','proposals','plans','events','audit','profile_updates']:

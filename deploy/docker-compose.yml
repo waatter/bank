@@ -1,7 +1,7 @@
 services:
   tropos:
     build:
-      context: ..
+      context: ./build-context
       dockerfile: Dockerfile
     network_mode: host
     command: ["python", "-m", "backend.server", "--host", "127.0.0.1", "--port", "8765", "--db", "/data/tropos.sqlite3"]

@@ -1,0 +1,91 @@
+{
+  "created_at": "2026-10-27T13:50:30.037486+00:00",
+  "branch": "codex/v3.0.0",
+  "base_head": "4e17723",
+  "source_freeze": {
+    "schema": "TROPOS-V3-FREEZE-1",
+    "created_at": "2026-10-27T13:27:49.322873+00:00",
+    "branch": "codex/v3.0.0",
+    "git_revision": "4e1772309508b56af876ad13c910e82b59dc1885",
+    "dirty": true,
+    "source_sha256": {
+      "VERSION": "2985be8b28d3ade858e8d8fb4bc22f565b1bf6020dff982dce141f7721b9999c",
+      "assets/action-ui.css": "3cd8441e3b0b0b1c9edf33d79d1d7ed78e67cb5a7d59a08d99b36363647c637c",
+      "assets/action-ui.js": "24921018f7eacc8a3d205374bc6a655bf71892df3dcc4e7ce895c33d30f42859",
+      "assets/backend-client.js": "4abab91c5f30a32f546ace7f73fc793fc7088fd334b9b08eea6a2efd678cbfc7",
+      "assets/chat-ui.css": "25036fabade15fd8b6c65c7b1724d726c88e2602307086e61e747c57194a4eda",
+      "assets/chat-ui.js": "fa245bfca63e88113530c9dfa1f923dbd756871df586d7f662afbb584ed5be4b",
+      "assets/demo.css": "8a384903683af6119a6a56cc7b274c1ee2bf5582bd40c66efd8ee01c7fe09d13",
+      "assets/demo.js": "1c13ddaa691a62b5ffa5c8bff329946dd756e75978da8aa96f1cb46b69a36ce1",
+      "assets/fonts/OFL-Manrope.txt": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
+      "assets/fonts/OFL-NotoSansSC.txt": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+      "assets/fonts/README.md": "caaf42af2690897539d0a3187f703b5c586e4245ee3a3cdb6e5f1acae16df649",
+      "assets/fonts/manrope-latin.woff2": "6088458c80de9d3b3f9c9e7dda830955b421f2530326909a6bc0da454c2dcd9f",
+      "assets/fonts/noto-sans-sc-ui.woff2": "e0d5c2de23d081703e66a3f47d3611427c4d6193d9e59f02ddf6fde845972f16",
+      "assets/home.css": "bde838f9082a058c43fb947cda38bb607c8277df3c082d414e2aca58fac4994e",
+      "assets/home.js": "486e7b9b21cffb3a96791a607c0e5bf2daaa2c96a4b603535462fcdc430ebfb2",
+      "assets/life-ui.css": "6bc320f72d8e6958285712b0dc80b2452e94ff7c19664f57f32516021f93850f",
+      "assets/life-ui.js": "99c8dbc3ad292cf7d7309eae45bd2b327044c78db3bacdfc5dd8d54a5bbba08d",
+      "assets/personal-ui.css": "a6202ec4d38d353123899deaf2f254bdcf0d31f73338178dd46497dfa1986e62",
+      "assets/personal-ui.js": "00ba800c6ab1ecc4d74b8bc164db25fd1ee87a4913c4245318f631337db35605",
+      "assets/profile-engine.js": "f9b2abba5bd113bd791f385666022a5dc83d551a0067c10b20285a85c2535dae",
+      "assets/profile-ui.css": "561fc8dff50a07620b49b81cf0cf0165aeae81ac199beaf81bd6b05e41a02dad",
+      "assets/profile-ui.js": "41982a3b2f46542032f99fe70163e7d11ef9cf7b26ffebc211396614cfe28704",
+      "assets/shopping-ui.css": "ec398a76a49868fe5c711a044c8ea68741065a7619f8f5143605e5efca09b1d5",
+      "assets/shopping-ui.js": "5525dea1bf7817bd83a1a1d4cdc2b8db3a9db8a14b3a38de39cb06a24400aa59",
+      "assets/tropos-mark.svg": "447e7326fc81a1d95f2fa243499b71056852894e8761dfcb59b856554ab7ba92",
+      "assets/typography.css": "a10391e29fb0d619b11062e437385f1be4b72245a713a534bba9b55d0e0ce67c",
+      "backend/__init__.py": "4252f282f81e9ac0f178c7c57d638e5b218cb55897e740220e393c478a524398",
+      "backend/conversation.py": "437bf8211857953291beb04e9ce3641b96da13d7f192a2620eebe1569f6b516c",
+      "backend/fixtures.json": "caa90b2f815ebece61f0d669773264663a89aec0c38626fc2303f10fd0a21b47",
+      "backend/insights.py": "c0c850613782628d3444fb99c57bba6432a15401ff6b2d4f529f50fdf68cca6c",
+      "backend/life_planner.py": "1ca62e103ba1f712d0bb4295d33c619dc5be3bab9830c763ad888a2b7d153912",
+      "backend/life_scenarios.json": "dce09193a1f21e29d84b503591fddad608eb575b129bb61d86852e0d3556eb54",
+      "backend/life_service.py": "17b815b18da86bca7f4d1182638b84ed9b2efaeffd59894856154a9d906d648d",
+      "backend/meituan_paotui.py": "6ed856662e2ad5b3b3a7092590cf667c21a490f3812f62fbf4263ae28ca69325",
+      "backend/model.py": "3f001b7a74d437b7bf864f0de71056185a2fd535b53a57e8113588814e50cb28",
+      "backend/profiling.py": "5a53d7c9e4a5fce94aaad0c523e8f1e98a16760e12bbc7aaed4d5021bb298013",
+      "backend/server.py": "47d765bd7a2155d3fb905facdf2ec8c543bf31cc6ae4644994a3c6ca5f6632f1",
+      "backend/service.py": "ec78be8bf19147766bb42762993c7642d037d45a70f1b3a020c923c1d1ed71c0",
+      "backend/shopping.py": "0c447c8d7ad46fc970888b27295de5557a63ff38a630aa5063853b6be86821dc",
+      "backend/subscription_service.py": "51edb87e410423b6b9ac6cc84d4cf1bdfe8ae496c46a2522367f89296c9f7e8e",
+      "demo.html": "fbe92350e4941ec497b3d0fc9870f5e1e7d4af9960ca6077b3ed58010413150f",
+      "index.html": "cb83e7c69bc9ae6824e85723e9160a85eaf594b7f35279ff6d40c0af033b927a"
+    },
+    "source_tree_hash": "14dc57b802e00629d608a444ec21234f8193387e55b6f158010bcd9a750be644",
+    "source_root": "/Users/water/Desktop/bank/.local/v3-readiness-20261027T132749Z/frozen-source",
+    "run_root": "/Users/water/Desktop/bank/.local/v3-readiness-20261027T132749Z",
+    "holdout_seen": false
+  },
+  "holdout_runner_freeze": {
+    "created_at": "2026-10-27T13:43:49.847463+00:00",
+    "runner_files": {
+      "eval/V3_PROTOCOL.md": "74d35b2650fa13653969493519ceedb6bfb2f3c88bd0d38ada266955bc678545",
+      "eval/v3_holdout.py": "709694b8996b93ae5f3fd3bb040669be70fc457c3d46d0fe949034d2030b2e78",
+      "tests/test_v3_holdout.py": "e0596f6584ee6d0396b4e2074eaf1cf949c0dd83419e86096a5d496116de0acb"
+    },
+    "suite_sha256": "a32fac52247f68b5bc248b3f47f1767f7a694252311a1e7c5533ed28871acf6f",
+    "blind_status": "runner frozen before suite opened by implementer"
+  },
+  "compare_runner_freeze": {
+    "created_at": "2026-10-27T13:46:10.481132+00:00",
+    "files": {
+      "eval/V3_PROTOCOL.md": "74d35b2650fa13653969493519ceedb6bfb2f3c88bd0d38ada266955bc678545",
+      "eval/v3_holdout.py": "709694b8996b93ae5f3fd3bb040669be70fc457c3d46d0fe949034d2030b2e78",
+      "eval/v3_compare.py": "47ee89f33d9e2b6837f7dcdacfc87d5ef1bb317614527b0c07fd0a8dd1f671e4",
+      "tests/test_v3_compare.py": "6001fedd45525b6dff4527c1b4271d2eef1ab945e15488d1106fec652dad7e71"
+    },
+    "context": "compare author never read sealed tasks; fixed selection and prompts before execution; parent has now seen production first-report errors but has not modified compare code"
+  },
+  "suite": {
+    "path": "eval/v3_holdout_cases.json",
+    "sha256": "a32fac52247f68b5bc248b3f47f1767f7a694252311a1e7c5533ed28871acf6f",
+    "case_count": 40
+  },
+  "notes": [
+    "来源与评估器冻结后运行首轮；首轮文件不覆盖。",
+    "公开用例后的修复结果仅称回归，不称新盲测。",
+    "画像呈现对照使用48次真实deepseek-flash调用；同源引擎合成用例不是外部审计、真人试用或总体风险验证。",
+    "两个评测器的源码总指纹口径不同，分别以各报告文件清单核对实际导入源码。"
+  ]
+}
