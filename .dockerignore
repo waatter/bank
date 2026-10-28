@@ -1,0 +1,15 @@
+.git
+.github
+.local
+.tmp
+.venv
+__pycache__
+*.pyc
+.env
+.env.*
+!deploy/.env.production.example
+tests
+docs
+eval
+scripts
+node_modules

@@ -53,7 +53,7 @@ def uid(prefix):
 class BankService:
     def __init__(self, db_path, fixtures_path=None):
         self.db_path = str(db_path)
-        self.fixtures = json.loads(Path(fixtures_path or Path(__file__).with_name('fixtures.json')).read_text())
+        self.fixtures = json.loads(Path(fixtures_path or Path(__file__).with_name('fixtures.json')).read_text(encoding='utf-8'))
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
             db.executescript('''
@@ -72,6 +72,12 @@ class BankService:
                 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY,user_id TEXT,content TEXT);
                 CREATE TABLE IF NOT EXISTS profile_updates(id INTEGER PRIMARY KEY,user_id TEXT,content TEXT);
                 CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id TEXT,expires REAL);
+                CREATE TABLE IF NOT EXISTS shopping_searches(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,content TEXT NOT NULL,created REAL NOT NULL);
+                CREATE TABLE IF NOT EXISTS shopping_checkouts(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,content TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS shopping_orders(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,request_key TEXT NOT NULL,content TEXT NOT NULL,UNIQUE(user_id,request_key));
+                CREATE TABLE IF NOT EXISTS shopping_provider_bindings(provider TEXT PRIMARY KEY,user_id TEXT NOT NULL,content TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS shopping_official_previews(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,content TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS shopping_official_orders(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,request_key TEXT NOT NULL,content TEXT NOT NULL,UNIQUE(user_id,request_key));
             ''')
 
     @contextlib.contextmanager
@@ -522,7 +528,7 @@ class BankService:
             for tx in ids:
                 db.execute('DELETE FROM entries WHERE transaction_id=?', (tx,))
             # Optional v2 planning tables share this reset transaction.
-            for table in ('life_scenes', 'life_state', 'life_plan_receipts'):
+            for table in ('life_scenes', 'life_state', 'life_plan_receipts', 'shopping_searches', 'shopping_checkouts', 'shopping_orders', 'cards', 'missions', 'household'):
                 if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone():
                     db.execute('DELETE FROM ' + table + ' WHERE user_id=?', (user_id,))
             for table in ['profiles','authorizations','accounts','counterparties','transactions','idempotency','proposals','plans','events','audit','profile_updates']:

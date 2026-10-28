@@ -1,0 +1,18 @@
+{$TROPOS_SITE_ADDRESS} {
+    encode zstd gzip
+
+    reverse_proxy 127.0.0.1:8765 {
+        header_up Host 127.0.0.1:8765
+        header_up Origin http://127.0.0.1:8765
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        -Server
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}

@@ -22,7 +22,7 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  vm.runInContext(definitions+'\n'+adapter+'\nrenderAll=()=>{};renderConsole=()=>{};renderBills=()=>{};renderCool=()=>{};toast=()=>{};globalThis.api={state,P,S,bankAPI,applyServerSnapshot,profileAdapter,lifeAdapter,serverTransferCheck,executeServerProposal,replayServerProposal,switchPersona,money,setGuard,serverAgentReply,cancelServerSubscription,ACTIONS,refreshServerProposals,serverProposalHTML};',context);
  const a=context.api;let count=0;const pass=(name,fn)=>{fn();count++;console.log('PASS',name)};
  a.state.serverMode=true;a.applyServerSnapshot(await a.bankAPI.connect('C'));
- pass('HTTP session and persisted account snapshot reach the workbench',()=>{assert.equal(a.P().name,'陈工');assert.equal(a.S().balance,20000);assert.equal(a.S().completed,false)});
+ pass('HTTP session and persisted account snapshot reach the workbench',()=>{assert.equal(a.P().name,'知远');assert.equal(a.S().balance,20000);assert.equal(a.S().completed,false)});
  assert.equal((await a.profileAdapter.saveProfile({...a.S().profile,readConsent:true})).ok,true);
  pass('Profile confirmation is stored by the server',()=>assert.equal(a.S().completed,true));
  node('#tfTo').value='目标储蓄';node('#tfAmt').value='100.49';node('#tfWhen').value='now';node('#tfMemo').value='HTTP integration';
@@ -46,7 +46,7 @@ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new
  const sub=a.S().subs[0];const result=await a.bankAPI.cancelSubscription(sub.id);a.applyServerSnapshot(result.snapshot);
  pass('Merchant receipt and cash prediction update from the same response',()=>{assert.equal(a.S().subs[0].status,'cancelled');assert.equal(typeof a.S().subs[0].receipt,'string');assert.ok(!a.S().serverSnapshot.cash.events.some(e=>e.label===sub.name+'续费'))});
  await a.switchPersona('A',true);
- pass('Account switching changes server session and does not reuse C balance',()=>{assert.equal(a.P().name,'阿林');assert.equal(a.S().balance,20000);assert.equal(a.S().completed,false)});
+ pass('Account switching changes server session and does not reuse C balance',()=>{assert.equal(a.P().name,'晓舟');assert.equal(a.S().balance,20000);assert.equal(a.S().completed,false)});
  await a.switchPersona('C',true);
  pass('Switching back restores C ledger and profile from SQLite',()=>{assert.equal(a.S().balance,balance-100.49);assert.equal(a.S().completed,true)});
  const revision=a.S().revision,updates=JSON.stringify(a.S().profileUpdates);

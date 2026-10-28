@@ -1,5 +1,6 @@
 """Domain invariants for the persistent synthetic bank, no external dependencies."""
 import concurrent.futures
+import contextlib
 import json
 from pathlib import Path
 import sqlite3
@@ -95,7 +96,7 @@ class BankServiceTests(unittest.TestCase):
         p = self.proposal(321.45)
         self.svc.confirm(self.c, p['id'], self.approve(p))
         self.svc.event(self.c, {'type':'salary_received', 'event_key':'pay'})
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             rows = db.execute('SELECT transaction_id,SUM(amount),COUNT(*) FROM entries GROUP BY transaction_id').fetchall()
         self.assertEqual(len(rows), 2)
         self.assertTrue(all(total == 0 and count == 2 for _, total, count in rows))
@@ -206,8 +207,9 @@ class BankServiceTests(unittest.TestCase):
         self.consent(self.c)
         p = self.proposal()
         p['expiresAt'] = 0
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             db.execute('UPDATE proposals SET content=? WHERE id=?', (json.dumps(p), p['id']))
+            db.commit()
         self.error('APPROVAL_EXPIRED', lambda: self.svc.confirm(self.c, p['id'], self.approve(p)))
 
     def test_proposal_recovery_is_read_only_scoped_and_survives_restart(self):
@@ -216,7 +218,7 @@ class BankServiceTests(unittest.TestCase):
         proposal = self.proposal()
         other = self.proposal(user=self.a)
         before = self.svc.snapshot(self.c)
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             stored = db.execute('SELECT content FROM proposals ORDER BY rowid').fetchall()
         recovered = BankService(self.path).proposals(self.c)
         self.assertEqual(recovered['snapshot'], before)
@@ -227,7 +229,7 @@ class BankServiceTests(unittest.TestCase):
         self.assertTrue(current['canConfirm'])
         self.assertEqual(current['confirmationToken'], proposal['confirmationToken'])
         self.assertTrue(all(check['ok'] for check in current['checks']))
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute('SELECT content FROM proposals ORDER BY rowid').fetchall(), stored)
         self.assertEqual(self.svc.confirm(self.c, current['id'], self.approve(current))['snapshot']['balance'], 19900)
 
@@ -238,8 +240,9 @@ class BankServiceTests(unittest.TestCase):
         blocked = self.proposal(15000)
         expired = self.proposal()
         expired['expiresAt'] = 0
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             db.execute('UPDATE proposals SET content=? WHERE id=?', (json.dumps(expired), expired['id']))
+            db.commit()
         recovered = {p['id']: p for p in self.svc.proposals(self.c)['proposals']}
         for proposal, status in [(waiting, 'waiting_condition'), (blocked, 'blocked'), (expired, 'expired')]:
             with self.subTest(status=status):
@@ -266,10 +269,11 @@ class BankServiceTests(unittest.TestCase):
         executed, revoked = self.proposal(), self.proposal()
         self.svc.revoke(self.c, revoked['id'])
         transaction = self.svc.confirm(self.c, executed['id'], self.approve(executed))['transaction']
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             content = json.loads(db.execute('SELECT content FROM proposals WHERE id=?', (executed['id'],)).fetchone()[0])
             content['expiresAt'] = 0
             db.execute('UPDATE proposals SET content=? WHERE id=?', (json.dumps(content), executed['id']))
+            db.commit()
         self.svc.event(self.c, {'type': 'bill_added', 'event_key': 'after-execution'})
         reopened = BankService(self.path)
         recovered = {p['id']: p for p in reopened.proposals(self.c)['proposals']}
@@ -299,9 +303,10 @@ class BankServiceTests(unittest.TestCase):
         self.consent(self.c)
         self.proposal()
         profile = self.svc.snapshot(self.c)['profile']
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             db.execute('UPDATE profiles SET profile=? WHERE user_id=?',
                        (json.dumps(dict(profile, readConsent=False)), self.c))
+            db.commit()
         proposal = self.svc.proposals(self.c)['proposals'][0]
         self.assertEqual(proposal['status'], 'blocked')
         self.assertEqual(proposal['invalidReason'], 'CONSENT_REQUIRED')

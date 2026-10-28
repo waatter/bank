@@ -1,5 +1,6 @@
 """Life planning persistence never spends money and commits obligations atomically."""
 import concurrent.futures
+import contextlib
 import json
 from pathlib import Path
 import sqlite3
@@ -163,13 +164,13 @@ class LifeServiceTests(unittest.TestCase):
     def test_analyze_is_read_only_with_consistent_versions(self):
         self.add()
         before = self.life.get(self.c)
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             counts_before = {name: db.execute('SELECT COUNT(*) FROM ' + name).fetchone()[0] for name in ('life_state', 'life_scenes', 'audit', 'profile_updates')}
         result = self.life.analyze(self.c)
         self.assertEqual(result['lifeVersion'], before['version'])
         self.assertEqual(result['accountRevision'], before['snapshot']['user']['revision'])
         self.assertEqual(self.life.get(self.c), before)
-        with sqlite3.connect(self.path) as db:
+        with contextlib.closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(counts_before, {name: db.execute('SELECT COUNT(*) FROM ' + name).fetchone()[0] for name in counts_before})
 
     def test_amount_and_boolean_validation_rejects_invalid_scene(self):
