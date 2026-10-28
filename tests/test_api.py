@@ -107,9 +107,20 @@ class ApiTests(unittest.TestCase):
     def test_static_allowlist_and_inline_script_nonce(self):
         for path in ["/", "/demo.html", "/assets/demo.js", "/assets/profile-engine.js"]:
             self.assertEqual(self.request("GET", path)[0], 200)
-        status, document, headers = self.request("GET", "/")
-        self.assertIn(b"<script nonce=", document)
-        self.assertIn("'nonce-", headers["Content-Security-Policy"])
+        # Use a fixture: the current homepage loads an external same-origin script.
+        # The nonce mechanism must still protect any registered page with inline JS.
+        original_root = self.server.root
+        with tempfile.TemporaryDirectory() as directory:
+            self.server.root = Path(directory).resolve()
+            (self.server.root / 'index.html').write_text('<!doctype html><script>window.example = true;</script>')
+            try:
+                status, document, headers = self.request("GET", "/")
+                self.assertEqual(status, 200)
+                self.assertIn(b"<script nonce=", document)
+                nonce = document.split(b'<script nonce="', 1)[1].split(b'"', 1)[0].decode()
+                self.assertIn("'nonce-" + nonce + "'", headers["Content-Security-Policy"])
+            finally:
+                self.server.root = original_root
         for path in ["/.env", "/.git/config", "/backend/service.py", "/README.md", "/tests/test_api.py", "/.local/tropos.sqlite3", "/assets/", "/assets/unregistered.js"]:
             with self.subTest(path=path):
                 self.assertEqual(self.request("GET", path)[0], 404)

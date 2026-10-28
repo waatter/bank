@@ -8,7 +8,7 @@ WORKDIR /app
 COPY backend ./backend
 COPY assets ./assets
 COPY reports ./reports
-COPY index.html demo.html ./
+COPY VERSION index.html demo.html study.html ./
 
 RUN useradd --create-home --uid 10001 tropos \
     && mkdir -p /data \

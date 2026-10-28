@@ -410,7 +410,7 @@ class AgentOps:
             snap = self.bank._snapshot(db, user_id)
             cards = self._cards(db, user_id)
             steps, deduction, saved = [], 0, 0
-            guarded = _safety_guard(message)
+            guarded = _safety_guard(message, strict=True)
             if guarded:
                 # 注入与引用历史的整句拦截：一个分句可疑，整单都不生成可执行步骤。
                 clauses = []
@@ -591,7 +591,14 @@ class AgentOps:
         return True, {'receipt': receipt, 'card': card}
 
     # ------------------------------------------------------------------ 对话入口
-    def respond(self, user_id, message, planner=None):
+    def get_mission(self, user_id, mission_id):
+        with self.bank._db() as db:
+            row = db.execute('SELECT content FROM missions WHERE user_id=? AND id=?', (user_id, mission_id)).fetchone()
+        if not row:
+            raise BankError(404, 'MISSION_NOT_FOUND', '任务单不存在。')
+        return json.loads(row[0])
+
+    def respond(self, user_id, message, planner=None, split=None):
         """/api/agent 的任务单分支：与单一意图同样只起草，执行仍需逐步授权。"""
         with self.bank._db() as db:
             consent = self.bank._profile(db, user_id).get('readConsent') is True
@@ -599,7 +606,8 @@ class AgentOps:
             return {'mode': 'rules', 'intent': {'action': 'clarify', 'question': '请先建立画像并确认读取模拟账本。'},
                     'snapshot': self.bank.snapshot(user_id), 'reply': '请先完成画像并主动确认读取模拟账本，再让我拆解并草拟多步任务。未执行任何操作。',
                     'trace': [{'engine': 'ARGOS', 'detail': '未取得读取授权，未拆解任务。'}]}
-        split = planner.decompose(message) if planner is not None else {'mode': 'rules', 'steps': None, 'reason': None}
+        if split is None:
+            split = planner.decompose(message) if planner is not None else {'mode': 'rules', 'steps': None, 'reason': None}
         result = self.plan(user_id, message, split['mode'], split['steps'])
         mission, summary = result['mission'], result['mission']['summary']
         if any(step['tool'] == 'guard' for step in mission['steps']):

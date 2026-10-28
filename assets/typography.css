@@ -1,0 +1,67 @@
+/* TROPOS typography: local fonts keep Chinese, Latin and amounts consistent offline. */
+@font-face {
+  font-family: "Tropos Sans SC";
+  src: url("fonts/noto-sans-sc-ui.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("fonts/manrope-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+:root {
+  --font-ui: "Manrope", "Tropos Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-display: var(--font-ui);
+  --font-number: "Manrope", "Tropos Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --sans: var(--font-ui);
+}
+
+/* Account themes may change the atmosphere; reading keeps the same rhythm. */
+body[data-persona] {
+  --sans: var(--font-ui);
+  --ui: var(--font-ui);
+  --display: var(--font-display);
+  --voice: var(--font-ui);
+  font-family: var(--font-ui);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+.num,
+.sill .v,
+.day .amt,
+.table .amt,
+.life-kpi dd,
+.life-metrics dd,
+.pu-summary dd,
+.pu-metrics dd,
+.ac-metric dd,
+.ac-day-detail strong,
+.ac-event-amount {
+  font-family: var(--font-number);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.brand-name {
+  font-family: "Manrope", var(--font-ui);
+  font-weight: 700;
+  letter-spacing: .14em;
+}
