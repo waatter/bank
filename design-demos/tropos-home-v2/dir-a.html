@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="TROPOS：千人千策，随境而变。知己 ETHOS、善谋 METIS、择时 KAIROS、守诺 ARGOS——基于动态金融画像与四引擎协同的自适应银行智能体。">
+<title>TROPOS · 千人千策，随境而变</title>
+<link rel="icon" href="tropos-mark-ink.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Tropos Sans";src:url("../../assets/fonts/noto-sans-sc-ui.woff2") format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Manrope";src:url("../../assets/fonts/manrope-latin.woff2") format("woff2");font-weight:400 800;font-display:swap}
+:root{
+  --paper:#FAFAF7; --ink:#211F1B; --ink-soft:#55524A; --ink-faint:#8A867B;
+  --gold:#B27D45; --gold-deep:#96683A; --pine:#315F5A; --cinnabar:#A8432F;
+  --hairline:rgba(33,31,27,.15);
+  --serif:"Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;
+  --kai:"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK SC",serif;
+  --sans:"Manrope","Tropos Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+::selection{background:var(--gold);color:#fff}
+a{color:inherit;text-decoration:none}
+.shell{max-width:1240px;margin:0 auto;padding:0 48px}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:20;background:rgba(250,250,247,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--hairline)}
+header .shell{display:flex;align-items:center;gap:36px;height:68px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:28px;height:28px}
+.brand b{font-weight:800;letter-spacing:.14em;font-size:15px}
+.brand small{font-size:11px;color:var(--ink-faint);letter-spacing:.3em;margin-left:2px}
+nav{margin-left:auto;display:flex;gap:28px;font-size:13.5px;color:var(--ink-soft)}
+nav a{padding:6px 2px;border-bottom:1px solid transparent;transition:.25s}
+nav a:hover{color:var(--ink);border-color:var(--gold)}
+.cta{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;padding:9px 20px;border:1px solid var(--ink);border-radius:999px;transition:.25s;white-space:nowrap}
+.cta:hover{background:var(--ink);color:var(--paper)}
+.cta.solid{background:var(--ink);color:var(--paper)}
+.cta.solid:hover{background:var(--gold-deep);border-color:var(--gold-deep)}
+
+/* ---------- hero ---------- */
+.hero{padding:104px 0 0;border-bottom:1px solid var(--hairline);position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:64px;align-items:end}
+.kicker{display:flex;align-items:center;gap:12px;font-size:12.5px;letter-spacing:.32em;color:var(--ink-faint);font-weight:700;margin-bottom:40px}
+.kicker::before{content:"";width:36px;height:1px;background:var(--gold)}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(56px,7.6vw,110px);line-height:1.18;letter-spacing:.02em}
+.hero h1 .brush{position:relative;display:inline-block}
+.hero h1 .brush svg{position:absolute;left:-4%;bottom:-.08em;width:108%;height:.34em;z-index:-1}
+.hero-sub{margin-top:36px;max-width:580px;font-size:17px;color:var(--ink-soft)}
+.hero-sub em{font-style:normal;font-family:var(--serif);font-weight:700;color:var(--ink)}
+.hero-actions{margin-top:44px;display:flex;align-items:center;gap:24px}
+.text-link{font-size:14px;color:var(--ink-soft);border-bottom:1px solid var(--hairline);padding-bottom:2px;transition:.25s}
+.text-link:hover{color:var(--gold-deep);border-color:var(--gold)}
+.hero-side{display:flex;align-items:flex-start;gap:36px;padding-bottom:10px}
+.couplet{writing-mode:vertical-rl;font-family:var(--serif);font-size:18px;letter-spacing:.4em;color:var(--ink-soft);line-height:2.15;border-left:1px solid var(--hairline);padding-left:28px;height:472px;white-space:nowrap}
+.couplet b{color:var(--gold-deep);font-weight:900}
+.hero-mark{width:60px;height:60px}
+.scroll-hint{margin-top:64px;font-size:11.5px;letter-spacing:.3em;color:var(--ink-faint)}
+/* 水墨长卷 */
+.ink-scroll{display:block;width:100%;height:clamp(220px,30vw,360px);margin-top:72px}
+.ink-caption{position:absolute;right:48px;bottom:26px;font-family:var(--kai);font-size:13px;color:var(--ink-faint);letter-spacing:.14em}
+
+/* ---------- engines ---------- */
+.engines{border-bottom:1px solid var(--hairline)}
+.section-head{padding:72px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:24px}
+.section-head h2{font-family:var(--serif);font-size:30px;font-weight:900;letter-spacing:.06em}
+.section-head p{font-size:13px;letter-spacing:.22em;color:var(--ink-faint)}
+.engine{display:grid;grid-template-columns:148px 220px 1fr 300px;gap:40px;align-items:center;padding:52px 0;border-top:1px solid var(--hairline)}
+.engine:last-child{border-bottom:none;padding-bottom:88px}
+.engine .seal-ring{position:relative;width:148px;height:148px;display:flex;align-items:center;justify-content:center}
+.engine .seal-ring svg{position:absolute;inset:0;width:100%;height:100%;opacity:.5;transition:.4s}
+.engine:hover .seal-ring svg{opacity:.85;transform:rotate(-4deg)}
+.engine .glyph{font-family:var(--serif);font-weight:900;font-size:72px;line-height:1;color:var(--ink);transition:.35s;position:relative;z-index:1}
+.engine:hover .glyph{color:var(--gold-deep)}
+.engine .name h3{font-family:var(--serif);font-size:30px;font-weight:900;letter-spacing:.1em}
+.engine .name span{display:block;margin-top:6px;font-size:13px;letter-spacing:.34em;color:var(--ink-faint);font-weight:700}
+.engine .duty{font-size:15.5px;color:var(--ink-soft);max-width:420px}
+.engine .duty strong{color:var(--ink)}
+.engine .ety{border-left:1px solid var(--hairline);padding-left:24px;font-size:13.5px;color:var(--ink-faint);font-family:var(--kai)}
+.engine .ety i{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:15px;color:var(--gold-deep);display:block;margin-bottom:6px;letter-spacing:.04em}
+.engine .num{font-size:12px;letter-spacing:.3em;color:var(--ink-faint);margin-bottom:14px;display:block;font-family:var(--sans)}
+
+/* ---------- shift ---------- */
+.shift{padding:96px 0;border-bottom:1px solid var(--hairline)}
+.shift .lead{font-family:var(--serif);font-size:clamp(28px,3.4vw,44px);font-weight:900;line-height:1.55;max-width:860px;letter-spacing:.02em}
+.shift .lead em{font-style:normal;color:var(--gold-deep);border-bottom:2px solid var(--gold)}
+.beats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:72px;border:1px solid var(--hairline)}
+.beat{padding:36px 32px 40px;border-right:1px solid var(--hairline);position:relative;background:var(--paper);transition:.3s}
+.beat:last-child{border-right:none}
+.beat:hover{background:#F4F1E9}
+.beat .step{font-size:12px;letter-spacing:.3em;color:var(--gold-deep);font-weight:700}
+.beat h3{font-family:var(--serif);font-size:22px;font-weight:900;margin:14px 0 10px}
+.beat p{font-size:14px;color:var(--ink-soft)}
+
+/* ---------- quote ---------- */
+.quote{padding:128px 0;text-align:center;border-bottom:1px solid var(--hairline);position:relative}
+.quote blockquote{font-family:var(--serif);font-size:clamp(26px,3.2vw,40px);font-weight:900;line-height:2;max-width:880px;margin:0 auto;letter-spacing:.04em}
+.quote cite{display:block;margin-top:30px;font-style:normal;font-family:var(--kai);font-size:14px;letter-spacing:.3em;color:var(--ink-faint)}
+.seal-stamp{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin-top:36px;background:var(--cinnabar);color:#F7EFE4;font-family:var(--serif);font-weight:900;font-size:24px;border-radius:7px;transform:rotate(-3deg);box-shadow:0 2px 10px rgba(168,67,47,.35);position:relative}
+.seal-stamp::after{content:"";position:absolute;inset:2.5px;border:1px solid rgba(247,239,228,.55);border-radius:5px}
+
+/* ---------- footer ---------- */
+footer{padding:72px 0 56px}
+.foot-grid{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap}
+.foot-brand{display:flex;align-items:center;gap:14px}
+.foot-brand img{width:40px;height:40px}
+.foot-brand .line{font-family:var(--serif);font-size:18px;font-weight:900;letter-spacing:.12em}
+.foot-note{font-size:12.5px;color:var(--ink-faint);line-height:2;text-align:right}
+.foot-note a{border-bottom:1px solid var(--hairline)}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.reveal.on{opacity:1;transform:none}
+
+@media (max-width:980px){
+  .shell{padding:0 24px}
+  nav{display:none}
+  .hero{padding:72px 0 0}
+  .hero-grid{grid-template-columns:1fr}
+  .hero-side{display:none}
+  .ink-caption{right:24px;bottom:16px}
+  .engine{grid-template-columns:100px 1fr;grid-template-rows:auto auto;gap:8px 24px}
+  .engine .seal-ring{width:100px;height:100px;grid-row:span 2}
+  .engine .glyph{font-size:52px}
+  .engine .ety{grid-column:2;border:none;padding-left:0}
+  .beats{grid-template-columns:1fr}
+  .beat{border-right:none;border-bottom:1px solid var(--hairline)}
+}
+</style>
+</head>
+<body>
+
+<header><div class="shell">
+  <a class="brand" href="#"><img src="tropos-mark-ink.svg" alt=""><span><b>TROPOS</b><small>自适应银行智能体</small></span></a>
+  <nav><a href="#engines">四引擎</a><a href="#shift">一次变化</a><a href="#belief">我们相信</a></nav>
+  <a class="cta solid" href="../../demo.html">打开工作台 ↗</a>
+</div></header>
+
+<main>
+<!-- ============ HERO ============ -->
+<section class="hero"><div class="shell">
+  <div class="hero-grid">
+    <div>
+      <p class="kicker">TROPOS · ADAPTIVE BANKING AGENT</p>
+      <h1>千人千策，<br><span class="brush">随境而变<svg viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><defs><filter id="brushline" x="-10%" y="-40%" width="120%" height="180%"><feTurbulence type="fractalNoise" baseFrequency="0.04 0.4" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7"/></filter></defs><path d="M6 20 C 70 12, 150 26, 294 14" stroke="#B27D45" stroke-width="7" stroke-linecap="round" fill="none" opacity=".8" filter="url(#brushline)"/></svg></span>。</h1>
+      <p class="hero-sub">「帮我打理这两万元」——同一句话，住在不同日子里的人，理应得到不同的回答。<em>先读懂你的处境，再动手安顿你的钱。</em>TROPOS 把这份体贴，做成了一套可以被检查的系统。</p>
+      <div class="hero-actions">
+        <a class="cta solid" href="../../demo.html">体验我的工作台 ↗</a>
+        <a class="text-link" href="#engines">认识四位协作者 ↓</a>
+      </div>
+    </div>
+    <div class="hero-side">
+      <p class="couplet">知己其人　<b>善谋其策</b>　择时而动　<b>守诺而行</b></p>
+      <img class="hero-mark" src="tropos-mark-ink.svg" alt="TROPOS 标记">
+    </div>
+  </div>
+  <p class="scroll-hint">向下 · 画卷徐徐展开</p>
+
+  <!-- 水墨长卷：地平线与气流，金色的点是你的选择 -->
+  <svg class="ink-scroll" viewBox="0 0 1400 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <filter id="inkwash" x="-10%" y="-30%" width="120%" height="160%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="3" seed="9" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="26"/>
+      </filter>
+      <filter id="inkline" x="-10%" y="-60%" width="120%" height="220%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.02 0.15" numOctaves="2" seed="5" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="10"/>
+      </filter>
+      <linearGradient id="fadeInk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#211F1B" stop-opacity=".16"/>
+        <stop offset="1" stop-color="#211F1B" stop-opacity=".03"/>
+      </linearGradient>
+      <radialGradient id="sunGlow" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#B27D45" stop-opacity=".9"/>
+        <stop offset=".4" stop-color="#B27D45" stop-opacity=".22"/>
+        <stop offset="1" stop-color="#B27D45" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <!-- 远山 -->
+    <path filter="url(#inkwash)" fill="url(#fadeInk)" d="M-20 300 Q 120 190 260 262 Q 340 300 430 250 Q 560 175 690 255 Q 760 296 850 268 Q 960 232 1060 270 Q 1180 318 1420 240 L 1420 360 L -20 360 Z"/>
+    <path filter="url(#inkwash)" fill="#211F1B" opacity=".1" d="M-20 320 Q 180 250 360 300 Q 520 344 700 296 Q 880 252 1050 306 Q 1200 346 1420 296 L 1420 360 L -20 360 Z"/>
+    <!-- 地平线 -->
+    <path filter="url(#inkline)" d="M-20 268 C 300 262, 900 276, 1420 264" stroke="#211F1B" stroke-width="2.2" fill="none" opacity=".55" stroke-linecap="round"/>
+    <!-- 三道气流 -->
+    <path filter="url(#inkline)" d="M60 190 C 300 160, 520 210, 760 176 C 940 152, 1080 168, 1180 150" stroke="#211F1B" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M120 226 C 340 204, 560 240, 800 214 C 980 196, 1100 204, 1220 188" stroke="#211F1B" stroke-width="2.4" fill="none" opacity=".36" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M40 150 C 260 130, 480 168, 720 138 C 900 116, 1040 128, 1140 112" stroke="#211F1B" stroke-width="1.8" fill="none" opacity=".26" stroke-linecap="round"/>
+    <!-- 金色的点 -->
+    <circle cx="1180" cy="128" r="46" fill="url(#sunGlow)"/>
+    <circle cx="1180" cy="128" r="7.5" fill="#B27D45" filter="url(#inkline)"/>
+  </svg>
+  <span class="ink-caption">气流代表变化，金色的点，是你的选择。</span>
+</div></section>
+
+<!-- ============ ENGINES ============ -->
+<section class="engines" id="engines"><div class="shell">
+  <div class="section-head reveal">
+    <h2>四位协作者，各有所守。</h2>
+    <p>FOUR ENGINES · ONE PROMISE</p>
+  </div>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/><defs><filter id="ringbrush" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.4"/></filter></defs></svg><span class="glyph">知</span></div>
+    <div class="name"><span class="num">壹</span><h3>知己</h3><span>ETHOS · 画像引擎</span></div>
+    <p class="duty"><strong>读懂你长久的心愿，也看见你眼下的处境。</strong>目标与习惯分开记录，余额和账单随时刷新——你不是一次问卷定下的标签，而是一个会变化的人。</p>
+    <div class="ety"><i>ethos, ἦθος</i>希腊语，品格与习惯。<br>看懂一个人，先于替他办事。</div>
+  </article>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">谋</span></div>
+    <div class="name"><span class="num">贰</span><h3>善谋</h3><span>METIS · 决策引擎</span></div>
+    <p class="duty"><strong>在现金、时间与授权的边界里，为你找出走得通的安排。</strong>先守住房租与还款，再谈远方和收益——每个建议都附上来龙去脉。</p>
+    <div class="ety"><i>mētis, μῆτις</i>希腊语，面对复杂局面的<br>谋略之智。可行，先于最优。</div>
+  </article>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">时</span></div>
+    <div class="name"><span class="num">叁</span><h3>择时</h3><span>KAIROS · 执行引擎</span></div>
+    <p class="duty"><strong>工资晚到、账单将至、交易失败——境遇一变，安排就跟着变。</strong>该暂停的暂停，该重排的重排，绝不照旧执行一份已经失效的计划。</p>
+    <div class="ety"><i>kairos, καιρός</i>希腊语，恰好的时机。<br>何时行动，本身就是判断。</div>
+  </article>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">守</span></div>
+    <div class="name"><span class="num">肆</span><h3>守诺</h3><span>ARGOS · 守护引擎</span></div>
+    <p class="duty"><strong>每一笔授权、限额与回执，都经它独立校验。</strong>越权则止，存疑则问——它不替你做主，只替你把关。你的确认，才是下一步。</p>
+    <div class="ety"><i>Argos, Ἄργος</i>《奥德赛》里苦候主人二十年的忠犬。<br>忠诚，包括拒绝的权利。</div>
+  </article>
+</div></section>
+
+<!-- ============ SHIFT ============ -->
+<section class="shift" id="shift"><div class="shell">
+  <p class="lead reveal">昨天妥帖的安排，<br>今天未必仍然合宜。<em>境遇变化时，TROPOS 比你先察觉。</em></p>
+  <div class="beats reveal">
+    <div class="beat"><span class="step">壹 · 察觉</span><h3>工资延期 15 天</h3><p>消息抵达的那一刻，依赖这笔收入、尚未执行的划转已被轻轻按住——不需要你先开口。</p></div>
+    <div class="beat"><span class="step">贰 · 重算</span><h3>重排现金路径</h3><p>按眼下的余额、躲不开的支出和你设下的底线重新计算，给出一份仍然站得住的新安排。</p></div>
+    <div class="beat"><span class="step">叁 · 说明</span><h3>讲清缘由，再等点头</h3><p>新旧计划并排摊开，每处改动都写明来由；你确认了才执行，办完有回执可查。</p></div>
+  </div>
+</div></section>
+
+<!-- ============ QUOTE ============ -->
+<section class="quote" id="belief"><div class="shell">
+  <blockquote class="reveal">没有两笔相同的钱，<br>正如没有两段相同的日子。</blockquote>
+  <cite class="reveal">—— TROPOS 的设计信念</cite>
+  <div class="reveal"><span class="seal-stamp">诺</span></div>
+</div></section>
+
+<!-- ============ FOOTER ============ -->
+<footer><div class="shell foot-grid">
+  <div class="foot-brand">
+    <img src="tropos-mark-ink.svg" alt="">
+    <div><div class="line">知己其人，善谋其策；择时而动，守诺而行。</div>
+    <div style="font-size:12px;color:var(--ink-faint);letter-spacing:.2em;margin-top:4px">TROPOS · 气流代表变化，金色的点代表你的选择</div></div>
+  </div>
+  <p class="foot-note">2026 FinTechathon 参赛原型 · 合成银行沙箱<br>所有数据均为模拟，不构成真实金融建议<br><a href="../../demo.html">进入完整工作台 ↗</a></p>
+</div></footer>
+</main>
+
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.18});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

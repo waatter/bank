@@ -2,24 +2,24 @@
    三种演示账户保留不同的色彩、留白与圆角，字体与核心信息层级保持一致。 */
 :root{
   --serif:"Songti SC","Noto Serif CJK SC","STSong","SimSun",serif;
-  --kai:var(--serif);
+  --kai:"Kaiti SC","STKaiti","KaiTi",var(--serif);
   --num:var(--font-number,"PingFang SC",sans-serif);
   --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
 }
-/* 清晨 · 晓舟 */
+/* 清晨 · 晓舟（国风纸墨：与首页同一套审美） */
 body[data-persona="A"]{
-  --bg:#e8edeb;--bg2:#dde5e2;--surface:#f7f9f8;--surface2:#edf2f0;
-  --ink:#1d2b2e;--ink2:#4c5b5e;--mute:#7d8a8b;--faint:#aab5b5;
-  --line:rgba(29,43,46,.09);--line2:rgba(29,43,46,.17);
-  --accent:#3d7a73;--accent-ink:#f4faf8;--soft:#d6e6e2;
-  --ok:#3d7a73;--warn:#b2803a;--bad:#b5503f;
-  --e-ethos:#3d7a73;--e-metis:#4a6788;--e-kairos:#b2803a;--e-argos:#b5503f;
-  --display:var(--sans);--display-w:620;--display-track:-.015em;
+  --bg:#F2EEE3;--bg2:#E8E2D2;--surface:#FAFAF6;--surface2:#F0EBDD;
+  --ink:#211F1B;--ink2:#55524A;--mute:#8A867B;--faint:#B4AE9E;
+  --line:rgba(33,31,27,.1);--line2:rgba(33,31,27,.18);
+  --accent:#315F5A;--accent-ink:#F6F2E6;--soft:#DCE5E0;
+  --ok:#3E7C4F;--warn:#B27D45;--bad:#A8432F;
+  --e-ethos:#4A6D8C;--e-metis:#7A6390;--e-kairos:#3E7C4F;--e-argos:#B27D45;
+  --display:var(--serif);--display-w:560;--display-track:.01em;
   --ui:var(--sans);--voice:var(--sans);
   --r-l:22px;--r-m:14px;--r-s:10px;
-  --shadow:0 18px 40px -30px rgba(29,43,46,.45);
-  --glow:radial-gradient(1100px 520px at 80% -10%,rgba(242,201,166,.45),transparent 65%);
-  --sky-ink:#1d2b2e;--sky-ink2:#3f4f52;--sky-mute:#5d6d70;
+  --shadow:0 18px 40px -30px rgba(33,31,27,.4);
+  --glow:radial-gradient(1100px 520px at 80% -10%,rgba(178,125,69,.16),transparent 65%);
+  --sky-ink:#211F1B;--sky-ink2:#4A4A42;--sky-mute:#5C6B6E;
 }
 /* 深夜 · 望舒 */
 body[data-persona="B"]{
@@ -29,7 +29,7 @@ body[data-persona="B"]{
   --accent:#f0b46a;--accent-ink:#2a1c08;--soft:rgba(240,180,106,.14);
   --ok:#9ccaa9;--warn:#f0b46a;--bad:#ee9c8f;
   --e-ethos:#9ccabf;--e-metis:#aabbe4;--e-kairos:#f0b46a;--e-argos:#ee9c8f;
-  --display:var(--sans);--display-w:620;--display-track:-.015em;
+  --display:var(--serif);--display-w:540;--display-track:.015em;
   --ui:var(--sans);--voice:var(--sans);
   --r-l:28px;--r-m:18px;--r-s:12px;
   --shadow:0 24px 50px -30px rgba(0,0,0,.7);
@@ -37,24 +37,24 @@ body[data-persona="B"]{
   --sky-ink:#f4ecdc;--sky-ink2:#cfc7b8;--sky-mute:#9aa1bb;
   color-scheme:dark;
 }
-/* 正午 · 知远 */
+/* 正午 · 知远（青花：暖纸底 + 青花蓝，归入国风纸墨家族） */
 body[data-persona="C"]{
-  --bg:#eef1f5;--bg2:#e2e7ee;--surface:#ffffff;--surface2:#f3f5f8;
-  --ink:#0e1a2b;--ink2:#3d4b5d;--mute:#6a7788;--faint:#a3aebb;
-  --line:rgba(14,26,43,.08);--line2:rgba(14,26,43,.16);
-  --accent:#2a55a5;--accent-ink:#ffffff;--soft:#e1e8f5;
-  --ok:#2e7d5b;--warn:#b77a1f;--bad:#c33d2e;
-  --e-ethos:#2e7d6b;--e-metis:#2a55a5;--e-kairos:#b77a1f;--e-argos:#c33d2e;
-  --display:var(--sans);--display-w:650;--display-track:-.02em;
+  --bg:#F1EEE4;--bg2:#E6E1D2;--surface:#FCFBF7;--surface2:#F0ECDF;
+  --ink:#221F1A;--ink2:#514D45;--mute:#857F72;--faint:#B0A996;
+  --line:rgba(34,31,26,.1);--line2:rgba(34,31,26,.18);
+  --accent:#2F4E8A;--accent-ink:#FAF7EE;--soft:#E3E5DC;
+  --ok:#3E7C4F;--warn:#B27D45;--bad:#A8432F;
+  --e-ethos:#4A6D8C;--e-metis:#7A6390;--e-kairos:#3E7C4F;--e-argos:#B27D45;
+  --display:var(--serif);--display-w:620;--display-track:.005em;
   --ui:var(--sans);--voice:var(--sans);
   --r-l:12px;--r-m:8px;--r-s:6px;
-  --shadow:0 1px 2px rgba(14,26,43,.06);
+  --shadow:0 1px 2px rgba(34,31,26,.08);
   --glow:linear-gradient(transparent,transparent);
-  --sky-ink:#0e1a2b;--sky-ink2:#2f3d50;--sky-mute:#4b5b70;
+  --sky-ink:#1D2B3E;--sky-ink2:#31465E;--sky-mute:#41566B;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.75 var(--ui);font-weight:380;-webkit-font-smoothing:antialiased;background:var(--glow),var(--bg);transition:background-color .6s,color .4s}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.8 var(--ui);font-weight:400;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;background:var(--glow),var(--bg);transition:background-color .6s,color .4s}
 body[data-persona="B"]{font-size:16px}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -167,13 +167,13 @@ body[data-persona="A"] .window{box-shadow:0 0 0 10px #f3f5f3,0 0 0 11px var(--li
 body[data-persona="B"] .window{box-shadow:0 0 0 10px #232c4d,0 0 0 11px rgba(240,180,106,.18),0 40px 90px -40px rgba(0,0,0,.8),0 0 120px -30px rgba(240,180,106,.25);margin:11px}
 body[data-persona="C"] .window{box-shadow:0 0 0 1px var(--line2)}
 .window svg{display:block;width:100%;height:auto}
-.window svg text{font-family:var(--ui)}
+.window svg text{font-family:var(--kai);letter-spacing:.03em}
 .window .mullion{position:absolute;top:0;bottom:0;left:64%;width:3px;background:color-mix(in srgb,var(--bg) 75%,transparent);pointer-events:none;z-index:2}
 body[data-persona="C"] .window .mullion{display:none}
 .sky-text{position:absolute;left:clamp(20px,3.4vw,44px);top:clamp(20px,3vw,38px);z-index:3;max-width:min(560px,58%);pointer-events:none}
-.sky-text .when{font-size:13.5px;color:var(--sky-mute)}
-.sky-text h1{margin:8px 0 8px;color:var(--sky-ink);font-size:clamp(28px,3.6vw,46px)}
-.sky-text p{margin:0;color:var(--sky-ink2);font-size:15px;max-width:460px}
+.sky-text .when{font-family:var(--kai);font-size:13.5px;letter-spacing:.12em;color:var(--sky-mute)}
+.sky-text h1{margin:10px 0 10px;color:var(--sky-ink);font-family:var(--serif);font-weight:560;letter-spacing:.015em;line-height:1.42;font-size:clamp(27px,3.4vw,42px)}
+.sky-text p{margin:0;color:var(--sky-ink2);font-size:15px;line-height:1.9;max-width:460px}
 .weather{position:absolute;right:clamp(16px,2.4vw,28px);top:clamp(16px,2.4vw,28px);z-index:3;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 15px;border-radius:999px;border:0;font-size:13.5px;color:var(--sky-ink);background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(8px)}
 .weather:hover{background:var(--surface)}
 .weather .ic{width:16px;height:16px}

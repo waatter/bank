@@ -1,0 +1,61 @@
+\sectionstart
+\section{接口与工程核对索引}
+\subsection{主要接口契约}
+以下列出代表入口，完整字段和错误行为以 \code{backend/server.py} 及对应服务测试为准。公开入口与登录业务入口分开；需要变更状态的请求不因路径存在就绕过用户确认。
+
+\small\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}L{1.5cm}L{6.9cm}L{5.0cm}@{}}
+\caption{代表性 HTTP 接口}\\
+\toprule 方法 & 路径 & 用途 \\\midrule\endfirsthead
+\multicolumn{3}{l}{\small 表\thetable\quad 代表性 HTTP 接口（续）}\\
+\toprule 方法 & 路径 & 用途 \\\midrule\endhead
+\bottomrule\endfoot
+GET & \code{/api/health} & 公开健康与版本 \\
+POST & \code{/api/auth/register}\newline\code{/api/auth/login} & 注册和登录 \\
+POST & \code{/api/auth/email/verify}\newline\code{/api/auth/password/reset} & 单次挑战验证与密码重置 \\
+GET & \code{/api/state}\newline\code{/api/insights} & 当前快照与财务体检 \\
+GET & \code{/api/financial-glossary} & 只读金融术语 \\
+POST & \code{/api/agent} & 对话理解与业务分派 \\
+GET & \code{/api/conversations/{id}} & 恢复对话与资源状态 \\
+POST & \code{/api/transfers/propose} & 生成普通转账草案 \\
+POST & \code{/api/proposals/{id}/confirm} & 确认有效草案 \\
+POST & \code{/api/missions}\newline\code{/api/missions/{id}/confirm} & 多步骤规划与逐项批准 \\
+POST & \code{/api/life/analyze}\newline\code{/api/life/commit}\newline\code{/api/life/goal} & 比较、登记义务、另建目标草案 \\
+GET & \code{/api/model-center} & 模型配置状态与能力投影 \\
+PUT & \code{/api/model-center/selection} & 当前用户选择模型 \\
+POST & \code{/api/shopping/paotui/preview} & 官方帮买预览 \\
+POST & \code{/api/shopping/paotui/previews/{id}/confirm} & 逐项确认并提交官方订单 \\
+\end{longtable}
+\normalsize
+
+\clearpage
+\subsection{工程模块与核查函数}
+\small
+\begin{longtable}{@{}L{4.8cm}L{4.6cm}L{4.0cm}@{}}
+\caption{核心实现索引}\\
+\toprule 文件 & 代表函数或对象 & 重点核对内容 \\\midrule\endfirsthead
+\multicolumn{3}{l}{\small 表\thetable\quad 核心实现索引（续）}\\
+\toprule 文件 & 代表函数或对象 & 重点核对内容 \\\midrule\endhead
+\bottomrule\endfoot
+\code{backend/service.py} & \code{_cash}, \code{_checks}, \code{confirm}, \code{_post} & 现金路径、复核、记账与幂等 \\
+\code{backend/conversation.py} & \code{turn}, \code{_draft_transfer}, \code{_refresh} & 对话版本、草案更正和恢复 \\
+\code{backend/agent_ops.py} & \code{plan}, \code{confirm}, \code{_execute} & 多步骤部分执行与回执 \\
+\code{backend/life_planner.py} & \code{analyze}, \code{_choices}, \code{_rank} & 四情景、离散选择、束宽与排序 \\
+\code{backend/life_service.py} & \code{commit_plan}, \code{propose_goal} & 登记义务与目标草案分离 \\
+\code{backend/insights.py} & \code{build_insights} & 可见数据统计与解释规则 \\
+\code{backend/model.py} & 模型适配、建议验证与本地策略 & 预算、数据发送与失败语义 \\
+\code{backend/model_center.py} & 用户选择、配置与能力状态 & 平台配置及个人密钥边界 \\
+\code{backend/meituan_paotui.py} & 组件调用与用户目录管理 & 参数数组、缓存与供应商错误 \\
+\code{backend/shopping.py} & Mock 与官方订单业务 & 订单未知状态和账本分离 \\
+\code{backend/server.py} & HTTP 路由与接入校验 & 会话归属、方法、头部与参数 \\
+\code{deploy/docker-compose.yml} & 应用与 Caddy host 网络 & 回环上游与目录挂载 \\
+\end{longtable}
+\normalsize
+
+\subsection{交付与复现}
+主文件为 \code{main.tex}，分节正文在 \code{sections/}，项目 logo 与长卷原件在 \code{assets/}。使用 kit 的中文 paper 日常版，以 XeLaTeX 编译；环境与依赖说明见源码包 README。
+\begin{lstlisting}
+latexmk -xelatex -interaction=nonstopmode \
+  -halt-on-error main.tex
+\end{lstlisting}
+\code{evidence/} 保存测试日志、规则红队报告、代码指纹与核验说明，用于追溯本次结果。源码包不包含用户数据库、密钥或供应商认证材料。

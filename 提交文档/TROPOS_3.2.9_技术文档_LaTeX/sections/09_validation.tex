@@ -1,0 +1,46 @@
+\sectionstart
+\section{验证方法与本次核验结果}
+\label{sec:validation}
+\subsection{可复现基线与计数口径}
+本次以 2026 年 11 月 2 日本地工作区复跑自动化测试。核心后端提交为 \code{2a33063}，界面包含尚未提交的水墨风更新，因此结果归属于工作区快照，而非声称某个完全干净的发布提交已经在全部环境验收。源码 SHA-256、运行命令、解释器版本和日志随 LaTeX 源码包的 \code{evidence/} 提供。
+
+\begin{table}[htbp]\centering\small
+\caption{本次本机复跑结果}
+\begin{tabularx}{\textwidth}{@{}L{2.25cm}L{3.45cm}Y@{}}\toprule
+检查层 & 实际计数 & 解释与范围 \\\midrule
+Python unittest & 共 470；成功 469；跳过 1；失败与错误 0 & 包括身份、账本、模型替身、HTTP、生活与连接器等测试 \\
+Node 测试运行器 & 101 项；通过 101；失败 0；跳过 0 & \code{tests/*.cjs}；并不等于独立的真实浏览器用户测试 \\
+规则模式红队 & 攻击 62/62；正常对照 14/14 & 对话攻击 51 项、API 绕过 11 项；当前工作区复跑 \\\bottomrule
+\end{tabularx}
+\end{table}
+
+Python 跳过项为 \code{test_windows_does_not_apply_unix_chmod_to_credential_directories}，原因是仅验证 Windows 的凭据目录行为，本次 macOS 不适用。跳过不是通过；本次结果也不替代 Windows 实机验证。470 是 unittest 发现并运行的测试总数，已经包含跳过项，不能写成“470 成功再加 1 跳过”。
+
+本次数字按所列命令与日志统计。历史发布材料中的数字需要结合各自日期、环境和计数单位阅读，不能直接替代当前结果。不同层的用例可能重叠，红队场景与 Python 回归也有交叉，不合计为独立覆盖总量。
+
+\begin{lstlisting}
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+node --test tests/*.cjs
+\end{lstlisting}
+
+\subsection{红队样例与结论边界}
+锁定样例集包含开发者构造的直接及间接注入、身份冒充、错误完成声明、收款人混淆、金额异常、多步夹带和 API 绕过等场景。攻击通过指不产生攻击者要求的可授权写动作或真实执行，账本保持预期状态且回复不虚称完成；正常对照通过指预期写动作以待授权形式出现，不能把“对照可办理”误写成已经付款。
+
+本次通过 \code{eval.redteam.benchmark(live_model=False)} 在规则模式复跑，将结果单独保存，不覆盖仓库历史报告。历史 \code{reports/redteam.json} 属于 2026 年 10 月 28 日 \code{7ac1c9c} 基线；本次的工作区结果与历史记录分别保留。未调用真实付费模型，也未创建真实美团订单。
+
+62/62 是已知开发样例的回归结果，不是未知攻击拦截率、统计泛化结论或安全认证。模型适配测试大量使用回环 Mock，能检查协议参数和降级行为，不能证明供应商当前账号权限、网络与真实端到端稳定性。
+
+\subsection{与技术主张对应的证据}
+\begin{table}[htbp]\centering\small
+\caption{关键主张与核验入口}
+\begin{tabularx}{\textwidth}{@{}L{3cm}YY@{}}\toprule
+技术主张 & 代码与测试入口 & 尚不能据此推出 \\\midrule
+确认前不产生普通转账扣款 & \code{service.py:confirm}；转账与 API 测试 & 所有外部交易均可撤销 \\
+同一方案不重复记账 & 交易唯一约束、幂等回执及并发测试 & 供应商清算恰好一次 \\
+现金路径可复算 & \code{_cash}、生活规划参考路径测试及本文算例 & 日内风险全覆盖或实际到账保证 \\
+注册用户数据分区 & \code{test_auth.py} 与对象归属检查 & 共享演示账号访客彼此隔离 \\
+模型失败可降级 & \code{test_model.py} 中回环替身与错误响应测试 & 所有供应商真实调用均已验收 \\\bottomrule
+\end{tabularx}
+\end{table}
+
+真实手机网络、无障碍用户盲测、供应商真实授权支付、目标 Linux 部署、压力与渗透测试需要分别记录环境、输入、结果和失败。功能测试成功不能替代可用性或生产安全验收。

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="TROPOS：知己、善谋、择时、守诺——四引擎协同的自适应银行智能体。Profile → Policy → Plan → Execution → Feedback，个性化发生在行动规则层。">
+<title>TROPOS · 四引擎协同的自适应银行智能体</title>
+<link rel="icon" href="../../assets/tropos-mark.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Tropos Sans";src:url("../../assets/fonts/noto-sans-sc-ui.woff2") format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Manrope";src:url("../../assets/fonts/manrope-latin.woff2") format("woff2");font-weight:400 800;font-display:swap}
+:root{
+  --navy:#0A1726; --navy-2:#0E1F33; --navy-3:#12283F;
+  --line:rgba(148,178,210,.16); --line-2:rgba(148,178,210,.3);
+  --ink:#EAF1F8; --dim:#9DB2C7; --faint:#64798E;
+  --ethos:#5B8DEF; --metis:#9B7EDE; --kairos:#45C48A; --argos:#D9A45B;
+  --sans:"Manrope","Tropos Sans","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--navy);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+::selection{background:var(--argos);color:var(--navy)}
+a{color:inherit;text-decoration:none}
+.shell{max-width:1240px;margin:0 auto;padding:0 48px}
+
+header{position:sticky;top:0;z-index:20;background:rgba(10,23,38,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+header .shell{display:flex;align-items:center;gap:36px;height:64px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:24px;height:24px}
+.brand b{font-weight:800;letter-spacing:.16em;font-size:14.5px}
+nav{margin-left:auto;display:flex;gap:26px;font-size:13px;color:var(--dim)}
+nav a{padding:5px 2px;transition:.25s}
+nav a:hover{color:var(--ink)}
+.cta{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:8px 18px;border-radius:6px;border:1px solid var(--argos);color:var(--argos);transition:.25s;white-space:nowrap}
+.cta:hover{background:var(--argos);color:var(--navy)}
+.cta.solid{background:var(--argos);color:var(--navy)}
+.cta.solid:hover{background:#E7B871;border-color:#E7B871}
+
+/* hero */
+.hero{position:relative;min-height:92vh;display:flex;align-items:center;overflow:hidden;border-bottom:1px solid var(--line)}
+#streams{position:absolute;inset:0;width:100%;height:100%}
+.hero-inner{position:relative;z-index:2;padding:120px 0}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--argos);margin-bottom:28px}
+.hero h1{font-size:clamp(48px,6.4vw,96px);font-weight:800;line-height:1.14;letter-spacing:.01em}
+.hero h1 .g{background:linear-gradient(100deg,#E7C48F,#D9A45B 55%,#B27D45);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-en{margin-top:18px;font-family:var(--mono);font-size:14px;color:var(--faint);letter-spacing:.12em}
+.hero-sub{margin-top:26px;max-width:540px;font-size:16px;color:var(--dim)}
+.hero-actions{margin-top:40px;display:flex;gap:16px;align-items:center}
+.ghost-link{font-family:var(--mono);font-size:13px;color:var(--dim);border-bottom:1px solid var(--line-2);padding-bottom:2px}
+.ghost-link:hover{color:var(--ink)}
+.chips{margin-top:56px;display:flex;flex-wrap:wrap;gap:10px}
+.chip{display:inline-flex;align-items:center;gap:9px;font-size:13px;padding:7px 14px;border:1px solid var(--line);border-radius:999px;color:var(--dim);background:rgba(14,31,51,.6)}
+.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* pipeline */
+.pipeline{padding:104px 0;border-bottom:1px solid var(--line);background:var(--navy-2)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-bottom:64px}
+.sec-head h2{font-size:30px;font-weight:800;letter-spacing:.02em}
+.sec-head .tag{font-family:var(--mono);font-size:12px;letter-spacing:.24em;color:var(--faint)}
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative}
+.node{padding:26px 22px 30px;border:1px solid var(--line);border-right:none;background:var(--navy);position:relative;transition:.3s}
+.node:last-child{border-right:1px solid var(--line)}
+.node:hover{background:var(--navy-3);transform:translateY(-4px)}
+.node .no{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.2em}
+.node h3{font-size:19px;font-weight:800;margin:12px 0 2px}
+.node .latin{font-family:var(--mono);font-size:11px;letter-spacing:.18em;margin-bottom:12px;display:block}
+.node p{font-size:13px;color:var(--dim);line-height:1.7}
+.node::after{content:"→";position:absolute;right:-9px;top:34px;color:var(--faint);z-index:2;font-size:14px}
+.node:last-child::after{content:"↺";right:10px;top:auto;bottom:-26px;color:var(--argos)}
+.node.e{--c:var(--ethos)}.node.m{--c:var(--metis)}.node.k{--c:var(--kairos)}
+.node .latin{color:var(--c)}
+.node.exec{--c:var(--kairos)}
+.node.fb{--c:var(--faint)}
+.argos-bar{margin-top:56px;border:1px solid rgba(217,164,91,.4);background:linear-gradient(90deg,rgba(217,164,91,.1),rgba(217,164,91,.03));padding:24px 28px;display:flex;align-items:center;gap:24px}
+.argos-bar .shield{font-size:22px;color:var(--argos)}
+.argos-bar h3{font-size:16px;font-weight:800;color:#E7C48F;letter-spacing:.06em}
+.argos-bar p{font-size:13.5px;color:var(--dim)}
+.argos-bar .veto{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--argos);border:1px dashed rgba(217,164,91,.5);padding:6px 12px;border-radius:4px;white-space:nowrap}
+
+/* formula */
+.formula{padding:104px 0;border-bottom:1px solid var(--line)}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.f-copy h2{font-size:30px;font-weight:800;line-height:1.4}
+.f-copy p{margin-top:20px;color:var(--dim);font-size:15px}
+.f-copy ul{margin-top:22px;list-style:none}
+.f-copy li{font-size:14px;color:var(--dim);padding:9px 0 9px 22px;position:relative;border-bottom:1px dashed var(--line)}
+.f-copy li::before{content:"▸";position:absolute;left:0;color:var(--kairos)}
+.code-card{background:#071220;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.code-top{display:flex;gap:7px;padding:13px 16px;border-bottom:1px solid var(--line);align-items:center}
+.code-top i{width:10px;height:10px;border-radius:50%;background:var(--line-2)}
+.code-top span{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
+.code-card pre{padding:24px 26px;font-family:var(--mono);font-size:13.5px;line-height:2;color:#C6D6E6;overflow-x:auto}
+.tok-k{color:var(--argos)} .tok-f{color:var(--ethos)} .tok-c{color:var(--faint)} .tok-n{color:var(--kairos)}
+
+/* events */
+.events{padding:104px 0;border-bottom:1px solid var(--line);background:var(--navy-2)}
+.ev-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:48px}
+.ev{font-family:var(--mono);font-size:13px;color:var(--dim);border:1px solid var(--line);padding:10px 18px;border-radius:6px;background:var(--navy);transition:.25s;cursor:default}
+.ev:hover{border-color:var(--kairos);color:var(--ink);transform:translateY(-2px)}
+.ev b{color:var(--kairos);font-weight:400}
+.ev-note{margin-top:36px;font-size:14px;color:var(--faint);max-width:620px}
+.ev-note strong{color:var(--dim)}
+
+/* promise */
+.promise{padding:110px 0;text-align:center}
+.promise h2{font-size:clamp(28px,3.6vw,46px);font-weight:800;line-height:1.5;max-width:860px;margin:0 auto}
+.promise h2 span{color:var(--argos)}
+.promise p{margin-top:22px;color:var(--faint);font-family:var(--mono);font-size:13px;letter-spacing:.14em}
+
+footer{padding:64px 0 48px;border-top:1px solid var(--line)}
+.foot{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.foot-brand{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--dim)}
+.foot-brand img{width:32px;height:32px}
+.foot-note{font-size:12px;color:var(--faint);text-align:right;line-height:2}
+.foot-note a{border-bottom:1px solid var(--line-2)}
+
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1)}
+.reveal.on{opacity:1;transform:none}
+
+@media (max-width:980px){
+  .shell{padding:0 24px}
+  nav{display:none}
+  .loop{grid-template-columns:1fr}
+  .node{border-right:1px solid var(--line);border-bottom:none}
+  .node:last-child{border-bottom:1px solid var(--line)}
+  .node::after{content:"↓";right:auto;left:24px;top:auto;bottom:-16px}
+  .f-grid{grid-template-columns:1fr;gap:40px}
+  .argos-bar{flex-wrap:wrap}
+  .argos-bar .veto{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<header><div class="shell">
+  <a class="brand" href="#"><img src="../../assets/tropos-mark.svg" alt=""><b>TROPOS</b></a>
+  <nav><a href="#loop">闭环链路</a><a href="#formula">约束与计算</a><a href="#events">事件驱动</a></nav>
+  <a class="cta solid" href="../../demo.html">打开工作台 ↗</a>
+</div></header>
+
+<main>
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <canvas id="streams"></canvas>
+  <div class="shell hero-inner">
+    <p class="kicker">ETHOS · METIS · KAIROS · ARGOS</p>
+    <h1>千人千策，<br><span class="g">随境而变</span>。</h1>
+    <p class="hero-en">One Banking Agent. Adaptive to Every Financial Life.</p>
+    <p class="hero-sub">四个引擎围绕同一个人协作：看懂处境、定下策略、等待时机、守住边界。个性化不停留在推荐文案——它发生在行动规则层。</p>
+    <div class="hero-actions">
+      <a class="cta solid" href="../../demo.html">体验沙箱工作台 ↗</a>
+      <a class="ghost-link" href="#loop">查看闭环链路 ↓</a>
+    </div>
+    <div class="chips">
+      <span class="chip"><i style="background:var(--ethos)"></i>知己 ETHOS · 动态画像</span>
+      <span class="chip"><i style="background:var(--metis)"></i>善谋 METIS · 约束决策</span>
+      <span class="chip"><i style="background:var(--kairos)"></i>择时 KAIROS · 事件执行</span>
+      <span class="chip"><i style="background:var(--argos)"></i>守诺 ARGOS · 可信守护</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section class="pipeline" id="loop"><div class="shell">
+  <div class="sec-head reveal">
+    <h2>一条可审计的闭环，而不是一句黑箱回答。</h2>
+    <span class="tag">PROFILE → POLICY → PLAN → EXECUTION → FEEDBACK</span>
+  </div>
+  <div class="loop reveal">
+    <div class="node e"><span class="no">01</span><h3>画像</h3><span class="latin">PROFILE · ETHOS</span><p>长期偏好与即时状态分开建模，附数据置信度与更新时间。</p></div>
+    <div class="node m"><span class="no">02</span><h3>策略</h3><span class="latin">POLICY · METIS</span><p>画像被翻译成可检验的策略参数：最低储备、付款优先级、预警阈值。</p></div>
+    <div class="node k"><span class="no">03</span><h3>计划</h3><span class="latin">PLAN · KAIROS</span><p>候选行动、预计影响与不可执行原因同时生成，等待授权。</p></div>
+    <div class="node exec"><span class="no">04</span><h3>执行</h3><span class="latin">EXECUTION · ARGOS GATE</span><p>每次资金操作携带幂等键，经独立网关校验后才触达沙箱账本。</p></div>
+    <div class="node fb"><span class="no">05</span><h3>回执</h3><span class="latin">FEEDBACK</span><p>执行回执回流为最新状态，成为下一轮决策的事实基础。</p></div>
+  </div>
+  <div class="argos-bar reveal">
+    <span class="shield">◈</span>
+    <div><h3>守诺 ARGOS · 跨层审查</h3><p>授权与身份、资金与规则、模型与数据、审计与可撤销——四道校验独立于其他引擎运行。</p></div>
+    <span class="veto">对不安全的行为，拥有否决权</span>
+  </div>
+</div></section>
+
+<!-- ============ FORMULA ============ -->
+<section class="formula" id="formula"><div class="shell f-grid">
+  <div class="f-copy reveal">
+    <h2>先保证可行，<br>再追求更好。</h2>
+    <p>金融决策不是让模型自由发挥。必要支付与最低储备是硬约束；收益比较排在最后。每个建议都必须通过确定性计算的检验。</p>
+    <ul>
+      <li>硬约束优先：合法、授权、余额、必要支付</li>
+      <li>可行域内优化：先减缺口与费用，再兼顾储蓄目标</li>
+      <li>预测收入在到账前，不参与实际付款</li>
+    </ul>
+  </div>
+  <div class="code-card reveal">
+    <div class="code-top"><i></i><i></i><i></i><span>metis / cashflow.ts</span></div>
+    <pre><span class="tok-c">// 逐日现金路径：B(t+1) = B(t) + Y(t) − M(t) − C(t) + x(t)</span>
+<span class="tok-k">const</span> feasible = path.every(<span class="tok-f">day</span> =>
+  day.balance >= user.<span class="tok-n">minReserve</span>        <span class="tok-c">// B(t) ≥ B_min</span>
+  && day.action ∈ user.<span class="tok-n">authorizedSet</span>  <span class="tok-c">// 授权集合之内</span>
+);
+
+<span class="tok-k">if</span> (scenario.<span class="tok-n">incomeDelayed</span>) {
+  plan.<span class="tok-f">freeze</span>(<span class="tok-n">"depends_on:salary"</span>);   <span class="tok-c">// 暂停失效计划</span>
+  plan.<span class="tok-f">replan</span>({ keepEssentials: <span class="tok-k">true</span> }); <span class="tok-c">// 保住必要支付</span>
+}</pre>
+  </div>
+</div></section>
+
+<!-- ============ EVENTS ============ -->
+<section class="events" id="events"><div class="shell">
+  <div class="sec-head reveal">
+    <h2>不需要你开口，变化本身会说话。</h2>
+    <span class="tag">EVENT-DRIVEN REPLANNING</span>
+  </div>
+  <div class="ev-grid reveal">
+    <span class="ev"><b>salary_received</b> 工资到账</span>
+    <span class="ev"><b>income_delayed</b> 收入延期</span>
+    <span class="ev"><b>bill_due_soon</b> 账单将至</span>
+    <span class="ev"><b>balance_below_buffer</b> 跌破缓冲</span>
+    <span class="ev"><b>subscription_renewal_soon</b> 续费临近</span>
+    <span class="ev"><b>transfer_failed</b> 转账失败</span>
+    <span class="ev"><b>user_changed_mandate</b> 授权变更</span>
+  </div>
+  <p class="ev-note reveal">每个事件都会触发对未执行计划的重新评估。<strong>系统因状态而行动，而不是只响应聊天消息</strong>——这是择时 KAIROS 与一般对话机器人的分界线。</p>
+</div></section>
+
+<!-- ============ PROMISE ============ -->
+<section class="promise"><div class="shell">
+  <h2 class="reveal">银行已经能办很多事。<br>我们要办的是：<span>同一句托付，给不同的人不同的答案。</span></h2>
+  <p class="reveal">2026 FINTECHATHON · SYNTHETIC BANKING SANDBOX</p>
+  <div class="hero-actions reveal" style="justify-content:center;margin-top:44px">
+    <a class="cta solid" href="../../demo.html">开始体验 ↗</a>
+  </div>
+</div></section>
+
+<footer><div class="shell foot">
+  <div class="foot-brand"><img src="../../assets/tropos-mark.svg" alt=""><span>知己其人，善谋其策；择时而动，守诺而行。</span></div>
+  <p class="foot-note">TROPOS · 2026 FinTechathon 参赛原型<br>合成数据沙箱，不构成真实金融建议 · <a href="../../demo.html">完整工作台 ↗</a></p>
+</div></footer>
+</main>
+
+<script>
+// 四色气流汇入金色中心点
+const cv=document.getElementById('streams'),ctx=cv.getContext('2d');
+let W,H,t=0;const COLORS=['#5B8DEF','#9B7EDE','#45C48A','#D9A45B'];
+function size(){W=cv.width=cv.offsetWidth*devicePixelRatio;H=cv.height=cv.offsetHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
+size();addEventListener('resize',size);
+function draw(){
+  const w=cv.offsetWidth,h=cv.offsetHeight,cx=w*.78,cy=h*.44;
+  ctx.clearRect(0,0,w,h);t+=.004;
+  COLORS.forEach((c,i)=>{
+    ctx.beginPath();ctx.strokeStyle=c;ctx.globalAlpha=.5;ctx.lineWidth=1.4;
+    const yb=h*(.12+i*.24);
+    for(let x=-20;x<=w;x+=8){
+      const p=x/w,dx=cx-x,dy=cy-yb;
+      const pull=Math.max(0,1-Math.hypot(dx,dy)/(w*.7));
+      const y=yb+Math.sin(x*.006+t*3+i*1.7)*26*(1-pull)+dy*pull*pull;
+      x===-20?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,90);
+  g.addColorStop(0,'rgba(217,164,91,.9)');g.addColorStop(.25,'rgba(217,164,91,.25)');g.addColorStop(1,'rgba(217,164,91,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,90,0,7);ctx.fill();
+  ctx.fillStyle='#E7C48F';ctx.beginPath();ctx.arc(cx,cy,5,0,7);ctx.fill();
+  ctx.strokeStyle='rgba(231,196,143,.5)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,16+Math.sin(t*4)*3,0,7);ctx.stroke();
+  requestAnimationFrame(draw);
+}
+draw();
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

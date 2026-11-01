@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>TROPOS · 同一句话，不同的人生安排</title>
+<style>
+@font-face{font-family:Noto;src:url('../../assets/fonts/noto-sans-sc-ui.woff2') format('woff2');font-display:swap}
+@font-face{font-family:Manrope;src:url('../../assets/fonts/manrope-latin.woff2') format('woff2');font-display:swap}
+:root{--blue:#243ec7;--green:#315f5a;--ink:#172d2b;--muted:#596967;--line:#d9e1df;--pale:#f1f5f3;--gold:#96632f}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:#fff;color:var(--ink);font:16px/1.75 Noto,sans-serif}
+button,a{-webkit-tap-highlight-color:transparent}a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #b27d45;outline-offset:5px}
+button{min-height:44px}h1,h2,h3,p{margin:0}h1,h2,h3{font-weight:550;line-height:1.3}img{max-width:100%}
+.wrap{width:min(1248px,calc(100% - 96px));margin:auto}
+.en{font-family:Manrope,Noto,sans-serif}
+.muted{color:var(--muted)}
+.eyebrow{font-size:13px;font-weight:550;letter-spacing:.06em}
+.section{padding:100px 0}
+.rule{border-top:1px solid var(--line)}
+.header{height:92px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:30px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand img{width:42px;height:42px}
+.brand strong{font:700 25px Manrope,sans-serif;letter-spacing:.06em}
+nav{display:flex;align-items:center;gap:34px;font-size:14px}
+nav a{display:flex;align-items:center;min-height:44px}
+.nav-cta{border:1px solid var(--green);padding:0 19px;border-radius:4px}
+.hero{padding:62px 0 0}
+.hero-top{display:flex;align-items:flex-end;justify-content:space-between;gap:48px;margin-bottom:40px}
+.hero h1{font-size:clamp(43px,5.2vw,74px);letter-spacing:-.055em;line-height:1.23}
+.hero h1 span{display:block;color:var(--blue)}
+.hero-copy{max-width:330px;padding-bottom:7px}
+.hero-copy p{margin:12px 0 20px;color:var(--muted)}
+.text-link{display:inline-flex;align-items:center;min-height:44px;border-bottom:1px solid var(--green);gap:24px;font-weight:550}
+.experiment{border:1px solid #cdd6de;border-radius:8px;overflow:hidden;box-shadow:0 12px 40px #15304408}
+.experiment-head{background:var(--blue);color:white;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px 30px}
+.prompt{font-size:23px;letter-spacing:-.02em}
+.prompt small{display:block;font-size:12px;color:#d8dfff;margin-bottom:3px;letter-spacing:.1em}
+.switch{display:flex;padding:4px;border:1px solid #8e9ce1;border-radius:5px;gap:4px;flex-shrink:0}
+.switch button{border:0;background:transparent;color:#fff;padding:7px 20px;border-radius:2px;font-size:14px}
+.switch button[aria-pressed="true"]{background:#fff;color:var(--blue)}
+.comparison{display:grid;grid-template-columns:1fr 1fr}
+.situation{padding:28px 30px 26px;min-width:0}
+.situation+ .situation{border-left:1px solid var(--line);background:#f5f8f6}
+.person-line{display:flex;align-items:center;gap:12px;margin-bottom:21px}
+.person-symbol{width:40px;height:40px;display:grid;place-items:center;border:1px solid #c1cdca;border-radius:50%;color:var(--green)}
+.person-line p{font-size:13px;color:var(--muted)}
+.person-line h3{font-size:18px}
+.situation h2{font-size:28px;margin-bottom:12px;letter-spacing:-.03em}
+.plan-copy{color:var(--muted);min-height:56px}
+.priority{display:flex;align-items:stretch;margin:25px 0 17px;border-top:2px solid var(--green);border-bottom:1px solid var(--line)}
+.priority span{flex:1;padding:13px 6px 13px 0;font-size:14px}
+.priority span+span{padding-left:16px;border-left:1px solid var(--line)}
+.priority b{display:block;font-size:12px;font-weight:450;color:var(--muted)}
+.plan-status{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--green)}
+.status-dot{width:7px;height:7px;flex-shrink:0;border-radius:50%;background:var(--green);margin-top:8px}
+.experiment[data-state="delay"] .status-dot{background:var(--gold)}
+.experiment[data-state="delay"] .plan-status{color:#7e542b}
+.sample-note{padding:12px 30px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);background:#fff}
+.collaboration{margin-top:20px;display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center}
+.collab-caption strong{display:block;font-size:16px;font-weight:550}
+.collab-caption p{font-size:12px;color:var(--muted);margin-top:5px}
+.route{position:relative;padding-bottom:48px}
+.route-nodes{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.route-node{position:relative;background:white;border:0;border-top:1px solid #bbc9c5;text-align:left;padding:12px 4px;color:var(--ink)}
+.route-node:before{content:'';position:absolute;top:-4px;left:4px;width:7px;height:7px;background:var(--green);border-radius:50%}
+.route-node:after{content:'';position:absolute;bottom:-12px;left:8px;height:22px;border-left:1px solid var(--green)}
+.route-node b{font-size:13px;color:var(--green);font-weight:550;margin-right:7px}
+.route-node[aria-pressed="true"]{color:var(--blue);border-color:var(--blue)}
+.guard-line{position:absolute;bottom:0;left:8px;right:0;width:calc(100% - 8px);border:1px solid var(--green);background:#eff5f2;color:var(--green);min-height:44px;text-align:left;padding:3px 12px;font-size:12px;border-radius:2px}
+.guard-line span{float:right}
+.guard-line[aria-pressed="true"]{background:var(--green);color:#fff}
+.guard-line:focus-visible{outline-offset:2px}
+.hero-foot{display:flex;justify-content:space-between;align-items:center;padding:23px 0 32px;font-size:12px;color:var(--muted)}
+.hero-foot span:first-child{color:var(--green)}
+.origin{background:var(--pale);padding:88px 0}
+.origin-grid{display:grid;grid-template-columns:1fr 1fr;gap:110px}
+.origin h2{font-size:43px;letter-spacing:-.04em;margin-top:20px}
+.origin-text{padding-top:3px}
+.origin-text>p{font-size:18px;color:var(--muted)}
+.change-line{margin-top:30px;padding-top:22px;border-top:1px solid #cad6d1;display:flex;gap:18px;align-items:center}
+.change-line span{font-size:14px;color:var(--muted)}
+.change-line strong{font-size:19px;font-weight:550}
+.change-line i{font-style:normal;color:var(--green)}
+.section-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:50px;margin-bottom:38px}
+.section-heading h2{font-size:42px;letter-spacing:-.04em}
+.section-heading p{max-width:380px;color:var(--muted)}
+.roles{display:grid;grid-template-columns:1fr 1.22fr;gap:70px}
+.role-list{border-top:1px solid var(--line)}
+.role-tab{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;border:0;border-bottom:1px solid var(--line);padding:21px 16px;background:#fff;color:var(--muted)}
+.role-tab strong{font-size:22px;font-weight:550}
+.role-tab .en{font-size:13px;min-width:82px}
+.role-tab em{font-style:normal;font-size:13px;margin-left:auto}
+.role-tab[aria-selected="true"]{color:var(--blue);background:#f2f4ff;border-bottom-color:#bdc6f1}
+.role-detail{background:var(--pale);padding:34px 38px;position:relative;min-height:344px}
+.role-detail:before{content:'';position:absolute;left:0;top:0;width:65px;border-top:3px solid var(--green)}
+.role-detail h3{font-size:29px;margin:12px 0 18px}
+.role-detail>p{color:var(--muted)}
+.role-example{margin-top:26px;padding-top:19px;border-top:1px solid #cbd8d3}
+.role-example span{display:block;font-size:12px;color:var(--green);margin-bottom:6px}
+.role-example p{font-size:16px}
+.role-caveat{font-size:13px;color:var(--muted);margin-top:22px}
+.map{background:#315f5a;color:#fff}
+.map .section-heading p{color:#d4e2df}
+.map-intro{font-size:13px;color:#d4e2df;margin-bottom:34px}
+.need-row{display:grid;grid-template-columns:210px 1fr 220px;gap:28px;padding:26px 0;border-top:1px solid #ffffff3b;align-items:center}
+.need-row:last-child{border-bottom:1px solid #ffffff3b}
+.need-name strong{font-size:23px;font-weight:500;display:block}
+.need-name span{font-size:12px;color:#c5d9d3;letter-spacing:.04em}
+.need-row>p{font-size:18px;color:#e2ece8}
+.need-row>span{font-size:14px;color:#cedfd9}
+.scope{margin-top:38px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:35px}
+.scope h3{font-size:17px;font-weight:500;margin-bottom:8px}
+.scope p{font-size:16px;color:#d4e2df}
+.scope h3:before{content:'+';margin-right:10px;color:#e2c39f}
+.now-future{display:grid;grid-template-columns:1.12fr 1fr;gap:80px}
+.now-future h2{font-size:35px;letter-spacing:-.04em;margin:12px 0 25px}
+.current-label{display:inline-block;font-size:12px;color:var(--green);background:#eaf3ed;padding:3px 10px;border-radius:2px}
+.capability{padding:16px 0;border-top:1px solid var(--line)}
+.capability h3{font-size:17px;margin-bottom:4px}
+.capability p{font-size:16px;color:var(--muted)}
+.future{padding-left:42px;border-left:1px solid var(--line)}
+.future>p{color:var(--muted)}
+.future ul{list-style:none;padding:0;margin:27px 0}
+.future li{padding:14px 0;border-top:1px solid var(--line)}
+.future li span{display:block;font-size:13px;color:var(--muted);margin-top:4px}
+.boundary{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:20px;margin-top:24px}
+.closing{background:var(--blue);color:#fff;padding:62px 0}
+.closing .wrap{display:flex;align-items:center;justify-content:space-between;gap:36px}
+.closing h2{font-size:39px;letter-spacing:-.04em}
+.closing p{color:#dfe5ff;margin-top:13px}
+.button{display:inline-flex;min-height:50px;align-items:center;justify-content:center;padding:12px 28px;background:#fff;color:var(--blue);border-radius:4px;font-weight:550;flex-shrink:0}
+footer{padding:29px 0 36px;display:flex;justify-content:space-between;align-items:center;gap:30px}
+footer p{font-size:12px;color:var(--muted);max-width:640px}
+.footer-brand{font:700 18px Manrope,sans-serif;letter-spacing:.06em}
+.footer-brand span{font:400 12px Noto,sans-serif;display:block;letter-spacing:0;color:var(--muted);margin-top:2px}
+@media(min-width:1500px){.hero{padding-top:78px}
+.hero-top{margin-bottom:48px}}
+@media(max-width:1000px){.wrap{width:calc(100% - 56px)}
+nav{gap:20px}
+.hero-top{gap:28px}
+.hero h1{font-size:54px}
+.hero-copy{max-width:280px}
+.origin-grid{gap:50px}
+.roles{gap:35px}
+.need-row{grid-template-columns:180px 1fr 160px}
+.now-future{gap:38px}
+.section-heading h2{font-size:36px}
+.section-heading p{max-width:300px}
+.future{padding-left:28px}}
+@media(max-width:720px){.wrap{width:calc(100% - 40px)}
+.header{height:76px;gap:12px}
+.brand{gap:7px}
+.brand img{width:33px;height:33px}
+.brand strong{font-size:20px}
+nav{gap:0}
+nav a:not(.nav-cta){display:none}
+.nav-cta{padding:0 12px;font-size:12px}
+.hero{padding-top:38px}
+.hero-top{display:block;margin-bottom:28px}
+.hero h1{font-size:44px;letter-spacing:-.06em}
+.hero-copy{max-width:none;margin-top:24px;padding:0}
+.hero-copy p{margin:8px 0 8px;font-size:16px}
+.eyebrow{font-size:12px}
+.experiment-head{padding:20px;display:block}
+.prompt{font-size:22px}
+.switch{margin-top:20px;width:100%}
+.switch button{flex:1}
+.comparison{grid-template-columns:1fr}
+.situation{padding:24px 20px}
+.situation+ .situation{border-left:0;border-top:1px solid var(--line)}
+.situation h2{font-size:26px}
+.person-line{margin-bottom:16px}
+.plan-copy{min-height:0}
+.sample-note{padding:12px 20px}
+.priority{margin-top:21px}
+.priority span{font-size:13px}
+.priority span+span{padding-left:12px}
+.collaboration{display:block;margin-top:26px}
+.collab-caption{margin-bottom:22px}
+.collab-caption p{margin-top:3px}
+.route-nodes{gap:10px}
+.route-node{font-size:14px;padding:12px 3px}
+.route-node b{display:block;font-size:12px}
+.guard-line{font-size:12px;min-height:44px;padding:8px}
+.guard-line span{display:none}
+.route{padding-bottom:46px}
+.hero-foot{align-items:flex-start;gap:20px;font-size:12px;padding:23px 0 30px}
+.section{padding:64px 0}
+.origin{padding:60px 0}
+.origin-grid{grid-template-columns:1fr;gap:28px}
+.origin h2{font-size:34px;margin-top:13px}
+.origin-text>p{font-size:16px}
+.change-line{gap:12px}
+.change-line strong{font-size:17px}
+.section-heading{display:block;margin-bottom:28px}
+.section-heading h2{font-size:33px}
+.section-heading p{max-width:none;margin-top:17px}
+.roles{grid-template-columns:1fr;gap:24px}
+.role-tab{padding:16px 12px}
+.role-tab strong{font-size:20px}
+.role-detail{padding:27px 24px;min-height:0}
+.role-detail h3{font-size:25px}
+.role-caveat{font-size:12px}
+.need-row{grid-template-columns:1fr;gap:10px;padding:25px 0}
+.need-name{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.need-name strong{font-size:22px}
+.need-row>p{font-size:17px}
+.need-row>span{font-size:13px}
+.scope{grid-template-columns:1fr;gap:25px;margin-top:32px}
+.scope p{font-size:16px}
+.now-future{grid-template-columns:1fr;gap:45px}
+.now-future h2{font-size:31px}
+.future{padding:30px 0 0;border-left:0;border-top:1px solid var(--line)}
+.closing{padding:44px 0}
+.closing .wrap{display:block}
+.closing h2{font-size:31px}
+.closing p{font-size:16px}
+.closing .button{margin-top:25px;width:100%}
+footer{display:block}
+footer p{margin-top:20px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="header wrap">
+  <a class="brand" href="#top" aria-label="TROPOS 首页"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSI+CiAgPHRpdGxlPlRST1BPUyBhdG1vc3BoZXJpYyBob3Jpem9uIG1hcms8L3RpdGxlPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjI4IiBzdHJva2U9IiMzMTVGNUEiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHBhdGggZD0iTTEzIDI0YzYuNCAxLjEgMTAuMy00LjQgMTcuMS0zLjMgNi4yIDEgOS4yIDUuNSAyMC45IDMiIHN0cm9rZT0iIzMxNUY1QSIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMSAzMi41YzcuMS0zLjIgMTIuMSA0LjEgMjAuMi40IDctMy4yIDEyLjMtMS41IDIxLjggMS4xIiBzdHJva2U9IiMzMTVGNUEiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMTUgNDFjNi45LTEuNiAxMC40IDIuMiAxNi42IDEuNSA3LjEtLjggOS4yLTUuNCAxNy40LTQuMiIgc3Ryb2tlPSIjMzE1RjVBIiBzdHJva2Utd2lkdGg9IjEuNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTMyIDExdjQyIiBzdHJva2U9IiNCMjdENDUiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLW9wYWNpdHk9Ii41NSIvPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjMuMiIgZmlsbD0iI0IyN0Q0NSIvPgo8L3N2Zz4K" alt="" width="42" height="42"><strong>TROPOS</strong></a>
+  <nav aria-label="主导航"><a href="#why">为什么做</a><a href="#roles">四个角色</a><a href="#map">项目版图</a><a class="nav-cta" href="http://127.0.0.1:8765/demo.html">进入体验</a></nav>
+</header>
+<main id="top">
+<section class="hero wrap" aria-labelledby="hero-title">
+  <div class="hero-top">
+    <h1 id="hero-title">同一句话，<span>不同的人生安排。</span></h1>
+    <div class="hero-copy"><div class="eyebrow">TROPOS 自适应银行智能体</div><p>千人千策，随境而变。<br>先看懂你的处境，再一起决定钱的去向。</p><a class="text-link" href="#comparison">看看安排如何不同 <span aria-hidden="true">↙</span></a></div>
+  </div>
+  <div class="experiment" id="comparison" data-state="normal">
+    <div class="experiment-head">
+      <div class="prompt"><small>同一个请求，两种财务处境</small>“帮我打理这两万元。”</div>
+      <div class="switch" role="group" aria-label="切换收入情景"><button type="button" data-scenario="normal" aria-pressed="true">平常</button><button type="button" data-scenario="delay" aria-pressed="false">工资延期</button></div>
+    </div>
+    <div class="comparison" aria-live="polite" aria-atomic="true">
+      <article class="situation">
+        <div class="person-line"><span class="person-symbol" aria-hidden="true">≈</span><div><h3>近期账单多，现金缓冲偏紧</h3><p>先照顾眼前的生活</p></div></div>
+        <h2 id="plan-a-title">先为必要支出留出余地。</h2>
+        <p class="plan-copy" id="plan-a-copy">先核对房租、还款与日常开销，保留可动用现金，再讨论是否有余量安排目标储蓄。</p>
+        <div class="priority"><span><b>优先保障</b>近期账单</span><span><b>持续保留</b>现金缓冲</span><span><b id="a-priority-label">之后再议</b><span id="a-priority" style="padding:0;border:0">目标储蓄</span></span></div>
+        <p class="plan-status"><span class="status-dot"></span><span id="plan-a-status">安排侧重：现金流守护；具体金额待核对。</span></p>
+      </article>
+      <article class="situation">
+        <div class="person-line"><span class="person-symbol" aria-hidden="true">≋</span><div><h3>必要储备充足，有中长期目标</h3><p>也为更远的打算留出空间</p></div></div>
+        <h2 id="plan-b-title">把余量，放回你的目标里。</h2>
+        <p class="plan-copy" id="plan-b-copy">确认近期支付和现金储备后，结合用钱时间、风险意愿与适当性，比较储蓄及长期资金安排。</p>
+        <div class="priority"><span><b>先行确认</b>必要储备</span><span><b>结合目标</b>用钱期限</span><span><b id="b-priority-label">共同讨论</b><span id="b-priority" style="padding:0;border:0">长期安排</span></span></div>
+        <p class="plan-status"><span class="status-dot"></span><span id="plan-b-status">安排侧重：目标与期限匹配；执行仍须确认。</span></p>
+      </article>
+    </div>
+    <p class="sample-note">静态叙事样例 · 不读取账户，不计算可投资金额，不发起任何金融操作。色块与分栏不代表资金比例。</p>
+  </div>
+  <div class="collaboration">
+    <div class="collab-caption"><strong>一个安排，四种职责。</strong><p>点击角色，查看它在协作中的位置</p></div>
+    <div class="route" aria-label="四角色协作路线，守诺贯穿各环节">
+      <div class="route-nodes"><button class="route-node" data-role="ethos" aria-pressed="true"><b class="en">ETHOS</b>知己 · 理解处境</button><button class="route-node" data-role="metis" aria-pressed="false"><b class="en">METIS</b>善谋 · 形成安排</button><button class="route-node" data-role="kairos" aria-pressed="false"><b class="en">KAIROS</b>择时 · 变化复核</button></div>
+      <button class="guard-line" data-role="argos" aria-pressed="false"><b class="en">ARGOS</b> 守诺 · 全程核对，有权否决 <span>授权 / 金额 / 对象 / 回执</span></button>
+    </div>
+  </div>
+  <div class="hero-foot"><span id="route-summary" aria-live="polite">知己：长期偏好与当下状态，分别理解。</span><span>知你所想，善作安排。</span></div>
+</section>
+<section class="origin" id="why" aria-labelledby="origin-title">
+  <div class="wrap origin-grid">
+    <div><div class="eyebrow">项目的出发点</div><h2 id="origin-title">生活不会照着<br>银行菜单发生。</h2></div>
+    <div class="origin-text"><p>我们很容易找到“转账”“理财”“账单”，却仍要自己回答：这笔钱现在能不能动？下个月会不会不够？如果工资晚了，原来的计划还合适吗？</p><p style="margin-top:18px">TROPOS 想把分散的操作，连成围绕人的安排。个性化不只改变推荐的措辞，还要改变先做什么、保留什么，以及何时停下来重新确认。</p><div class="change-line"><span>从选择一项业务</span><i aria-hidden="true">↗</i><strong>到照顾一种处境</strong></div></div>
+  </div>
+</section>
+<section class="section wrap" id="roles" aria-labelledby="roles-title">
+  <div class="section-heading"><h2 id="roles-title">各有分工，<br>始终围绕同一个你。</h2><p>理解、安排与复核相互衔接。守诺贯穿其中，让每一次行动都有边界、有依据。</p></div>
+  <div class="roles">
+    <div class="role-list" role="tablist" aria-label="了解四角色" aria-orientation="vertical">
+      <button id="tab-ethos" class="role-tab" role="tab" data-role="ethos" aria-selected="true" aria-controls="role-panel"><span class="en">ETHOS</span><strong>知己</strong><em>理解你与此刻</em></button>
+      <button id="tab-metis" class="role-tab" role="tab" data-role="metis" aria-selected="false" aria-controls="role-panel" tabindex="-1"><span class="en">METIS</span><strong>善谋</strong><em>找到可行安排</em></button>
+      <button id="tab-kairos" class="role-tab" role="tab" data-role="kairos" aria-selected="false" aria-controls="role-panel" tabindex="-1"><span class="en">KAIROS</span><strong>择时</strong><em>变化后再检查</em></button>
+      <button id="tab-argos" class="role-tab" role="tab" data-role="argos" aria-selected="false" aria-controls="role-panel" tabindex="-1"><span class="en">ARGOS</span><strong>守诺</strong><em>每一环都有底线</em></button>
+    </div>
+    <div id="role-panel" class="role-detail" role="tabpanel" aria-labelledby="tab-ethos" tabindex="0">
+      <div class="eyebrow en" id="role-name">ETHOS / 知己</div><h3 id="role-title">记住你的目标，也看见眼前的变化。</h3>
+      <p id="role-description">把长期偏好与当下财务状态分开理解：你想为什么存钱，与这周必须支付什么，同样值得被认真对待。只依据已授权的信息，并允许你纠正。</p>
+      <div class="role-example"><span>放进刚才的情景</span><p id="role-example">同样是两万元，近期账单与现金缓冲不同，安排的起点就不同。</p></div>
+    </div>
+  </div>
+  <p class="role-caveat">四个名字代表协作职责，不表示有四个自主大模型在运行。偏好不等于授权；状态变化也不会自动改写你的长期目标。</p>
+</section>
+<section class="section map" id="map" aria-labelledby="map-title">
+  <div class="wrap">
+    <div class="section-heading"><h2 id="map-title">让钱的安排，<br>跟得上人生的需要。</h2><p>我们从四类资金需要出发。它们可以同时存在，也会随处境改变重点，没有一种是给人的永久标签。</p></div>
+    <p class="map-intro">四类任务重点 · 不是人群分组，也不是收益承诺</p>
+    <div class="need-row"><div class="need-name"><strong>现金流守护</strong><span class="en">Protect</span></div><p>先让必要的支付，有着落。</p><span>关注近期账单与现金缓冲</span></div>
+    <div class="need-row"><div class="need-name"><strong>负债减压</strong><span class="en">Recover</span></div><p>把分散的还款，理出轻重缓急。</p><span>关注到期义务与支付顺序</span></div>
+    <div class="need-row"><div class="need-name"><strong>财富积累</strong><span class="en">Accumulate</span></div><p>在生活的余量里，慢慢靠近目标。</p><span>关注储蓄目标与日常预算</span></div>
+    <div class="need-row"><div class="need-name"><strong>长期资金安排</strong><span class="en">Grow</span></div><p>为更远的打算，匹配用钱的期限。</p><span>关注流动性、风险意愿与适当性</span></div>
+    <div class="scope" aria-label="连接三类场景">
+      <div><h3>银行事务</h3><p>把转账、订阅、卡片与理财操作放回任务背景里，每一步单独确认。</p></div>
+      <div><h3>现金规划</h3><p>从可见账单与现金路径出发，看清近期约束，再讨论目标的空间。</p></div>
+      <div><h3>生活联动</h3><p>让生日、出行与日常消费的计划，先经过预算，再走向服务。</p></div>
+    </div>
+  </div>
+</section>
+<section class="section wrap" id="progress" aria-labelledby="progress-title">
+  <div class="now-future">
+    <div><span class="current-label">现在可体验 · 合成数据与沙箱</span><h2 id="progress-title">从一个能解释的安排开始。</h2>
+      <div class="capability"><h3>看清处境与依据</h3><p>合成账本、动态画像、30 天现金路径与财务体检：说明用了什么数据、按什么规则判断，以及还有什么不知道。</p></div>
+      <div class="capability"><h3>把意图变成可确认的步骤</h3><p>转账、订阅、卡与理财沙箱支持多步骤逐项确认；财务状态变化后，旧方案需要重新核验。</p></div>
+      <div class="capability"><h3>用自己的方式理解与计划</h3><p>生活规划、金融白话解释与模型中心，让你看懂安排、选择理解服务，再决定下一步。</p></div>
+    </div>
+    <div class="future"><span class="eyebrow muted">未来探索</span><h2>陪伴更长的时间，<br>连接更完整的生活。</h2><p>我们希望从眼前的一次任务，走向长期变化中的持续协作。以下是探索方向，尚未作为完整能力实现。</p>
+      <ul><li>更完整的人生阶段支持<span>让目标与资金需要在不同阶段持续衔接。</span></li><li>跨账户的协同安排<span>在清晰授权下，理解分散的资金与义务。</span></li><li>小微经营的现金流支持<span>围绕应收、应付、回款延迟与工资压力规划。</span></li></ul>
+    </div>
+  </div>
+  <p class="boundary">当前不接真实银行，也没有后台自动执行器。美团跑腿需本人授权，真实支付到美团完成。此页为静态叙事演示，不构成金融建议；未来方向不代表完整生命周期模型或收益优化已实现。</p>
+</section>
+<section class="closing" aria-labelledby="closing-title"><div class="wrap"><div><h2 id="closing-title">先认识你，再一起安排。</h2><p>从一份合成账本开始，看看 TROPOS 如何理解、解释与复核。</p></div><a class="button" href="http://127.0.0.1:8765/demo.html">进入 TROPOS 体验</a></div></section>
+</main>
+<footer class="wrap"><div class="footer-brand">TROPOS<span>知你所想，善作安排。</span></div><p>基于动态金融画像与四引擎协同的自适应银行智能体。<br>方向 B · 产品叙事初稿 · 所有情景均为说明性样例。</p></footer>
+<script>
+const scenarios={
+  normal:{aTitle:'先为必要支出留出余地。',aCopy:'先核对房租、还款与日常开销，保留可动用现金，再讨论是否有余量安排目标储蓄。',aStatus:'安排侧重：现金流守护；具体金额待核对。',aLabel:'之后再议',aPriority:'目标储蓄',bTitle:'把余量，放回你的目标里。',bCopy:'确认近期支付和现金储备后，结合用钱时间、风险意愿与适当性，比较储蓄及长期资金安排。',bStatus:'安排侧重：目标与期限匹配；执行仍须确认。',bLabel:'共同讨论',bPriority:'长期安排'},
+  delay:{aTitle:'工资晚了，先重看生活的底线。',aCopy:'先复核未执行计划，重新检查房租与还款前的现金缺口；建议暂停新增非必要转出，保留必要支付义务，重新说明安排。',aStatus:'等待重新核验与确认，不把预计工资当作已到账。',aLabel:'建议暂停',aPriority:'非必要转出',bTitle:'有储备，也要重新检查原计划。',bCopy:'复核延期收入对现金储备及目标的影响。信息不足时不沿用旧安排；长期目标保留，是否调整仍由你重新确认。',bStatus:'储备充足不代表跳过复核，不自动申购或转账。',bLabel:'待重新确认',bPriority:'长期安排'}
+};
+const scenarioTargets={aTitle:'plan-a-title',aCopy:'plan-a-copy',aStatus:'plan-a-status',aLabel:'a-priority-label',aPriority:'a-priority',bTitle:'plan-b-title',bCopy:'plan-b-copy',bStatus:'plan-b-status',bLabel:'b-priority-label',bPriority:'b-priority'};
+document.querySelectorAll('[data-scenario]').forEach(button=>button.addEventListener('click',()=>{
+  const state=button.dataset.scenario;document.querySelector('.experiment').dataset.state=state;
+  document.querySelectorAll('[data-scenario]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+  Object.entries(scenarioTargets).forEach(([key,id])=>document.getElementById(id).textContent=scenarios[state][key]);
+}));
+const roles={
+  ethos:{name:'ETHOS / 知己',title:'记住你的目标，也看见眼前的变化。',description:'把长期偏好与当下财务状态分开理解：你想为什么存钱，与这周必须支付什么，同样值得被认真对待。只依据已授权的信息，并允许你纠正。',example:'同样是两万元，近期账单与现金缓冲不同，安排的起点就不同。',summary:'知己：长期偏好与当下状态，分别理解。'},
+  metis:{name:'METIS / 善谋',title:'把“想做的事”，变成“可行的安排”。',description:'在预算、流动性与目标之间形成行动顺序。先覆盖必要义务和现金底线，再讨论可调整的余量；信息不足时说明缺口，不猜一个金额。',example:'现金偏紧时先保留缓冲；储备充足时，再结合目标期限讨论后续安排。',summary:'善谋：在预算、流动性与目标之间，形成可行安排。'},
+  kairos:{name:'KAIROS / 择时',title:'情况变了，安排就值得再看一遍。',description:'发现工资延期、账单变化等状态事件，复核尚未执行的计划。条件变化后重新安排；工资到账也只恢复待确认状态，不替你自动执行。',example:'工资延期时，先检查原计划是否仍适用；重新生成方案后，仍需你逐项确认。',summary:'择时：状态变化后复核未执行计划，重新安排、重新确认。'},
+  argos:{name:'ARGOS / 守诺',title:'不是最后盖章，而是每一环都守住约定。',description:'从数据授权、方案生成到确认与结果查询，跨层核对授权、金额、对象和回执。越权、条件不满足或信息不足时，有权否决并说明原因。',example:'即使方案已生成，确认时仍要复核当前状态；结果未知时查询原凭证，不另发一笔。',summary:'守诺：贯穿理解、规划、复核与回执；不满足约定，就不执行。'}
+};
+function selectRole(key){
+  const role=roles[key];
+  document.querySelectorAll('.role-tab').forEach(button=>{const active=button.dataset.role===key;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
+  document.querySelectorAll('.route [data-role]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.role===key)));
+  document.getElementById('role-panel').setAttribute('aria-labelledby','tab-'+key);
+  ['name','title','description','example'].forEach(field=>document.getElementById('role-'+field).textContent=role[field]);
+  document.getElementById('route-summary').textContent=role.summary;
+}
+document.querySelectorAll('[data-role]').forEach(button=>button.addEventListener('click',()=>selectRole(button.dataset.role)));
+const roleTabs=[...document.querySelectorAll('.role-tab')];
+roleTabs.forEach((button,index)=>button.addEventListener('keydown',event=>{
+  let next;if(event.key==='ArrowDown')next=(index+1)%4;else if(event.key==='ArrowUp')next=(index+3)%4;else if(event.key==='Home')next=0;else if(event.key==='End')next=3;else return;
+  event.preventDefault();roleTabs[next].focus();selectRole(roleTabs[next].dataset.role);
+}));
+</script>
+</body>
+</html>

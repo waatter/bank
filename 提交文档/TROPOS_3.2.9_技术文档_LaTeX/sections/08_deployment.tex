@@ -1,0 +1,38 @@
+\sectionstart
+\section{部署拓扑与运行维护}
+\subsection{运行环境与服务入口}
+后端声明最低 Python 3.10，主体使用标准库；这不表示每个受支持小版本均已完成同等测试。项目 Dockerfile 使用 Python 3.13，并从 Node.js 22 镜像复制 Node 可执行文件。Node 用于官方跑腿及授权组件，也用于前端测试，不是 Python 银行业务服务的替代运行时。
+
+本次文档核验使用 macOS、Python 3.12.14 和 Node.js 24.22.1。它与 Docker 构建声明不同，应分别记录；未提供镜像摘要或容器内版本实测时，不以镜像主版本宣称已完成目标容器验收。
+
+\begin{lstlisting}
+./scripts/run.sh
+# 或在项目根目录运行
+python3 -m backend.server --host 127.0.0.1 --port 8765 \
+  --db .local/tropos.sqlite3
+\end{lstlisting}
+首页为 \code{index.html}，完整工作台为 \code{demo.html}。局域网演示需要显式配置访问方式；设备互访还取决于防火墙与网络隔离。开放演示模式必须视为可修改共享合成状态的环境，不能作为生产访问控制。
+
+\subsection{Linux Docker 与 HTTPS}
+当前 Compose 中应用与 Caddy 都使用 host 网络。应用监听宿主机回环 \code{127.0.0.1:8765}，Caddy 在同一宿主网络上接收站点流量并反向代理该地址；配置中没有额外的应用 \code{ports} 发布映射。该拓扑面向 Linux 主机，不能直接推定其他操作系统具有完全相同的 host 网络行为。
+
+应用使用 UID 10001 非 root 用户、只读根文件系统、\code{no-new-privileges} 和受限临时目录。数据库、官方组件及授权状态通过明确目录挂载；组件只读与授权缓存可写需要分别配置权限。配置存在不代表目标服务器的目录属主、域名证书和外网端口已经验收。
+
+\begin{table}[htbp]\centering\small
+\caption{关键部署配置及缺失时的行为}
+\begin{tabularx}{\textwidth}{@{}L{1.6cm}L{5.1cm}Y@{}}\toprule
+配置组 & 配置入口 & 缺失或错误时的影响 \\\midrule
+站点与邮件 & \code{TROPOS_SITE_ADDRESS}、\code{TROPOS_PUBLIC_URL}、\code{TROPOS_SMTP_*} & 域名、回调或邮件功能不可据启动成功推定就绪 \\
+认证主密钥 & \code{TROPOS_AUTH_MASTER_KEY} 及本地持久化位置 & 自动生成只适于明确管理的环境，丢失或轮换影响 MFA \\
+模型服务 & \code{TROPOS_DEEPSEEK_*} 等各服务配置 & 服务不可选或规则降级；真实调用仍依赖供应商权限 \\
+美团组件 & \code{TROPOS_MEITUAN_*} & 官方链路不可用，Mock 可独立运行 \\\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{升级与故障恢复}
+3.2.x 提供基础 Compose 与版本覆盖文件。更新前备份数据库、配置、认证主密钥与供应商状态，核对挂载目录、UID 和目标镜像；更新后检查健康版本、登录、读取、草案、确认与原回执查询。数据库结构兼容与状态迁移应按实际升级路径验证，不能承诺任何旧版本都能无迁移替换。
+
+\begin{lstlisting}
+curl -fsS http://127.0.0.1:8765/api/health
+\end{lstlisting}
+健康接口返回 \code{version} 为 \code{3.2.9} 只说明服务版本与基础可访问性，不代表 SMTP、真实模型、美团授权和支付均可用。故障时先区分只读请求、已创建草案、已提交订单和结果未知的交易，再按原凭证查询；不以重启或再次提交代替状态核对。

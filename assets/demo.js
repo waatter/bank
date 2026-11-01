@@ -479,7 +479,7 @@ const TONE = {
     welcome: '可输入资金安排或转账目标，也可以运行收入延期压力测试。',
   },
 };
-const T = () => TONE[S().profile.style || state.persona];
+const T = () => TONE[state.persona]; // 场景/口吻/时刻跟随账户；profile.style 仅作画像记录，避免串场景
 function setClock() { const [h, m] = T().clock; TODAY.setHours(h, m, 0, 0); }
 
 /* ------------------------------------------------------------------ 导航与画像切换 */
@@ -704,8 +704,8 @@ function nudgeHTML(p, st) {
 /* 窗外：山脊是 30 天余额，水面是安全线。下雨表示收入延期；雨停（或云散）表示新安排已采纳。 */
 const SCENES = {
   dawn: {
-    sky: { clear: ['#a9bfcc', '#d9d3cb', '#f1cdb0'], rain: ['#97a4ae', '#bfc3c3', '#d3cdc4'], after: ['#b0c5d1', '#e0d8ce', '#f2cfae'] },
-    far: ['#c3cecb', '#a9bcb5'], land: ['#9db5a5', '#6f927f'], ridge: '#4f7463', water: ['#a2bec4', '#7c9fa8'],
+    sky: { clear: ['#9db6c6', '#d6d0c1', '#f3d0a1'], rain: ['#97a4ae', '#bfc3c3', '#d3cdc4'], after: ['#a8bfcb', '#ded5c7', '#f2cfae'] },
+    far: ['#bcc9c4', '#9db3a9'], land: ['#a4bca9', '#5f8a72'], ridge: '#3f6a58', water: ['#a2bec4', '#7c9fa8'],
     label: '#2f4346', tick: '#f4f7f6', salary: '#d9925a', d11: '#b5503f',
   },
   night: {
@@ -770,11 +770,11 @@ function renderScene() {
     for (let d = 0; d <= HORIZON; d += 5) s += `<line x1="${x(d)}" x2="${x(d)}" y1="0" y2="${H}" stroke="#fff" stroke-opacity=".18"/>`;
   }
   if (weather === 'after' && kind !== 'night') s += [['#e9b0a6', 300], ['#eed7a0', 288], ['#bcd8b7', 276], ['#a9c6de', 264]].map(([c, r]) => `<path d="M${W * .36 - r},${H} A${r},${r} 0 0 1 ${W * .36 + r},${H}" fill="none" stroke="${c}" stroke-width="12" opacity=".32"/>`).join('');
-  const cloud = (cx, cy, k, fill, cls) => `<g class="cloud ${cls}"><ellipse cx="${cx}" cy="${cy}" rx="${48 * k}" ry="${14 * k}" fill="${fill}"/><ellipse cx="${cx - 18 * k}" cy="${cy - 8 * k}" rx="${22 * k}" ry="${13 * k}" fill="${fill}"/><ellipse cx="${cx + 14 * k}" cy="${cy - 12 * k}" rx="${26 * k}" ry="${17 * k}" fill="${fill}"/></g>`;
+  const cloud = (cx, cy, k, fill, cls) => `<g class="cloud ${cls}"><ellipse cx="${cx}" cy="${cy}" rx="${52 * k}" ry="${9 * k}" fill="${fill}"/><ellipse cx="${cx - 20 * k}" cy="${cy - 6 * k}" rx="${22 * k}" ry="${8 * k}" fill="${fill}"/><ellipse cx="${cx + 16 * k}" cy="${cy - 9 * k}" rx="${26 * k}" ry="${10 * k}" fill="${fill}"/></g>`;
   if (weather === 'rain') {
     const cf = kind === 'night' ? ['#2a3156', '#323a62'] : ['#8e99a3', '#a3acb4'];
     s += cloud(W * .2, 60, 1.6, cf[0], '') + cloud(W * .5, 44, 1.9, cf[1], 'b') + cloud(W * .8, 66, 1.7, cf[0], '') + cloud(W * .36, 96, 1.1, cf[1], 'b');
-  } else if (kind !== 'night') s += cloud(W * .5, 52, .9, 'rgba(255,255,255,.85)', '') + cloud(W * .66, 92, .6, 'rgba(255,255,255,.7)', 'b');
+  } else if (kind !== 'night') s += cloud(W * .5, 52, .9, 'rgba(255,255,255,.55)', '') + cloud(W * .66, 92, .6, 'rgba(255,255,255,.4)', 'b');
   // 远景
   s += `<path d="M0,${top + 30} C${W * .14},${top - 6} ${W * .26},${top + 6} ${W * .4},${top + 24} S${W * .66},${top - 10} ${W * .8},${top + 14} S${W * .94},${top + 2} ${W},${top + 16} V${H} H0Z" fill="${sc.far[0]}"/>`;
   if (kind === 'night') {
@@ -1651,7 +1651,8 @@ function setGuard(on) {
 }
 
 function renderAll() {
-  document.body.dataset.persona = S().profile.style || state.persona;
+  // 视觉主题跟随当前账户；profile.style 是文案呈现偏好（见 TONE），不应改变账户主题。
+  document.body.dataset.persona = state.persona;
   $('#auditCount').textContent=state.log.length;
   setClock();
   renderPersonaSwitch();

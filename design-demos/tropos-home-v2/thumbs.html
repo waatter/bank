@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TROPOS 首页 · 六方向缩略</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#EDEDE8;font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:#222;padding:48px}
+h1{font-size:22px;font-weight:800}
+p.sub{color:#777;font-size:13px;margin:8px 0 32px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1200px;margin:0 auto}
+.cell{background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.thumb{height:220px;position:relative;overflow:hidden}
+.meta{padding:14px 18px 16px}
+.meta b{font-size:14.5px}
+.meta span{display:block;font-size:12px;color:#888;margin-top:4px}
+.tag{position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:700;background:#222;color:#fff;padding:3px 10px;border-radius:99px;z-index:2;letter-spacing:.1em}
+.tag.alt{background:#fff;color:#222;border:1px solid #ccc}
+a.full{position:absolute;inset:0;z-index:3}
+/* A 纸面宣言 */
+.t-a{background:#FAFAF7}
+.t-a .big{position:absolute;left:18px;top:38px;font-family:"Songti SC",serif;font-weight:900;font-size:34px;line-height:1.4;color:#1B1A17}
+.t-a .big i{font-style:normal;color:#B27D45}
+.t-a .vert{position:absolute;right:22px;top:26px;writing-mode:vertical-rl;font-family:"Songti SC",serif;font-size:12px;letter-spacing:.3em;color:#999;border-left:1px solid #ddd;padding-left:10px;height:150px}
+.t-a .rule{position:absolute;left:18px;right:18px;bottom:26px;border-top:1px solid #ddd;padding-top:10px;display:flex;gap:12px}
+.t-a .rule i{width:34px;height:34px;font-style:normal;font-family:"Songti SC",serif;font-weight:900;font-size:20px;color:#B27D45}
+/* B 星图 */
+.t-b{background:#0A1726}
+.t-b .big{position:absolute;left:18px;top:34px;font-weight:800;font-size:30px;color:#EAF1F8;line-height:1.35}
+.t-b .big i{font-style:normal;color:#D9A45B}
+.t-b .mono{position:absolute;left:18px;top:110px;font-family:monospace;font-size:9.5px;color:#64798E;letter-spacing:.1em}
+.t-b .dot{position:absolute;right:52px;top:60px;width:12px;height:12px;border-radius:50%;background:#E7C48F;box-shadow:0 0 30px 8px rgba(217,164,91,.4)}
+.t-b .ln{position:absolute;height:2px;opacity:.6;border-radius:2px}
+/* C 同言 */
+.t-c{background:#F7F5F0}
+.t-c .bb{position:absolute;left:50%;top:18px;transform:translateX(-50%);background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px 16px;font-family:"Songti SC",serif;font-weight:700;font-size:12.5px;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.t-c .half{position:absolute;bottom:14px;top:76px;width:42%;background:#fff;border:1px solid #e2e2dc;border-radius:8px}
+.t-c .half.l{left:14px;border-top:3px solid #2F6B66}
+.t-c .half.r{right:14px;border-top:3px solid #A9763B}
+.t-c .half i{display:block;height:7px;margin:12px 12px 0;background:#eee;border-radius:4px}
+.t-c .half i:nth-child(2){width:70%}.t-c .half i:nth-child(3){width:85%}
+/* D 活字钤印 */
+.t-d{background:#F4EFE6;display:flex;align-items:center;justify-content:center}
+.t-d .gridc{display:grid;grid-template-columns:repeat(4,34px);gap:6px}
+.t-d .gridc i{width:34px;height:34px;border:1px solid #C9BFA9;display:flex;align-items:center;justify-content:center;font-family:"Songti SC",serif;font-weight:900;font-size:17px;font-style:normal;color:#3B382F}
+.t-d .seal{position:absolute;right:20px;bottom:18px;width:40px;height:40px;background:#B03A2E;color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"Songti SC",serif;font-weight:900;font-size:22px;transform:rotate(-4deg)}
+/* E 资金天气 */
+.t-e{background:#FBFBF9}
+.t-e svg{position:absolute;inset:0;width:100%;height:100%}
+.t-e .cap{position:absolute;left:16px;top:16px;font-size:12px;font-weight:800;color:#315F5A}
+/* F 蓝图 */
+.t-f{background:#12365B;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:22px 22px}
+.t-f .box{position:absolute;border:1px solid rgba(255,255,255,.75);border-radius:4px;color:#DCE9F5;font-size:10px;display:flex;align-items:center;justify-content:center;font-family:monospace;letter-spacing:.05em}
+.t-f .t{position:absolute;left:16px;top:14px;color:#fff;font-weight:800;font-size:13px;font-family:monospace}
+</style>
+</head>
+<body>
+<h1>TROPOS 首页 · 六个候选方向</h1>
+<p class="sub">A / B / C 已出完整初稿（点击缩略图打开）；D / E / F 为备选。选定方向后再实现正式首页。</p>
+<div class="grid">
+
+<div class="cell"><div class="thumb t-a"><span class="tag">A · 完整稿</span><a class="full" href="dir-a.html"></a>
+  <div class="big">千人千策，<br><i>随境而变</i>。</div>
+  <div class="vert">知己其人 善谋其策</div>
+  <div class="rule"><i>知</i><i>谋</i><i>时</i><i>守</i></div>
+</div><div class="meta"><b>A · 纸面宣言</b><span>宋体编辑排版 · 四引擎汉字章节 · 希腊词源批注 · 冷纸白+守诺金</span></div></div>
+
+<div class="cell"><div class="thumb t-b"><span class="tag">B · 完整稿</span><a class="full" href="dir-b.html"></a>
+  <div class="big">千人千策，<br><i>随境而变</i>。</div>
+  <div class="mono">ETHOS · METIS · KAIROS · ARGOS</div>
+  <div class="dot"></div>
+  <div class="ln" style="left:150px;top:80px;width:120px;background:#5B8DEF;transform:rotate(8deg)"></div>
+  <div class="ln" style="left:150px;top:110px;width:130px;background:#9B7EDE;transform:rotate(-4deg)"></div>
+  <div class="ln" style="left:150px;top:140px;width:120px;background:#45C48A;transform:rotate(-14deg)"></div>
+</div><div class="meta"><b>B · 星图</b><span>深海军蓝 · 四色气流汇金点 · 闭环管线 + 约束公式 · 工程叙事</span></div></div>
+
+<div class="cell"><div class="thumb t-c"><span class="tag">C · 完整稿</span><a class="full" href="dir-c.html"></a>
+  <div class="bb">「帮我打理这两万元」</div>
+  <div class="half l"><i></i><i></i><i></i></div>
+  <div class="half r"><i></i><i></i><i></i></div>
+</div><div class="meta"><b>C · 同言</b><span>产品即首页 · 同一句话分屏对照两种处境 · 可切换收入冲击重排</span></div></div>
+
+<div class="cell"><div class="thumb t-d"><span class="tag alt">D · 备选</span>
+  <div class="gridc"><i>知</i><i>己</i><i>善</i><i>谋</i><i>择</i><i>时</i><i>守</i><i>诺</i><i>千</i><i>人</i><i>千</i><i>策</i></div>
+  <div class="seal">守</div>
+</div><div class="meta"><b>D · 活字钤印</b><span>宋体活字网格 + 朱文印 · 极致中式契约感 · 互动较弱</span></div></div>
+
+<div class="cell"><div class="thumb t-e"><span class="tag alt">E · 备选</span>
+  <span class="cap">未来 30 天 · 余额路径</span>
+  <svg viewBox="0 0 400 220" preserveAspectRatio="none">
+    <path d="M0,150 L60,140 L120,160 L180,110 L240,130 L300,90 L400,100" fill="none" stroke="#315F5A" stroke-width="2.5"/>
+    <path d="M0,150 L60,150 L120,170 L180,160 L240,175 L300,150 L400,160" fill="none" stroke="#B27D45" stroke-width="2" stroke-dasharray="6 5"/>
+    <line x1="0" y1="185" x2="400" y2="185" stroke="#C66" stroke-width="1" stroke-dasharray="3 4"/>
+  </svg>
+</div><div class="meta"><b>E · 资金天气</b><span>余额曲线作主角的报纸图表风 · 与现有首页试算卡重叠，新意不足</span></div></div>
+
+<div class="cell"><div class="thumb t-f"><span class="tag alt">F · 备选</span>
+  <span class="t">TROPOS / SYSTEM BLUEPRINT</span>
+  <div class="box" style="left:20px;top:60px;width:70px;height:34px">ETHOS</div>
+  <div class="box" style="left:120px;top:60px;width:70px;height:34px">METIS</div>
+  <div class="box" style="left:220px;top:60px;width:70px;height:34px">KAIROS</div>
+  <div class="box" style="left:120px;top:130px;width:130px;height:34px;border-style:dashed">ARGOS GATE</div>
+</div><div class="meta"><b>F · 蓝图</b><span>图纸网格上的四引擎工程图 · 与 B 同族但少色彩体系，并入 B</span></div></div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>TROPOS 水墨标记：圆、气流与金色的点</title>
+  <defs>
+    <filter id="brush" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/>
+    </filter>
+    <filter id="brushSoft" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.8"/>
+    </filter>
+  </defs>
+  <!-- 圆：一笔未闭合的墨圈，收笔处在右上 -->
+  <path d="M50.5 15.6 A24 24 0 1 0 55 24.5" stroke="#211F1B" stroke-width="2.4" stroke-linecap="round" filter="url(#brush)"/>
+  <!-- 三道气流：有提按的墨线 -->
+  <g stroke="#211F1B" stroke-linecap="round" filter="url(#brushSoft)">
+    <path d="M14 25.5c6.2 1 10-3.9 16.6-2.9 5.9.9 8.9 4.9 19.4 2.7" stroke-width="1.9" stroke-opacity=".88"/>
+    <path d="M12.5 32.8c6.8-2.8 11.7 3.6 19.5.5 6.7-2.8 11.8-1.3 20 1" stroke-width="1.9" stroke-opacity=".7"/>
+    <path d="M16 40.6c6.5-1.4 9.9 2 15.8 1.3 6.7-.7 8.7-4.8 16.2-3.7" stroke-width="1.9" stroke-opacity=".55"/>
+  </g>
+  <!-- 金色的点：你的选择 -->
+  <circle cx="32" cy="32" r="3.4" fill="#B27D45" filter="url(#brushSoft)"/>
+</svg>

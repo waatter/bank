@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <filter id="inkwash" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="3" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="26"/></filter>
+      <filter id="inkline" x="-10%" y="-60%" width="120%" height="220%"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.15" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="10"/></filter>
+      <linearGradient id="fadeInk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#211F1B" stop-opacity=".16"/><stop offset="1" stop-color="#211F1B" stop-opacity=".03"/></linearGradient>
+      <radialGradient id="sunGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#B27D45" stop-opacity=".9"/><stop offset=".4" stop-color="#B27D45" stop-opacity=".22"/><stop offset="1" stop-color="#B27D45" stop-opacity="0"/></radialGradient>
+    </defs>
+    <path filter="url(#inkwash)" fill="url(#fadeInk)" d="M-20 300 Q 120 190 260 262 Q 340 300 430 250 Q 560 175 690 255 Q 760 296 850 268 Q 960 232 1060 270 Q 1180 318 1420 240 L 1420 360 L -20 360 Z"/>
+    <path filter="url(#inkwash)" fill="#211F1B" opacity=".1" d="M-20 320 Q 180 250 360 300 Q 520 344 700 296 Q 880 252 1050 306 Q 1200 346 1420 296 L 1420 360 L -20 360 Z"/>
+    <path filter="url(#inkline)" d="M-20 268 C 300 262, 900 276, 1420 264" stroke="#211F1B" stroke-width="2.2" fill="none" opacity=".55" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M60 190 C 300 160, 520 210, 760 176 C 940 152, 1080 168, 1180 150" stroke="#211F1B" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M120 226 C 340 204, 560 240, 800 214 C 980 196, 1100 204, 1220 188" stroke="#211F1B" stroke-width="2.4" fill="none" opacity=".36" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M40 150 C 260 130, 480 168, 720 138 C 900 116, 1040 128, 1140 112" stroke="#211F1B" stroke-width="1.8" fill="none" opacity=".26" stroke-linecap="round"/>
+    <circle cx="1180" cy="128" r="46" fill="url(#sunGlow)"/>
+    <circle cx="1180" cy="128" r="7.5" fill="#B27D45" filter="url(#inkline)"/>
+  </svg>

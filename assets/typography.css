@@ -20,13 +20,15 @@
   --font-display: var(--font-ui);
   --font-number: "Manrope", "Tropos Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --sans: var(--font-ui);
+  --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Noto Serif SC", "SimSun", serif;
+  --kai: "Kaiti SC", "STKaiti", "KaiTi", var(--serif);
+  --display: var(--font-display); /* 默认展示字体；账户主题（demo.css）可用更高优先级覆盖 */
 }
 
 /* Account themes may change the atmosphere; reading keeps the same rhythm. */
 body[data-persona] {
   --sans: var(--font-ui);
   --ui: var(--font-ui);
-  --display: var(--font-display);
   --voice: var(--font-ui);
   font-family: var(--font-ui);
 }

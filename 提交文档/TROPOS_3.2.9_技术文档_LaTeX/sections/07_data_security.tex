@@ -1,0 +1,47 @@
+\sectionstart
+\section{数据模型与身份安全}
+\subsection{持久化对象与版本}
+SQLite 保存用户、画像、合成账户、交易、分录、幂等信息、方案、事件、对话、生活计划和购物状态。资源查询附带当前会话解析得到的用户 ID，不能由客户端请求字段任意替换归属。写事务采用 \texttt{BEGIN IMMEDIATE}，并用唯一约束保证用户范围内的请求去重。
+
+\begin{table}[htbp]\centering\small
+\caption{主要持久化对象及用途}
+\begin{tabularx}{\textwidth}{@{}L{2.2cm}L{4.25cm}Y@{}}\toprule
+对象组 & 代表表 & 主要约束或版本 \\\midrule
+用户与画像 & \code{users}, \code{profiles}, \code{profile_updates} & 账户 revision、画像版本、授权读取状态 \\
+账本与回执 & \code{accounts}, \code{transactions}, \code{entries} & 整数分、交易唯一键、相反方向分录 \\
+请求与方案 & \code{idempotency}, \code{proposals}, \code{authorizations} & 请求指纹、令牌、有效期与用户归属 \\
+身份与挑战 & \code{auth_accounts}, \code{sessions}, \code{auth_challenges} & 口令及令牌摘要、消费状态与过期 \\
+多因素认证 & \code{mfa_settings}, \code{mfa_recovery_codes} & TOTP 计数、防重放、恢复码单次消费 \\
+对话与任务 & \code{conversations}, \code{conversation_requests}, \code{missions} & 对话版本、资源引用、步骤执行结果 \\
+生活与购物 & \code{life_*}, \code{shopping_*} & 生活版本、账本版本、订单与供应商绑定 \\\bottomrule
+\end{tabularx}
+\end{table}
+
+账户修订号用于发现财务事实变化；生活版本用于发现方案输入变化；对话版本用于并发消息与上下文一致性。三者并不互相替代。对话请求指纹绑定用户、消息与原会话标识，同键异内容应拒绝；重放可以重新读取业务资源状态，而不是把历史文本里的完成描述当作最新事实。
+
+\subsection{注册账户与共享演示账户}
+注册账户生成独立用户 ID 和合成账本。密码使用独立盐值的 scrypt 慢哈希；会话令牌使用高熵随机值，数据库保存摘要，有效期为 24 小时。连续五次错误口令触发 15 分钟限制；重置密码撤销已有会话。验证与重置链接使用短期、单次消费挑战，邮箱未验证并不阻止当前注册流程立即签发会话，不能把邮箱验证称为所有访问的强制前置条件。
+
+TOTP 支持计数防重放与一次性恢复码，登录挑战窗口为五分钟。TOTP 相关秘密依赖服务端主密钥派生与绑定状态；主密钥需要持久化并妥善备份，轮换可能使已有绑定失效。这些控制不包含实名、活体或真实银行卡验证。
+
+A/B/C 为共享演示身份，同一演示 persona 的访客复用同一用户空间。注册账户之间的数据隔离，不意味着共享演示账号的每位访客都独立隔离；同一演示用户的模型与供应商绑定也可能共享。真实授权应使用本人注册账户，并清楚告知数据接收方。
+
+\subsection{接入校验与权限边界}
+网关检查 Host、Origin、Sec-Fetch-Site、方法、路径、JSON 类型与请求大小，并设置缓存、内容类型、引用来源和 CSP 等响应策略。公开健康检查及部分认证入口不要求既有会话，业务资源则由会话绑定用户。生产 HTTPS 由 Caddy 终止，Python 接入层提供 HTTP 与应用校验。
+
+\begin{table}[htbp]\centering\small
+\caption{主要威胁与控制落点}
+\begin{tabularx}{\textwidth}{@{}L{2.5cm}YY@{}}\toprule
+威胁 & 现有控制 & 保证范围 \\\midrule
+跨用户读取或修改 & 会话绑定用户、对象查询带用户条件 & 注册用户资源；共享 persona 不是访客级隔离 \\
+模型越权与注入 & 不可信输入隔离、动作及字段检查、执行网关 & 不代表能识别所有自然语言攻击 \\
+过期方案与并发变化 & 修订号、生活版本、TTL、事务内复核 & 契约依业务入口而异 \\
+重复扣款与网络重试 & 用户范围唯一键、原方案交易查询、原回执 & 本地合成账本，不外推到供应商清算 \\
+凭据泄漏 & 摘要存储、密钥不回显、状态目录隔离 & 用户输入、供应商缓存与日志仍需单独治理 \\\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{可信本机配置与残余风险}
+\code{--model-admin} 是可信本机演示开关，不是经过独立管理员角色认证的权限系统。开启后不应让不可信用户访问；公网运行应通过部署环境管理平台密钥。个人模型服务地址的配置校验，也不能证明目标服务值得信任。
+
+反向代理会改写部分请求头，后端看到的 Host 和 Origin 不一定是浏览器原始值，因此应结合实际代理策略评估跨站防护，不能仅列后端头部检查就宣称链路全程保留了原始来源证明。Caddy 可记录请求日志，后端不打印路径不等于整个链路没有日志。真实地址、认证回调、查询参数和凭据缓存都需要适当的访问、保留及清理策略。

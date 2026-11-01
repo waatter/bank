@@ -1,0 +1,42 @@
+\sectionstart
+\section{总体架构与四引擎协作}
+\label{sec:architecture}
+\subsection{分层结构与信任边界}
+系统采用同源网页、Python 标准库 HTTP 服务与 SQLite 数据库。页面负责输入、展示、选择和独立确认；网关解析会话及请求；业务服务读取事实、计算约束并执行状态变更。模型返回值与外部网页内容均作为待检查的数据，不因来源于模型而获得授权。
+
+\begin{figure}[htbp]\centering
+\caption{系统分层与对外连接边界}
+\begin{tikzpicture}[node distance=7mm and 6mm]
+\node[box,text width=12cm] (ui) {同源用户界面\quad 首页、工作台、财务体检、生活规划、模型中心};
+\node[box,text width=12cm,below=of ui] (http) {HTTP 接入\quad 路由与请求校验、用户会话、读取同意};
+\node[box,text width=5.5cm,below left=9mm and -5.65cm of http] (model) {受限智能编排\\意图、澄清、候选方案、只读回答};
+\node[box,text width=5.5cm,right=6mm of model] (core) {确定性业务内核\\现金计算、版本复核、授权与记账};
+\node[box,text width=5.5cm,below=of model] (ext) {外部服务\\模型与搜索、SMTP、美团连接器};
+\node[box,text width=5.5cm,below=of core] (db) {SQLite 与独立运行状态\\合成账本、回执、审计、用户分区};
+\draw[arr] (ui)--(http);\draw[arr] (http.south)-|(model.north);\draw[arr] (http.south)-|(core.north);
+\draw[arr] (model)--node[above,font=\scriptsize]{校验候选}(core);
+\draw[arr] (model)--(ext);\draw[arr] (core)--(db);
+\end{tikzpicture}
+\tabnote{外部连接不共享银行账本执行权。美团真实支付在用户与美团之间完成，订单状态与合成银行交易分别记录。}
+\end{figure}
+
+后端以模块而非独立模型进程组织职责：\code{server.py} 提供接入，\code{service.py} 管理账户、身份和账本，\code{conversation.py} 与 \code{agent_ops.py} 编排任务，\code{model.py} 适配模型，\code{life_planner.py} 执行有限期规划。四引擎是贯穿这些模块的逻辑职责，不要求四个大模型分别驻留，也不暗示存在未实现的自主协商网络。
+
+\subsection{职责到工程模块的映射}
+\begin{table}[htbp]\centering\small
+\caption{四引擎职责及其可观察产物}
+\begin{tabularx}{\textwidth}{@{}L{2cm}YY@{}}\toprule
+职责 & 输入与判断 & 实现位置与产物 \\\midrule
+ETHOS 知己 & 目标、期限、风险声明、现金状态、用户更正 & 画像规则与 \code{service.py}；版本化画像、当前任务侧重及原因 \\
+METIS 善谋 & 账单、现金约束、允许的行动与候选方案 & \code{model.py}、\code{life_planner.py}、\code{agent_ops.py}；可核验方案与有序任务 \\
+KAIROS 择时 & 显式收入事件、当前日期条件、计划有效期与账户版本 & \code{service.py}、\code{life_service.py}、\code{conversation.py}；等待、失效、复核与重新生成 \\
+ARGOS 守诺 & 身份、授权、对象、金额、计划版本、确认与回执 & \code{server.py}、\code{service.py}、\code{agent_ops.py}；拒绝、澄清、二次核验及原子记账 \\\bottomrule
+\end{tabularx}
+\end{table}
+
+ARGOS 的作用贯穿生成与执行：草案阶段检查可行性，确认阶段复核当前事实，执行阶段检查幂等与账本一致性。它拥有停止推进的业务效果，而不是在流程末尾补一句安全提示。KAIROS 的现有触发来自明确请求、演示事件与确认时检查；没有后台常驻事件执行器，条件满足后仍须重新核验与确认。
+
+\subsection{画像到反馈的闭环}
+用户首先声明目标、现金底线、用钱期限、流动性与风险意愿，并明确是否同意读取所需信息。画像层保留这些长期声明，账本层单独记录余额、账单、工资状态和版本。策略层据此约束候选空间，计划层形成可以逐项查看的步骤，业务层只执行当前有效且已经确认的动作。回执、用户更正和新事件成为后续判断的输入。
+
+例如工资延期只改变短期收入时点，不等于用户同意提高风险或降低现金底线。现金路径重算后，原先可行的转账草案可能因账户版本变化而失效。系统应解释为何需要重看、保留已完成操作的回执，并为未执行部分重新准备草案；不把原来的授权延伸为新安排的空白授权。

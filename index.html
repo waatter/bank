@@ -1,93 +1,460 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="TROPOS 银行智能体：知你所想，善作安排。用自然语言开始转账、账单分析和订阅管理；四位帮手了解情况、规划步骤、检查变化，由你确认办理。">
-  <meta name="theme-color" content="#f5f4ee">
-  <title>TROPOS · 知你所想，善作安排</title>
-  <link rel="icon" href="assets/tropos-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/home.css">
-  <link rel="stylesheet" href="assets/typography.css">
-  <script src="assets/home.js" defer></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="TROPOS：千人千策，随境而变。知己 ETHOS、善谋 METIS、择时 KAIROS、守诺 ARGOS——基于动态金融画像与四引擎协同的自适应银行智能体。转账、账单分析、订阅管理，先理解你的处境，再由你确认办理。">
+<meta name="theme-color" content="#FAFAF7">
+<title>TROPOS · 千人千策，随境而变</title>
+<link rel="icon" href="assets/tropos-mark.svg" type="image/svg+xml">
+<script src="assets/home.js" defer></script>
+<style>
+:root{
+  --paper:#FAFAF7; --card:#FFFFFF; --wash:#F3F0E8; --ink:#211F1B; --ink-soft:#55524A; --ink-faint:#8A867B;
+  --gold:#B27D45; --gold-deep:#96683A; --pine:#315F5A; --cinnabar:#A8432F;
+  --hairline:rgba(33,31,27,.15); --hairline-soft:rgba(33,31,27,.09);
+  --serif:"Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;
+  --kai:"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK SC",serif;
+  --sans:"Manrope","Tropos Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px;-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+::selection{background:var(--gold);color:#fff}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;color:inherit;background:none;border:none}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+.shell{max-width:1240px;margin:0 auto;padding:0 48px}
+.skip-link{position:fixed;top:10px;left:10px;z-index:100;padding:8px 20px;background:var(--ink);color:#fff;transform:translateY(-150%)}
+.skip-link:focus{transform:translateY(0)}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.reveal.on{opacity:1;transform:none}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:20;background:rgba(250,250,247,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--hairline)}
+header .shell{display:flex;align-items:center;gap:36px;height:68px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:30px;height:30px}
+.brand b{font-weight:800;letter-spacing:.14em;font-size:15px}
+.brand small{font-size:11px;color:var(--ink-faint);letter-spacing:.3em;margin-left:2px}
+nav{margin-left:auto;display:flex;gap:28px;font-size:13.5px;color:var(--ink-soft)}
+nav a{padding:6px 2px;border-bottom:1px solid transparent;transition:.25s}
+nav a:hover{color:var(--ink);border-color:var(--gold)}
+.cta{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;padding:9px 20px;border:1px solid var(--ink);border-radius:999px;transition:.25s;white-space:nowrap}
+.cta:hover{background:var(--ink);color:var(--paper)}
+.cta.solid{background:var(--ink);color:var(--paper)}
+.cta.solid:hover{background:var(--gold-deep);border-color:var(--gold-deep)}
+
+/* ---------- hero ---------- */
+.hero{padding:96px 0 0;border-bottom:1px solid var(--hairline);position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:64px;align-items:end}
+.kicker{display:flex;align-items:center;gap:12px;font-size:12.5px;letter-spacing:.32em;color:var(--ink-faint);font-weight:700;margin-bottom:40px}
+.kicker::before{content:"";width:36px;height:1px;background:var(--gold)}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(52px,7.2vw,104px);line-height:1.18;letter-spacing:.02em}
+.hero h1 .brush{position:relative;display:inline-block}
+.hero h1 .brush svg{position:absolute;left:-4%;bottom:-.08em;width:108%;height:.34em;z-index:-1}
+.hero-sub{margin-top:36px;max-width:580px;font-size:17px;color:var(--ink-soft)}
+.hero-sub em{font-style:normal;font-family:var(--serif);font-weight:700;color:var(--ink)}
+.hero-actions{margin-top:40px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.text-link{font-size:14px;color:var(--ink-soft);border-bottom:1px solid var(--hairline);padding-bottom:2px;transition:.25s}
+.text-link:hover{color:var(--gold-deep);border-color:var(--gold)}
+.hero-promise{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;font-size:12.5px;color:var(--ink-soft)}
+.hero-promise i{font-style:normal;color:var(--gold-deep);margin-right:4px}
+.hero-side{display:flex;align-items:flex-start;gap:36px;padding-bottom:10px}
+.couplet{writing-mode:vertical-rl;font-family:var(--serif);font-size:18px;letter-spacing:.4em;color:var(--ink-soft);line-height:2.15;border-left:1px solid var(--hairline);padding-left:28px;height:472px;white-space:nowrap}
+.couplet b{color:var(--gold-deep);font-weight:900}
+.hero-mark{width:60px;height:60px}
+.scroll-hint{margin-top:56px;font-size:11.5px;letter-spacing:.3em;color:var(--ink-faint)}
+.ink-scroll{display:block;width:100%;height:clamp(200px,26vw,330px);margin-top:56px}
+.ink-caption{position:absolute;right:48px;bottom:24px;font-family:var(--kai);font-size:13px;color:var(--ink-faint);letter-spacing:.14em}
+
+/* ---------- section head ---------- */
+.section-head{padding:80px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:24px}
+.section-head h2{font-family:var(--serif);font-size:30px;font-weight:900;letter-spacing:.06em}
+.section-head p{font-size:13px;letter-spacing:.22em;color:var(--ink-faint)}
+
+/* ---------- 业务示例 ---------- */
+.tasks{padding-bottom:88px;border-bottom:1px solid var(--hairline)}
+.task-card{margin-top:48px;background:var(--card);border:1px solid var(--hairline);border-radius:6px;overflow:hidden;box-shadow:0 20px 50px -30px rgba(33,31,27,.25)}
+.task-top{display:flex;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--hairline-soft);font-size:12px;letter-spacing:.18em;color:var(--ink-faint)}
+.task-body{display:grid;grid-template-columns:1fr 1.2fr;gap:0}
+.task-left{padding:32px;border-right:1px solid var(--hairline-soft);display:flex;flex-direction:column;gap:20px}
+.task-picker{display:flex;gap:8px;flex-wrap:wrap}
+.task-picker button{font-size:13px;padding:8px 16px;border:1px solid var(--hairline);border-radius:999px;color:var(--ink-soft);transition:.25s}
+.task-picker button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.task-quote{background:var(--wash);border-left:3px solid var(--gold);padding:18px 20px;font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.7}
+.task-quote span{color:var(--gold-deep);font-size:24px;line-height:0}
+.task-right{padding:32px}
+.task-right h3{font-family:var(--serif);font-size:22px;font-weight:900;margin-bottom:18px}
+.task-steps{list-style:none;display:flex;flex-direction:column;gap:0}
+.task-steps li{display:flex;gap:16px;align-items:baseline;padding:10px 0;border-bottom:1px dashed var(--hairline);font-size:14.5px;color:var(--ink-soft)}
+.task-steps li:last-child{border-bottom:none}
+.task-steps span{font-family:var(--serif);color:var(--gold-deep);font-weight:900;font-size:13px;letter-spacing:.1em}
+.task-result{margin-top:20px;display:flex;gap:12px;align-items:flex-start;background:var(--wash);border-radius:6px;padding:16px 18px}
+.task-result i{width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:8px;flex:none;font-style:normal}
+.task-result strong{display:block;font-size:14.5px}
+.task-result p{font-size:12.5px;color:var(--ink-faint);margin-top:2px}
+.task-bottom{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-top:1px solid var(--hairline-soft);font-size:12px;color:var(--ink-faint)}
+.task-bottom a{color:var(--gold-deep);font-weight:700;border-bottom:1px solid transparent}
+.task-bottom a:hover{border-color:var(--gold)}
+
+/* ---------- engines ---------- */
+.engines{border-bottom:1px solid var(--hairline)}
+.engine{display:grid;grid-template-columns:148px 220px 1fr 300px;gap:40px;align-items:center;padding:52px 0;border-top:1px solid var(--hairline)}
+.engine:last-child{border-bottom:none;padding-bottom:88px}
+.engine .seal-ring{position:relative;width:148px;height:148px;display:flex;align-items:center;justify-content:center}
+.engine .seal-ring svg{position:absolute;inset:0;width:100%;height:100%;opacity:.5;transition:.4s}
+.engine:hover .seal-ring svg{opacity:.85;transform:rotate(-4deg)}
+.engine .glyph{font-family:var(--serif);font-weight:900;font-size:72px;line-height:1;color:var(--ink);transition:.35s;position:relative;z-index:1}
+.engine:hover .glyph{color:var(--gold-deep)}
+.engine .name h3{font-family:var(--serif);font-size:30px;font-weight:900;letter-spacing:.1em}
+.engine .name span{display:block;margin-top:6px;font-size:13px;letter-spacing:.34em;color:var(--ink-faint);font-weight:700}
+.engine .duty{font-size:15.5px;color:var(--ink-soft);max-width:420px}
+.engine .duty strong{color:var(--ink)}
+.engine .ety{border-left:1px solid var(--hairline);padding-left:24px;font-size:13.5px;color:var(--ink-faint);font-family:var(--kai)}
+.engine .ety i{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:15px;color:var(--gold-deep);display:block;margin-bottom:6px;letter-spacing:.04em}
+.engine .num{font-size:12px;letter-spacing:.3em;color:var(--ink-faint);margin-bottom:14px;display:block}
+
+/* ---------- shift ---------- */
+.shift{padding:96px 0;border-bottom:1px solid var(--hairline)}
+.shift .lead{font-family:var(--serif);font-size:clamp(28px,3.4vw,44px);font-weight:900;line-height:1.55;max-width:860px;letter-spacing:.02em}
+.shift .lead em{font-style:normal;color:var(--gold-deep);border-bottom:2px solid var(--gold)}
+.beats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:72px;border:1px solid var(--hairline)}
+.beat{padding:36px 32px 40px;border-right:1px solid var(--hairline);background:var(--paper);transition:.3s}
+.beat:last-child{border-right:none}
+.beat:hover{background:var(--wash)}
+.beat .step{font-size:12px;letter-spacing:.3em;color:var(--gold-deep);font-weight:700}
+.beat h3{font-family:var(--serif);font-size:22px;font-weight:900;margin:14px 0 10px}
+.beat p{font-size:14px;color:var(--ink-soft)}
+
+/* ---------- 资金天气 ---------- */
+.forecast-sec{padding:96px 0;border-bottom:1px solid var(--hairline);background:var(--wash)}
+.f-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:64px;align-items:start}
+.f-copy h2{font-family:var(--serif);font-size:clamp(30px,3.6vw,46px);font-weight:900;line-height:1.4}
+.f-copy h2 em{font-style:normal;color:var(--gold-deep)}
+.f-copy>p{margin-top:22px;color:var(--ink-soft);font-size:15.5px;max-width:420px}
+.f-note{display:flex;gap:14px;align-items:center;margin-top:44px}
+.f-note .line{width:35px;height:1px;background:var(--gold)}
+.f-note p{font-size:12.5px;color:var(--ink-faint);line-height:1.9}
+.f-note strong{font-weight:700;color:var(--ink-soft)}
+.preview{background:var(--card);border:1px solid var(--hairline);border-radius:6px;overflow:hidden;box-shadow:0 20px 50px -30px rgba(33,31,27,.25)}
+.preview-top{display:flex;justify-content:space-between;align-items:flex-start;padding:20px 26px;border-bottom:1px solid var(--hairline-soft)}
+.preview-top .k{font-size:11px;letter-spacing:.24em;color:var(--gold-deep);font-weight:700}
+.preview-top span.sub{font-size:12.5px;color:var(--ink-faint);display:block;margin-top:2px}
+.sample-label{font-size:10.5px;letter-spacing:.14em;color:var(--ink-faint);border:1px solid var(--hairline);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.scenario-picker{display:flex;gap:8px;padding:18px 26px 0;flex-wrap:wrap}
+.scenario-picker button{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:8px 15px;border:1px solid var(--hairline);border-radius:999px;color:var(--ink-soft);transition:.25s}
+.scenario-picker button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.scenario-picker button[aria-pressed="true"]{background:var(--pine);color:#F4F1E8;border-color:var(--pine)}
+.forecast-heading{display:flex;justify-content:space-between;align-items:baseline;padding:22px 26px 6px;gap:16px}
+.forecast-heading .sub{font-size:12px;color:var(--ink-faint);display:block}
+.forecast-heading h3{font-family:var(--serif);font-size:21px;font-weight:900;margin-top:4px}
+.plan-switch{display:flex;gap:8px;padding:14px 26px 0}
+.plan-switch button{font-size:12.5px;padding:7px 14px;border:1px solid var(--hairline);border-radius:999px;color:var(--ink-soft);transition:.25s}
+.plan-switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.forecast-amount{display:flex;justify-content:space-between;align-items:baseline;padding:18px 26px 4px}
+.forecast-amount span{font-size:12px;color:var(--ink-faint);display:block}
+.forecast-amount strong{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.forecast-state{font-size:11.5px;font-weight:700;color:var(--pine);background:rgba(49,95,90,.1);padding:5px 12px;border-radius:999px;white-space:nowrap}
+.forecast-state.is-tight{color:var(--cinnabar);background:rgba(168,67,47,.1)}
+.cash-chart{padding:8px 26px 0}
+.cash-chart svg{width:100%;height:auto;display:block}
+.cash-chart text{font-family:var(--sans);font-size:9px;fill:var(--ink-faint)}
+.cash-chart .reserve-label{fill:var(--gold-deep);font-size:8.5px}
+.chart-key{display:flex;gap:20px;padding:12px 26px 0;font-size:11.5px;color:var(--ink-faint)}
+.chart-key i{display:inline-block;width:18px;height:2px;vertical-align:middle;margin-right:6px}
+.chart-key .line-original{background:#B4AE9F}
+.chart-key .line-adjusted{background:var(--pine)}
+.chart-key .line-reserve{background:var(--gold);height:0;border-top:2px dashed var(--gold)}
+.suggestion{display:flex;gap:14px;margin:18px 26px 0;background:var(--wash);border-left:3px solid var(--gold);padding:16px 18px;align-items:flex-start}
+.suggestion-icon{color:var(--gold-deep);font-weight:800}
+.suggestion strong{display:block;font-size:14.5px}
+.suggestion p{font-size:12.5px;color:var(--ink-faint);margin-top:2px}
+.preview-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:14px 26px;border-top:1px solid var(--hairline-soft);font-size:12px;color:var(--ink-faint)}
+.preview-bottom a{color:var(--gold-deep);font-weight:700}
+.sample-note{margin:0;padding:10px 26px 16px;font-size:11px;color:var(--ink-faint)}
+
+/* ---------- quote ---------- */
+.quote{padding:120px 0;text-align:center;border-bottom:1px solid var(--hairline)}
+.quote blockquote{font-family:var(--serif);font-size:clamp(26px,3.2vw,40px);font-weight:900;line-height:2;max-width:880px;margin:0 auto;letter-spacing:.04em}
+.quote cite{display:block;margin-top:30px;font-style:normal;font-family:var(--kai);font-size:14px;letter-spacing:.3em;color:var(--ink-faint)}
+.seal-stamp{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin-top:36px;background:var(--cinnabar);color:#F7EFE4;font-family:var(--serif);font-weight:900;font-size:24px;border-radius:7px;transform:rotate(-3deg);box-shadow:0 2px 10px rgba(168,67,47,.35);position:relative}
+.seal-stamp::after{content:"";position:absolute;inset:2.5px;border:1px solid rgba(247,239,228,.55);border-radius:5px}
+
+/* ---------- start ---------- */
+.start-sec{padding:96px 0;border-bottom:1px solid var(--hairline)}
+.start-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.start-grid h2{font-family:var(--serif);font-size:clamp(28px,3.2vw,42px);font-weight:900;line-height:1.45}
+.start-steps{list-style:none;margin:32px 0;display:flex;flex-direction:column;gap:0}
+.start-steps li{display:flex;gap:16px;align-items:baseline;padding:12px 0;border-bottom:1px dashed var(--hairline);font-size:15px;color:var(--ink-soft)}
+.start-steps li:last-child{border-bottom:none}
+.start-steps span{font-family:var(--serif);font-weight:900;color:var(--gold-deep)}
+.start-note{font-size:12px;color:var(--ink-faint);margin-top:16px}
+.conversation{background:var(--card);border:1px solid var(--hairline);border-radius:6px;padding:32px;box-shadow:0 20px 50px -30px rgba(33,31,27,.25)}
+.conversation-user{display:inline-block;background:var(--wash);border-radius:14px 14px 14px 4px;padding:14px 20px;font-size:15px;line-height:1.7}
+.conversation-agent{display:flex;gap:14px;margin-top:20px;align-items:flex-start}
+.conversation-agent img{width:30px;height:30px;flex:none;margin-top:4px}
+.conversation-agent p{background:var(--ink);color:var(--paper);border-radius:14px 14px 4px 14px;padding:14px 20px;font-size:14.5px;line-height:1.8}
+.conversation-caption{display:block;margin-top:18px;text-align:center;font-family:var(--kai);font-size:13px;color:var(--ink-faint);letter-spacing:.12em}
+
+/* ---------- calculation ---------- */
+.calculation{padding:56px 0}
+.calculation details{border:1px solid var(--hairline);border-radius:6px;background:var(--card)}
+.calculation summary{cursor:pointer;padding:20px 26px;font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;list-style:none}
+.calculation summary::-webkit-details-marker{display:none}
+.calculation summary span{color:var(--gold-deep);font-weight:400}
+.calculation-content{padding:0 26px 28px;font-size:13.5px;color:var(--ink-soft)}
+.calculation-content dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}
+.calculation-content dl>div{background:var(--wash);padding:12px 16px;border-radius:6px}
+.calculation-content dt{font-size:11.5px;color:var(--ink-faint)}
+.calculation-content dd{font-weight:800;font-size:15px;margin-top:2px;font-variant-numeric:tabular-nums}
+.daily-table-wrap{max-height:300px;overflow:auto;border:1px solid var(--hairline-soft);border-radius:6px;margin-top:14px}
+.daily-table-wrap table{width:100%;border-collapse:collapse;font-size:12.5px}
+.daily-table-wrap caption{text-align:left;padding:10px 14px;font-weight:700;background:var(--wash)}
+.daily-table-wrap th,.daily-table-wrap td{padding:7px 14px;border-bottom:1px solid var(--hairline-soft);text-align:right;font-variant-numeric:tabular-nums}
+.daily-table-wrap th:first-child{text-align:left}
+
+/* ---------- footer ---------- */
+footer{padding:72px 0 56px}
+.foot-grid{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap}
+.foot-brand{display:flex;align-items:center;gap:14px}
+.foot-brand img{width:40px;height:40px}
+.foot-brand .line{font-family:var(--serif);font-size:18px;font-weight:900;letter-spacing:.12em}
+.foot-note{font-size:12.5px;color:var(--ink-faint);line-height:2;text-align:right}
+.foot-note a{border-bottom:1px solid var(--hairline)}
+
+@media (max-width:980px){
+  .shell{padding:0 24px}
+  nav{display:none}
+  .hero{padding:64px 0 0}
+  .hero-grid{grid-template-columns:1fr}
+  .hero-side{display:none}
+  .ink-caption{right:24px;bottom:16px}
+  .task-body{grid-template-columns:1fr}
+  .task-left{border-right:none;border-bottom:1px solid var(--hairline-soft)}
+  .engine{grid-template-columns:100px 1fr;grid-template-rows:auto auto;gap:8px 24px}
+  .engine .seal-ring{width:100px;height:100px;grid-row:span 2}
+  .engine .glyph{font-size:52px}
+  .engine .ety{grid-column:2;border:none;padding-left:0}
+  .beats{grid-template-columns:1fr}
+  .beat{border-right:none;border-bottom:1px solid var(--hairline)}
+  .f-grid{grid-template-columns:1fr;gap:40px}
+  .start-grid{grid-template-columns:1fr;gap:40px}
+}
+</style>
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-<header class="site-header shell">
-  <a class="brand" href="#" aria-label="TROPOS 首页"><img src="assets/tropos-mark.svg" alt=""><span class="brand-type">TROPOS<small>知变 · 善安排</small></span></a>
-  <nav aria-label="主要导航"><a href="#bank-tasks">能办什么</a><a href="#bank-helpers">四位帮手</a><a href="#try">情况变了怎么办</a></nav>
-  <a class="button button-small button-dark" href="demo.html">先建立我的画像 <span aria-hidden="true">↗</span></a>
-</header>
+
+<header><div class="shell">
+  <a class="brand" href="#" aria-label="TROPOS 首页"><img src="assets/tropos-mark.svg" alt=""><span><b>TROPOS</b><small>自适应银行智能体</small></span></a>
+  <nav aria-label="主要导航"><a href="#tasks">能办什么</a><a href="#engines">四位协作者</a><a href="#try">资金天气</a><a href="#start">怎么开始</a></nav>
+  <a class="cta solid" href="demo.html">打开工作台 ↗</a>
+</div></header>
+
 <main id="main">
-  <section class="bank-hero shell" aria-labelledby="hero-title">
-    <div class="bank-hero-top">
-      <div class="bank-intro"><p class="eyebrow"><span class="brand-dot"></span> TROPOS · 懂你的银行智能体</p><h1 id="hero-title">知你所想，<br><span class="title-accent">善作安排<svg viewBox="0 0 240 15" aria-hidden="true"><path d="M3 10C65 1 143 2 236 8"/></svg></span>。</h1><p class="hero-description">转账、查账单、管续费、亲情付，一句话说完几件事。<br class="desktop-break">先了解你的情况，拆成任务单逐步核验，再由你逐项授权。</p><div class="hero-buttons"><a class="button button-dark" href="demo.html">打开银行工作台 <span aria-hidden="true">↗</span></a><a class="text-link" href="#bank-tasks">看看能办什么 <span aria-hidden="true">↓</span></a></div><div class="hero-promise"><span><i aria-hidden="true">✓</i> 懂你的情况</span><span><i aria-hidden="true">✓</i> 事情有下文</span><span><i aria-hidden="true">✓</i> 办理有记录</span><span><i aria-hidden="true">✓</i> 62 条攻击全部拦下</span></div></div>
-      <div class="bank-task-demo" aria-label="银行业务办理过程示例">
-        <div class="bank-demo-top"><span>TROPOS / 一句话，开始办理</span><span>过程示例</span></div>
-        <div class="bank-task-picker" role="group" aria-label="选择银行业务示例"><button type="button" data-bank-task="transfer" aria-pressed="true">帮我转账</button><button type="button" data-bank-task="bills" aria-pressed="false">看看账单</button><button type="button" data-bank-task="subscriptions" aria-pressed="false">管好续费</button></div>
-        <div class="bank-user-message"><span aria-hidden="true">“</span><p id="bank-intent">给房东转 1,200 元，备注这个月房租。</p></div>
-        <div class="bank-response" aria-live="polite" aria-atomic="true"><h2 id="bank-task-title">把一笔转账，准备得明明白白。</h2><ol id="bank-task-steps"><li><span>01</span>听懂收款人、金额和备注</li><li><span>02</span>检查余额、收款人和付款条件</li><li><span>03</span>你核对并确认后，才会记账</li></ol><div class="bank-result"><span class="bank-result-dot" aria-hidden="true"></span><div><strong id="bank-task-state">等你确认，尚未转账</strong><p id="bank-task-note">办理后可查原回执，重复确认不会重复扣款。</p></div></div></div>
-        <div class="bank-demo-bottom"><span>示例不会发起业务</span><a href="demo.html">到工作台体验 <span aria-hidden="true">↗</span></a></div>
+<!-- ============ HERO ============ -->
+<section class="hero"><div class="shell">
+  <div class="hero-grid">
+    <div>
+      <p class="kicker">TROPOS · ADAPTIVE BANKING AGENT</p>
+      <h1 id="hero-title">千人千策，<br><span class="brush">随境而变<svg viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><defs><filter id="brushline" x="-10%" y="-40%" width="120%" height="180%"><feTurbulence type="fractalNoise" baseFrequency="0.04 0.4" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7"/></filter></defs><path d="M6 20 C 70 12, 150 26, 294 14" stroke="#B27D45" stroke-width="7" stroke-linecap="round" fill="none" opacity=".8" filter="url(#brushline)"/></svg></span>。</h1>
+      <p class="hero-sub">「帮我打理这两万元」——同一句话，住在不同日子里的人，理应得到不同的回答。<em>先读懂你的处境，再动手安顿你的钱。</em>TROPOS 把这份体贴，做成了一套可以被检查的系统。</p>
+      <div class="hero-actions">
+        <a class="cta solid" href="demo.html">体验我的工作台 ↗</a>
+        <a class="text-link" href="#engines">认识四位协作者 ↓</a>
+      </div>
+      <div class="hero-promise"><span><i>✓</i> 懂你的情况</span><span><i>✓</i> 事情有下文</span><span><i>✓</i> 办理有记录</span><span><i>✓</i> 62 条攻击全部拦下</span></div>
+    </div>
+    <div class="hero-side">
+      <p class="couplet">知己其人　<b>善谋其策</b>　择时而动　<b>守诺而行</b></p>
+      <img class="hero-mark" src="assets/tropos-mark.svg" alt="TROPOS 标记">
+    </div>
+  </div>
+  <p class="scroll-hint">向下 · 画卷徐徐展开</p>
+  <svg class="ink-scroll" viewBox="0 0 1400 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <filter id="inkwash" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="3" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="26"/></filter>
+      <filter id="inkline" x="-10%" y="-60%" width="120%" height="220%"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.15" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="10"/></filter>
+      <linearGradient id="fadeInk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#211F1B" stop-opacity=".16"/><stop offset="1" stop-color="#211F1B" stop-opacity=".03"/></linearGradient>
+      <radialGradient id="sunGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#B27D45" stop-opacity=".9"/><stop offset=".4" stop-color="#B27D45" stop-opacity=".22"/><stop offset="1" stop-color="#B27D45" stop-opacity="0"/></radialGradient>
+    </defs>
+    <path filter="url(#inkwash)" fill="url(#fadeInk)" d="M-20 300 Q 120 190 260 262 Q 340 300 430 250 Q 560 175 690 255 Q 760 296 850 268 Q 960 232 1060 270 Q 1180 318 1420 240 L 1420 360 L -20 360 Z"/>
+    <path filter="url(#inkwash)" fill="#211F1B" opacity=".1" d="M-20 320 Q 180 250 360 300 Q 520 344 700 296 Q 880 252 1050 306 Q 1200 346 1420 296 L 1420 360 L -20 360 Z"/>
+    <path filter="url(#inkline)" d="M-20 268 C 300 262, 900 276, 1420 264" stroke="#211F1B" stroke-width="2.2" fill="none" opacity=".55" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M60 190 C 300 160, 520 210, 760 176 C 940 152, 1080 168, 1180 150" stroke="#211F1B" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M120 226 C 340 204, 560 240, 800 214 C 980 196, 1100 204, 1220 188" stroke="#211F1B" stroke-width="2.4" fill="none" opacity=".36" stroke-linecap="round"/>
+    <path filter="url(#inkline)" d="M40 150 C 260 130, 480 168, 720 138 C 900 116, 1040 128, 1140 112" stroke="#211F1B" stroke-width="1.8" fill="none" opacity=".26" stroke-linecap="round"/>
+    <circle cx="1180" cy="128" r="46" fill="url(#sunGlow)"/>
+    <circle cx="1180" cy="128" r="7.5" fill="#B27D45" filter="url(#inkline)"/>
+  </svg>
+  <span class="ink-caption">气流代表变化，金色的点，是你的选择。</span>
+</div></section>
+
+<!-- ============ 业务示例 ============ -->
+<section class="tasks" id="tasks"><div class="shell">
+  <div class="section-head reveal">
+    <h2>一句话，开始办理。</h2>
+    <p>TRANSFER · BILLS · SUBSCRIPTIONS</p>
+  </div>
+  <div class="task-card reveal" aria-label="银行业务办理过程示例">
+    <div class="task-top"><span>TROPOS / 业务办理过程示例</span><span>示例不会发起业务</span></div>
+    <div class="task-body">
+      <div class="task-left">
+        <div class="task-picker" role="group" aria-label="选择银行业务示例">
+          <button type="button" data-bank-task="transfer" aria-pressed="true">帮我转账</button>
+          <button type="button" data-bank-task="bills" aria-pressed="false">看看账单</button>
+          <button type="button" data-bank-task="subscriptions" aria-pressed="false">管好续费</button>
+        </div>
+        <div class="task-quote"><span aria-hidden="true">「</span><p id="bank-intent" style="display:inline">给房东转 1,200 元，备注这个月房租。</p><span aria-hidden="true">」</span></div>
+        <p style="font-size:12.5px;color:var(--ink-faint)">一句生活里的话，就是开始。同名收款人先问清，金额不明先补充。</p>
+      </div>
+      <div class="task-right">
+        <h3 id="bank-task-title">把一笔转账，准备得明明白白。</h3>
+        <ol class="task-steps" id="bank-task-steps">
+          <li><span>壹</span>听懂收款人、金额和备注</li>
+          <li><span>贰</span>检查余额、收款人和付款条件</li>
+          <li><span>叁</span>你核对并确认后，才会记账</li>
+        </ol>
+        <div class="task-result"><i aria-hidden="true"></i><div><strong id="bank-task-state">等你确认，尚未转账</strong><p id="bank-task-note">办理后可查原回执，重复确认不会重复扣款。</p></div></div>
       </div>
     </div>
-    <div class="bank-helpers" id="bank-helpers"><p class="bank-helpers-caption">四位帮手，把同一件事照顾周全。</p><ol class="helpers-list">
-      <li><span class="helper-mark">知</span><h3>知己 <small>ETHOS</small></h3><p>了解你的目标和当前情况<br>同一句话，也有不同安排</p></li>
-      <li><span class="helper-mark">谋</span><h3>善谋 <small>METIS</small></h3><p>把需求变成清楚的步骤<br>每笔金额都有依据</p></li>
-      <li><span class="helper-mark">时</span><h3>择时 <small>KAIROS</small></h3><p>工资、账单有了变化<br>及时提醒，重新安排</p></li>
-      <li><span class="helper-mark">守</span><h3>守诺 <small>ARGOS</small></h3><p>办理前再检查一遍<br>你的确认，才是下一步</p></li>
-    </ol></div>
-  </section>
+    <div class="task-bottom"><span>过程示例 · 使用合成账本</span><a href="demo.html">到工作台体验 ↗</a></div>
+  </div>
+</div></section>
 
-  <section class="difference shell" id="profile-first" aria-labelledby="profile-first-title">
-    <div class="section-intro"><p class="eyebrow">先了解你，再打开你的安排。</p><h2 id="profile-first-title">同一份银行服务，<br>从不同的需要开始。</h2><p>先说目标、现金底线和用钱期限，再核对损失承受意愿与相关经验。<br>页面会先呈现你当前需要处理的事，工资和账单变化后继续更新。</p></div>
-    <div class="feature-grid">
-      <article class="feature-card"><span class="feature-no">01 / 多维画像</span><h3>愿意承担，也要承担得起。</h3><p>分别了解承受意愿、财务能力、期限、流动性和知识经验；答案不一致时，先问清你的意思。</p></article>
-      <article class="feature-card"><span class="feature-no">02 / 你的工作台</span><h3>先看到当下最重要的事。</h3><p>现金修复、弹性缓冲、负债减压、近期目标、稳健积累、长期规划，以及待完善复核，共七种工作台侧重。</p></article>
-      <article class="feature-card"><span class="feature-no">03 / 随情况调整</span><h3>变化有依据，选择可更正。</h3><p>页面会解释为什么这样安排；长期偏好由你确认。三种阅读风格不决定风险档位，每项操作另行确认。</p><a class="feature-caption" href="demo.html">建立画像，查看我的安排 ↗</a></article>
+<!-- ============ ENGINES ============ -->
+<section class="engines" id="engines"><div class="shell">
+  <div class="section-head reveal">
+    <h2>四位协作者，各有所守。</h2>
+    <p>FOUR ENGINES · ONE PROMISE</p>
+  </div>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><defs><filter id="ringbrush" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.4"/></filter></defs><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">知</span></div>
+    <div class="name"><span class="num">壹</span><h3>知己</h3><span>ETHOS · 画像引擎</span></div>
+    <p class="duty"><strong>读懂你长久的心愿，也看见你眼下的处境。</strong>目标与习惯分开记录，余额和账单随时刷新——你不是一次问卷定下的标签，而是一个会变化的人。</p>
+    <div class="ety"><i>ethos, ἦθος</i>希腊语，品格与习惯。<br>看懂一个人，先于替他办事。</div>
+  </article>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">谋</span></div>
+    <div class="name"><span class="num">贰</span><h3>善谋</h3><span>METIS · 决策引擎</span></div>
+    <p class="duty"><strong>在现金、时间与授权的边界里，为你找出走得通的安排。</strong>先守住房租与还款，再谈远方和收益——每个建议都附上来龙去脉。</p>
+    <div class="ety"><i>mētis, μῆτις</i>希腊语，面对复杂局面的<br>谋略之智。可行，先于最优。</div>
+  </article>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">时</span></div>
+    <div class="name"><span class="num">叁</span><h3>择时</h3><span>KAIROS · 执行引擎</span></div>
+    <p class="duty"><strong>工资晚到、账单将至、交易失败——境遇一变，安排就跟着变。</strong>该暂停的暂停，该重排的重排，绝不照旧执行一份已经失效的计划。</p>
+    <div class="ety"><i>kairos, καιρός</i>希腊语，恰好的时机。<br>何时行动，本身就是判断。</div>
+  </article>
+
+  <article class="engine reveal">
+    <div class="seal-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M82 22 A40 40 0 1 0 88 38" stroke="#211F1B" stroke-width="2.6" fill="none" stroke-linecap="round" filter="url(#ringbrush)"/></svg><span class="glyph">守</span></div>
+    <div class="name"><span class="num">肆</span><h3>守诺</h3><span>ARGOS · 守护引擎</span></div>
+    <p class="duty"><strong>每一笔授权、限额与回执，都经它独立校验。</strong>越权则止，存疑则问——它不替你做主，只替你把关。你的确认，才是下一步。</p>
+    <div class="ety"><i>Argos, Ἄργος</i>《奥德赛》里苦候主人二十年的忠犬。<br>忠诚，包括拒绝的权利。</div>
+  </article>
+</div></section>
+
+<!-- ============ SHIFT ============ -->
+<section class="shift" id="shift"><div class="shell">
+  <p class="lead reveal">昨天妥帖的安排，<br>今天未必仍然合宜。<em>境遇变化时，TROPOS 比你先察觉。</em></p>
+  <div class="beats reveal">
+    <div class="beat"><span class="step">壹 · 察觉</span><h3>工资延期 15 天</h3><p>消息抵达的那一刻，依赖这笔收入、尚未执行的划转已被轻轻按住——不需要你先开口。</p></div>
+    <div class="beat"><span class="step">贰 · 重算</span><h3>重排现金路径</h3><p>按眼下的余额、躲不开的支出和你设下的底线重新计算，给出一份仍然站得住的新安排。</p></div>
+    <div class="beat"><span class="step">叁 · 说明</span><h3>讲清缘由，再等点头</h3><p>新旧计划并排摊开，每处改动都写明来由；你确认了才执行，办完有回执可查。</p></div>
+  </div>
+</div></section>
+
+<!-- ============ 资金天气 ============ -->
+<section class="forecast-sec" aria-labelledby="cash-title"><div class="shell f-grid">
+  <div class="f-copy reveal">
+    <p class="kicker" style="margin-bottom:24px">你的资金天气</p>
+    <h2 id="cash-title">同一句吩咐，<br>也有<em>不同安排</em>。</h2>
+    <p>生活变一变，看看钱会怎么变。工资晚到、突然多笔开支，TROPOS 会重新算一遍，再请你确认新的安排。</p>
+    <div class="f-note"><span class="line" aria-hidden="true"></span><p>你的目标由你定，<br><strong>变化之后，旧安排会重新检查。</strong></p></div>
+  </div>
+  <div class="preview reveal" id="try" data-outlook="calm">
+    <div class="preview-top"><div><span class="k">未来 30 天 · 交互试算</span><span class="sub">模拟账本，不读取你的账户</span></div><span class="sample-label">交互示例</span></div>
+    <div class="scenario-picker" role="group" aria-label="选择一个生活变化">
+      <button type="button" data-scenario="salary" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17H5a4 4 0 0 1-.3-8A7 7 0 0 1 18 8a4.5 4.5 0 0 1 1 8.9M9 16v4m4-6v4m4-2v4"/></svg>工资晚到</button>
+      <button type="button" data-scenario="purchase" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/></svg>想买大件</button>
+      <button type="button" data-scenario="travel" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V4h8v3M8 7v14m8-14v14"/></svg>准备旅行</button>
     </div>
-  </section>
+    <div class="forecast-heading"><div><span class="sub" id="forecast-sub">如果工资晚到 15 天</span><h3 id="forecast-title">存钱晚一点，日常照常过。</h3></div></div>
+    <div class="plan-switch" role="group" aria-label="比较两种安排"><button type="button" data-plan="original" aria-pressed="false">照原来的安排</button><button type="button" data-plan="adjusted" aria-pressed="true">看看新安排</button></div>
+    <div class="forecast-amount"><div><span>未来 30 天，手头最少还有</span><strong id="forecast-min">¥4,880</strong></div><span class="forecast-state" id="forecast-state">高于预留金额</span></div>
+    <div class="cash-chart" id="cash-chart"></div>
+    <div class="chart-key"><span><i class="line-original"></i>原来安排</span><span><i class="line-adjusted"></i>新安排</span><span><i class="line-reserve"></i>想留的 ¥4,000</span></div>
+    <div class="suggestion" aria-live="polite" aria-atomic="true"><span class="suggestion-icon" aria-hidden="true">↗</span><div><strong id="suggestion-title">先把 ¥3,000 的存钱计划往后挪。</strong><p id="suggestion-detail">等工资到账再存。房租和还款照常留好。</p></div></div>
+    <div class="preview-bottom"><span id="forecast-benefit">最紧的时候，多留 ¥3,000</span><a href="#calculation" id="calculation-link">怎么算的 ↘</a></div>
+    <p class="sample-note">模拟账本试算，调整建议需要你确认。</p>
+    <noscript><p class="sample-note">开启浏览器 JavaScript 后，可切换生活情况并查看余额变化。</p></noscript>
+  </div>
+</div></section>
 
-  <section class="difference shell" id="bank-tasks" aria-labelledby="difference-title">
-    <div class="section-intro"><p class="eyebrow">从一句话，到一件办清楚的银行事。</p><h2 id="difference-title">该转的转明白，<br>该查的看清楚。</h2><p>转账、账单、续费，放在一个工作台里。<br>能看到下一步，也能找到办理记录。</p></div>
-    <div class="feature-grid">
-      <article class="feature-card"><span class="feature-no">01 / 智能转账</span><div class="mini-options" aria-hidden="true"><span>说清需求</span><span class="selected">本人确认</span><span>查看回执</span></div><h3>帮你准备好，确认后再转。</h3><p>用一句话填写收款人、金额和备注。同名先问清，转账前再检查，办理后可查原回执。</p><a class="feature-caption" href="demo.html">去体验转账 ↗</a></article>
-      <article class="feature-card"><span class="feature-no">02 / 账单分析</span><div class="mini-options" aria-hidden="true"><span>分类汇总</span><span class="selected">逐笔可查</span><span>留意大额</span></div><h3>看清钱去哪，也找得到依据。</h3><p>查看当前账本的收支分类和待核对流水。每个汇总都能回到原记录，再看看后面有哪些账单。</p><a class="feature-caption" href="demo.html">去看看账单 ↗</a></article>
-      <article class="feature-card"><span class="feature-no">03 / 订阅管理</span><div class="mini-options" aria-hidden="true"><span>查看续费</span><span class="selected">比较影响</span><span>确认取消</span></div><h3>续不续，先看清再决定。</h3><p>从对话进入订阅管理，逐项查看续费和取消后的影响。你确认取消后，工作台会更新状态并保留回执。</p><a class="feature-caption" href="demo.html">去管理续费 ↗</a></article>
+<!-- ============ QUOTE ============ -->
+<section class="quote" id="belief"><div class="shell">
+  <blockquote class="reveal">没有两笔相同的钱，<br>正如没有两段相同的日子。</blockquote>
+  <cite class="reveal">—— TROPOS 的设计信念</cite>
+  <div class="reveal"><span class="seal-stamp">诺</span></div>
+</div></section>
+
+<!-- ============ START ============ -->
+<section class="start-sec" id="start"><div class="shell start-grid">
+  <div class="reveal">
+    <p class="kicker" style="margin-bottom:24px">从一件小事开始</p>
+    <h2>不用翻遍菜单，<br>先说说想办什么。</h2>
+    <ol class="start-steps">
+      <li><span>壹</span>选一个演示账户</li>
+      <li><span>贰</span>说说目标和想留的钱</li>
+      <li><span>叁</span>看办理步骤，再由你确认</li>
+    </ol>
+    <a class="cta solid" href="demo.html">开始我的安排 ↗</a>
+    <p class="start-note">使用模拟账户，不用填写银行卡信息。</p>
+  </div>
+  <div class="conversation reveal" aria-label="对话示例">
+    <div class="conversation-user">帮我看看，哪些会员快续费了？</div>
+    <div class="conversation-agent"><img src="assets/tropos-mark.svg" alt="TROPOS"><p>我会先列出已登记的订阅和续费日。<br><strong>你可以逐项查看，要取消时，我会再请你确认。</strong></p></div>
+    <span class="conversation-caption">一句生活里的话，就是开始。</span>
+  </div>
+</div></section>
+
+<!-- ============ CALCULATION ============ -->
+<section class="calculation" id="calculation" aria-label="示例计算说明"><div class="shell">
+  <details id="calculation-details"><summary>想看细节？这里是首页示例的账本和算法。<span aria-hidden="true">＋</span></summary>
+    <div class="calculation-content">
+      <p>首页是独立的交互示例，不读取你的账户。每次切换都会重新计算未来 30 天的余额。</p>
+      <dl>
+        <div><dt>初始余额</dt><dd>¥12,800</dd></div>
+        <div><dt>预计工资</dt><dd>第 10 天 ¥9,000</dd></div>
+        <div><dt>房租 / 还款</dt><dd>第 4 天 ¥4,200 / 第 17 天 ¥1,800</dd></div>
+        <div><dt>日常开支 / 存钱</dt><dd>每天 ¥80 / 第 12 天存 ¥3,000</dd></div>
+        <div><dt>想留在手边</dt><dd>¥4,000</dd></div>
+      </dl>
+      <p id="scenario-basis">工资晚到示例：工资改到第 25 天；新安排建议把存钱改到第 27 天。</p>
+      <p>余额 = 初始余额 + 截至当天的预计收入 − 日常开支 − 已列支出与存钱。预计收入会影响后续估算，到账前不能用于实际付款。示例没有计算收益、手续费或未知支出。</p>
+      <div class="daily-table-wrap"><table><caption>当前示例的每日余额（元）</caption><thead><tr><th scope="col">天数</th><th scope="col">原来安排</th><th scope="col">新安排</th></tr></thead><tbody id="daily-balances"></tbody></table></div>
     </div>
-  </section>
-
-  <section class="hero cash-feature shell" aria-labelledby="cash-title">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="brand-dot"></span> TROPOS 的不同 · 情况变了，安排也会变</p>
-      <h2 id="cash-title">同一句吩咐，<br>也有<span class="title-accent">不同安排<svg viewBox="0 0 240 15" aria-hidden="true"><path d="M3 10C65 1 143 2 236 8"/></svg></span>。</h2>
-      <p class="hero-description">银行事要办好，也要顾到你接下来的日子。<br class="desktop-break">工资晚到、突然多笔开支，TROPOS 会重新算一遍，再请你确认新的安排。</p>
-      <div class="hero-buttons"><a class="button button-dark" href="demo.html">体验我的银行助手 <span aria-hidden="true">↗</span></a><a class="text-link" href="#try">切换右侧例子 <span aria-hidden="true">↓</span></a></div>
-      <div class="hero-promise"><span><i aria-hidden="true">✓</i> 看未来一个月</span><span><i aria-hidden="true">✓</i> 比较不同选择</span><span><i aria-hidden="true">✓</i> 每一步由你定</span></div>
-      <div class="hero-note"><span class="note-line" aria-hidden="true"></span><p>你的目标由你定，<br><strong>变化之后，旧安排会重新检查。</strong></p></div>
-    </div>
-    <div class="preview" id="try">
-      <div class="preview-top"><div><p class="card-kicker">你的资金天气</p><span>生活变一变，看看钱会怎么变。</span></div><span class="sample-label">交互示例</span></div>
-      <div class="scenario-picker" role="group" aria-label="选择一个生活变化">
-        <button type="button" data-scenario="salary" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17H5a4 4 0 0 1-.3-8A7 7 0 0 1 18 8a4.5 4.5 0 0 1 1 8.9M9 16v4m4-6v4m4-2v4"/></svg>工资晚到</button>
-        <button type="button" data-scenario="purchase" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/></svg>想买大件</button>
-        <button type="button" data-scenario="travel" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V4h8v3M8 7v14m8-14v14"/></svg>准备旅行</button>
-      </div>
-      <div class="forecast-heading"><div><span class="forecast-sub" id="forecast-sub">如果工资晚到 15 天</span><h2 id="forecast-title">存钱晚一点，日常照常过。</h2></div><span class="weather-symbol" id="weather-symbol" aria-hidden="true"><i></i></span></div>
-      <div class="plan-switch" role="group" aria-label="比较两种安排"><button type="button" data-plan="original" aria-pressed="false">照原来的安排</button><button type="button" data-plan="adjusted" aria-pressed="true">看看新安排</button></div>
-      <div class="forecast-amount"><div><span>未来 30 天，手头最少还有</span><strong id="forecast-min">¥4,880</strong></div><span class="forecast-state" id="forecast-state">高于预留金额</span></div>
-      <div class="cash-chart" id="cash-chart"></div>
-      <div class="chart-key"><span><i class="line-original"></i>原来安排</span><span><i class="line-adjusted"></i>新安排</span><span><i class="line-reserve"></i>想留的 ¥4,000</span></div>
-      <div class="suggestion" aria-live="polite" aria-atomic="true"><span class="suggestion-icon" aria-hidden="true">↗</span><div><strong id="suggestion-title">先把 ¥3,000 的存钱计划往后挪。</strong><p id="suggestion-detail">等工资到账再存。房租和还款照常留好。</p></div></div>
-      <div class="preview-bottom"><span id="forecast-benefit">最紧的时候，多留 ¥3,000</span><a href="#calculation" id="calculation-link">怎么算的 <span aria-hidden="true">↘</span></a></div>
-      <p class="sample-note">模拟账本试算，调整建议需要你确认。</p>
-      <noscript><p class="sample-note">开启浏览器 JavaScript 后，可切换生活情况并查看余额变化。</p></noscript>
-    </div>
-  </section>
-
-  <section class="start-section shell" id="start" aria-labelledby="start-title"><div><p class="eyebrow">从一件小事开始。</p><h2 id="start-title">不用翻遍菜单，<br>先说说想办什么。</h2><ol class="start-steps"><li><span>1</span>选一个演示账户</li><li><span>2</span>说说目标和想留的钱</li><li><span>3</span>看办理步骤，再由你确认</li></ol><a class="button button-dark" href="demo.html">开始我的安排 <span aria-hidden="true">↗</span></a><p class="start-note">使用模拟账户，不用填写银行卡信息。</p></div><div class="conversation" aria-label="对话示例"><div class="conversation-user">帮我看看，<br>哪些会员快续费了？</div><div class="conversation-agent"><img src="assets/tropos-mark.svg" alt="TROPOS"><p>我会先列出已登记的订阅和续费日。<br><strong>你可以逐项查看，<br>要取消时，我会再请你确认。</strong></p></div><span class="conversation-caption">一句生活里的话，就是开始。</span></div></section>
-
-  <section class="calculation shell" id="calculation" aria-label="示例计算说明"><details id="calculation-details"><summary>想看细节？这里是首页示例的账本和算法。<span aria-hidden="true">＋</span></summary><div class="calculation-content"><p>首页是独立的交互示例，不读取你的账户。每次切换都会重新计算未来 30 天的余额。</p><dl><div><dt>初始余额</dt><dd>¥12,800</dd></div><div><dt>预计工资</dt><dd>第 10 天 ¥9,000</dd></div><div><dt>房租 / 还款</dt><dd>第 4 天 ¥4,200 / 第 17 天 ¥1,800</dd></div><div><dt>日常开支 / 存钱</dt><dd>每天 ¥80 / 第 12 天存 ¥3,000</dd></div><div><dt>想留在手边</dt><dd>¥4,000</dd></div></dl><p id="scenario-basis">工资晚到示例：工资改到第 25 天；新安排建议把存钱改到第 27 天。</p><p>余额 = 初始余额 + 截至当天的预计收入 − 日常开支 − 已列支出与存钱。预计收入会影响后续估算，到账前不能用于实际付款。示例没有计算收益、手续费或未知支出。</p><div class="daily-table-wrap"><table><caption>当前示例的每日余额（元）</caption><thead><tr><th scope="col">天数</th><th scope="col">原来安排</th><th scope="col">新安排</th></tr></thead><tbody id="daily-balances"></tbody></table></div></div></details></section>
+  </details>
+</div></section>
 </main>
-<footer class="site-footer shell"><div><a class="brand" href="#" aria-label="返回顶部"><img src="assets/tropos-mark.svg" alt=""><span class="brand-type">TROPOS<small>知你所想，善作安排。</small></span></a><p>气流代表变化，金色的点代表你的选择。知变化，也守住你的决定。</p></div><p>2026 FinTechathon 参赛原型<br>模拟账户与账本 · 独立参赛作品<br><a href="demo.html">完整工作台 ↗</a><br><a href="study.html">匿名试用记录 ↗</a></p></footer>
+
+<footer><div class="shell foot-grid">
+  <div class="foot-brand">
+    <img src="assets/tropos-mark.svg" alt="">
+    <div><div class="line">知己其人，善谋其策；择时而动，守诺而行。</div>
+    <div style="font-size:12px;color:var(--ink-faint);letter-spacing:.2em;margin-top:4px">TROPOS · 气流代表变化，金色的点代表你的选择</div></div>
+  </div>
+  <p class="foot-note">2026 FinTechathon 参赛原型 · 合成银行沙箱<br>所有数据均为模拟，不构成真实金融建议<br><a href="demo.html">完整工作台 ↗</a>　<a href="study.html">匿名试用记录 ↗</a></p>
+</div></footer>
+
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.18});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
 </body>
 </html>
