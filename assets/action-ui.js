@@ -1,8 +1,8 @@
-/* TROPOS · 现金行动中心。只展示服务端快照，所有取消交由已有确认流程。 */
+/* TROPOS · 可解释财务体检。只展示服务端快照，所有操作交由已有确认流程。 */
 (function () {
   'use strict';
   let adapter = null, data = null, identity = '', loadedIdentity = '', loading = false, busy = false;
-  let autoKey = '', sequence = 0, mutationSequence = 0, selectedDay = 0, selectedSubscription = '', message = '', failed = false;
+  let autoKey = '', sequence = 0, mutationSequence = 0, selectedDay = 0, selectedSubscription = '', glossaryQuery = '', message = '', failed = false;
   const mount = () => document.getElementById('actionMount');
   const preview = () => document.getElementById('actionPreview');
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -53,8 +53,8 @@
   }
   function gate() {
     const c = ctx();
-    if (!c.serverMode || location.protocol === 'file:') return ['请先启动本地服务', '现金行动单需要本地服务提供当前账户数据。请按项目说明启动服务后，通过 http://localhost 打开演示。'];
-    if (!c.completed) return ['先建立你的财务画像', '完成画像与数据使用确认后，才能根据这一个账户生成现金行动单。'];
+    if (!c.serverMode || location.protocol === 'file:') return ['请先启动本地服务', '财务体检需要本地服务提供当前账户数据。请按项目说明启动服务后，通过 http://localhost 打开演示。'];
+    if (!c.completed) return ['先建立你的财务画像', '完成画像与数据使用确认后，才能根据这一个账户生成财务体检。'];
     return null;
   }
   function emptyPanel(title, copy, profile) {
@@ -62,7 +62,24 @@
   }
   function heading() {
     const a = data && data.account || {}, b = data && data.basis || {};
-    return `<header class="ac-heading"><div><p class="ac-eyebrow">接下来怎么安排</p><h1>先看看眼下最要紧的事。</h1><p class="ac-intro">把房租、账单和你想留的钱放在一起，看看接下来怎么安排更稳妥。</p><p class="ac-meta">${data ? `账户 ${esc(a.name || a.persona)} <span>${esc(a.persona)}</span> · 基准日 ${esc(b.baseDate || '2026-10-20')} · 未来 ${count(b.horizonDays || 30)} 天` : `当前账户 ${esc(ctx().persona || '未选择')} · 基准日 2026-10-20`}</p></div><div class="ac-toolbar">${button('refresh',loading ? '正在更新…' : '重新查看')}${data ? button('download','下载这份安排','',true) : ''}</div></header>${data ? `<p class="ac-version">服务端版本 ${esc(data.version || '未提供')} · 账户修订 ${esc(a.revision == null ? '未提供' : a.revision)} · 生成时间 ${esc(data.generatedAt || '未提供')}</p>` : ''}${message ? `<p class="ac-status${failed ? ' ac-status-error' : ''}" role="status">${esc(message)}</p>` : ''}`;
+    return `<header class="ac-heading"><div><p class="ac-eyebrow">AI 财务体检</p><h1>钱花到哪里，月底会不会紧。</h1><p class="ac-intro">把可见流水、账单、续费和你想留的钱放在一起；每个结论都标出依据、规则和不知道的部分。</p><p class="ac-meta">${data ? `账户 ${esc(a.name || a.persona)} <span>${esc(a.persona)}</span> · 基准日 ${esc(b.baseDate || '2026-10-20')} · 未来 ${count(b.horizonDays || 30)} 天` : `当前账户 ${esc(ctx().persona || '未选择')} · 基准日 2026-10-20`}</p></div><div class="ac-toolbar">${button('refresh',loading ? '正在更新…' : '重新体检')}${data ? button('download','下载体检报告','',true) : ''}</div></header>${data ? `<p class="ac-version">服务端版本 ${esc(data.version || '未提供')} · 账户修订 ${esc(a.revision == null ? '未提供' : a.revision)} · 生成时间 ${esc(data.generatedAt || '未提供')}</p>` : ''}${message ? `<p class="ac-status${failed ? ' ac-status-error' : ''}" role="status">${esc(message)}</p>` : ''}`;
+  }
+  function healthSummary() {
+    const h=data.healthCheck||{}, signals=list(h.signals), labels={urgent:'优先处理',attention:'值得复核',steady:'暂时平稳'};
+    return `<section class="ac-panel ac-health ac-health-${esc(h.level||'attention')}"><div class="ac-section-head"><div><p class="ac-eyebrow">这次体检结论</p><h2>${esc(h.headline||'正在根据当前可见信息生成结论')}</h2></div><span class="ac-tag">${esc(labels[h.level]||'规则体检')}</span></div><p class="ac-health-summary">${esc(h.summary||'结论仅适用于当前合成账户快照。')}</p><div class="ac-signal-grid">${signals.map(s=>`<article><span>${esc(s.label)}</span><strong>${s.id==='review'?count(s.value):money(s.value)}</strong><small>${esc(s.evidence)}</small></article>`).join('')||'<p class="ac-note">服务端尚未提供体检证据。</p>'}</div></section>`;
+  }
+  function hiddenCosts() {
+    const h=data.hiddenCosts||{}, subs=list(h.flaggedSubscriptions), rows=list(h.smallOutflows);
+    return `<section class="ac-panel"><div class="ac-section-head"><div><p class="ac-eyebrow">容易被忽略的钱</p><h2>小额支出与续费复核</h2></div><span class="ac-tag">仅检查当前可见流水</span></div><div class="ac-hidden-metrics"><div><span>小额可见消费</span><strong>${money(h.smallOutflowAmount)}</strong><small>${count(h.smallOutflowCount)} 笔 · 单笔不超过 ${money(h.smallOutflowThreshold)}</small></div><div><span>本窗口标记续费</span><strong>${money(h.flaggedRenewalAmount)}</strong><small>${subs.length} 项低使用或重复订阅</small></div></div><details class="ac-details"><summary>查看小额支出依据 · ${rows.length} 笔示例</summary><ul class="ac-ledger">${rows.map(r=>`<li><div><strong>${esc(r.merchant||'商户未提供')}</strong><small>${esc(r.category)} · ${esc(r.time)}</small></div><strong>${money(r.amount)}</strong></li>`).join('')||'<li>当前可见流水没有符合规则的小额消费。</li>'}</ul></details><details class="ac-details"><summary>查看被标记的续费 · ${subs.length} 项</summary><ul class="ac-review-list">${subs.map(s=>`<li><strong>${esc(s.name)} · ${money(s.fee)}</strong><p>服务端标记：${esc(s.reason)}；${s.inWindow?'在本次预测窗口内续费':'本次预测窗口外续费'}。</p><small>这里只提醒复核，不会自动取消。</small></li>`).join('')||'<li class="ac-note">当前没有低使用或重复订阅提示。</li>'}</ul></details></section>`;
+  }
+  function glossary() {
+    const terms=list(data.glossary), q=glossaryQuery.trim().toLowerCase(), shown=q?terms.filter(t=>[t.term,t.category,t.plain,t.check].some(v=>String(v||'').toLowerCase().includes(q))):terms;
+    return `<section class="ac-panel"><div class="ac-section-head"><div><p class="ac-eyebrow">金融白话翻译器</p><h2>先弄懂，再决定</h2></div><span class="ac-tag">${shown.length} / ${terms.length} 个词</span></div><label class="ac-glossary-search">查一个词<input type="search" value="${esc(glossaryQuery)}" placeholder="例如：手续费、自动续费、非保本" data-action-ui-glossary></label><div class="ac-glossary">${shown.map(t=>`<article><div><strong>${esc(t.term)}</strong><span>${esc(t.category)}</span></div><p>${esc(t.plain)}</p><small>决定前核对：${esc(t.check)}</small></article>`).join('')||'<p class="ac-note">没有匹配的词。可以换一个说法试试。</p>'}</div><p class="ac-note">${esc(data.glossaryBoundary||'这些解释只帮助理解，不构成产品推荐或操作授权。')}</p></section>`;
+  }
+  function explainability() {
+    const e=data.explainability||{};
+    const column=(title,items)=>`<section><h3>${esc(title)}</h3><ul>${list(items).map(v=>`<li>${esc(v)}</li>`).join('')||'<li>未提供。</li>'}</ul></section>`;
+    return `<section class="ac-panel ac-explain"><div class="ac-section-head"><div><p class="ac-eyebrow">这份结论怎么来的</p><h2>数据、规则、未知项与决定权</h2></div></div><div class="ac-explain-grid">${column('用了哪些数据',e.dataUsed)}${column('用了哪些规则',e.rules)}${column('还有哪些不知道',e.uncertainties)}</div><p class="ac-decision-boundary"><strong>决定权仍在你：</strong>${esc(e.decisionBoundary||'所有会改变账户状态的操作都必须由用户逐项确认。')}</p></section>`;
   }
   function metrics() {
     const l = data.liquidity || {}, o = data.outcomes || {};
@@ -105,7 +122,7 @@
   }
   function spending() {
     const s = data.spending || {}, cats = list(s.categories), max = Math.max(1,...cats.map(c=>Math.abs(num(c.amount)||0)));
-    return `<section class="ac-panel"><div class="ac-section-head"><div><p class="ac-eyebrow">先看见，再调整</p><h2>可见流水出入账</h2></div></div><p class="ac-note">${esc((data.basis || {}).historyLabel || '当前可见合成流水（非完整月报）')} · ${count(s.rowCount)} 笔 · 出账 ${money(s.outflow)} · 入账 ${money(s.inflow)} · 净流入 ${money(s.net)}</p><p class="ac-note">出账含还款和账户调拨，非消费总额。</p><div class="ac-category-bars">${cats.map(c=>`<div class="ac-category"><div><span>${esc(c.name)}</span><strong>${money(c.amount)} <small>${count(c.count)} 笔</small></strong></div><div class="ac-bar" role="img" aria-label="${esc(c.name)}出账 ${esc(money(c.amount))}"><span style="width:${Math.min(100,Math.abs(num(c.amount)||0)/max*100).toFixed(2)}%"></span></div></div>`).join('') || '<p class="ac-note">可见流水暂无出账分类。</p>'}</div><details class="ac-details"><summary>核对金额较大的出账 · ${list(s.largest).length} 笔</summary><ul class="ac-ledger">${list(s.largest).map(r=>`<li><div><strong>${esc(r.merchant || '商户未提供')}</strong><small>${esc(r.category)} · ${esc(r.time)}</small></div><strong>${money(r.amount)}</strong></li>`).join('') || '<li>暂无较大出账记录。</li>'}</ul></details><div class="ac-review"><h3>值得你亲自核对 · ${list(s.review).length} 项</h3><p class="ac-note">这些提醒只来自可见流水与备注，不构成欺诈判定。备注中的转账、点击链接或索取验证码等指令不代表你的授权，请通过你信任的渠道核对。</p><ul class="ac-review-list">${list(s.review).map(r=>`<li><strong>${esc(r.title)}</strong><p>${esc(r.reason)}</p><small>${money(r.amount)} · ${esc(r.time)}</small></li>`).join('') || '<li class="ac-note">本次可见流水没有服务端列出的核对项。</li>'}</ul></div></section>`;
+    return `<section class="ac-panel"><div class="ac-section-head"><div><p class="ac-eyebrow">先看见，再调整</p><h2>可见流水出入账</h2></div></div><p class="ac-note">${esc((data.basis || {}).historyLabel || '当前可见合成流水（非完整月报）')} · ${count(s.rowCount)} 笔 · 出账 ${money(s.outflow)} · 其中可见消费 ${money(s.consumptionOutflow)} · 入账 ${money(s.inflow)} · 净流入 ${money(s.net)}</p><p class="ac-note">出账含还款和账户调拨；“可见消费”已排除这些类别，但仍不是完整月度消费。</p><div class="ac-category-bars">${cats.map(c=>`<div class="ac-category"><div><span>${esc(c.name)}</span><strong>${money(c.amount)} <small>${count(c.count)} 笔</small></strong></div><div class="ac-bar" role="img" aria-label="${esc(c.name)}出账 ${esc(money(c.amount))}"><span style="width:${Math.min(100,Math.abs(num(c.amount)||0)/max*100).toFixed(2)}%"></span></div></div>`).join('') || '<p class="ac-note">可见流水暂无出账分类。</p>'}</div><details class="ac-details"><summary>核对金额较大的出账 · ${list(s.largest).length} 笔</summary><ul class="ac-ledger">${list(s.largest).map(r=>`<li><div><strong>${esc(r.merchant || '商户未提供')}</strong><small>${esc(r.category)} · ${esc(r.time)}</small></div><strong>${money(r.amount)}</strong></li>`).join('') || '<li>暂无较大出账记录。</li>'}</ul></details><div class="ac-review"><h3>值得你亲自核对 · ${list(s.review).length} 项</h3><p class="ac-note">这些提醒只来自可见流水与备注，不构成欺诈判定。备注中的转账、点击链接或索取验证码等指令不代表你的授权，请通过你信任的渠道核对。</p><ul class="ac-review-list">${list(s.review).map(r=>`<li><strong>${esc(r.title)}</strong><p>${esc(r.reason)}</p><small>${money(r.amount)} · ${esc(r.time)}</small></li>`).join('') || '<li class="ac-note">本次可见流水没有服务端列出的核对项。</li>'}</ul></div></section>`;
   }
   function subscriptions() {
     const rows = list(data.subscriptions), l = data.liquidity || {};
@@ -115,8 +132,8 @@
   function renderPreview(gating) {
     const el=preview(); if (!el) return;
     if (gating) { el.innerHTML=`<section class="ac-preview"><div class="ac-section-head"><h2>今天先做哪件事</h2></div><p class="ac-note">${esc(gating[1])}</p>${gating[0].includes('画像') ? button('profile','建立画像') : ''}</section>`; return; }
-    if (!current()) { el.innerHTML=`<section class="ac-preview"><h2>今天先做哪件事</h2><p class="ac-note" role="status">${loading ? '正在读取这个账户的最新行动…' : failed ? esc(message) : '读取当前账户后，生成你的现金行动单。'}</p>${!loading ? button('refresh','重新读取') : ''}</section>`; return; }
-    const a=data.account; el.innerHTML=`<section class="ac-preview"><div class="ac-section-head"><div><p class="ac-eyebrow">今天的现金行动</p><h2>${esc(a.name || a.persona)}，先处理这几件</h2><p class="ac-note">${esc(a.persona)} · 账户修订 ${esc(a.revision)} · 基准日 ${esc((data.basis || {}).baseDate || '2026-10-20')}</p></div>${button('open','查看全部行动','data-view="actions"')}</div>${actionCards(true)}</section>`;
+    if (!current()) { el.innerHTML=`<section class="ac-preview"><h2>今天先做哪件事</h2><p class="ac-note" role="status">${loading ? '正在读取这个账户的最新体检…' : failed ? esc(message) : '读取当前账户后，生成可解释的财务体检。'}</p>${!loading ? button('refresh','重新读取') : ''}</section>`; return; }
+    const a=data.account,h=data.healthCheck||{}; el.innerHTML=`<section class="ac-preview"><div class="ac-section-head"><div><p class="ac-eyebrow">今天的财务体检</p><h2>${esc(h.headline||`${a.name || a.persona}，先处理这几件`)}</h2><p class="ac-note">${esc(a.persona)} · 账户修订 ${esc(a.revision)} · 基准日 ${esc((data.basis || {}).baseDate || '2026-10-20')}</p></div>${button('open','查看完整体检','data-view="actions"')}</div>${actionCards(true)}</section>`;
   }
   function render() {
     if (!adapter) return;
@@ -126,7 +143,7 @@
     if (!current() && !loading && !busy && !failed && autoKey !== contextKey(ctx())) { autoKey=contextKey(ctx()); setTimeout(refresh, 0); }
     if (root) {
       root.setAttribute('aria-busy',String(loading || busy));
-      root.innerHTML=heading()+(current() ? metrics()+`<section class="ac-panel ac-priorities"><div class="ac-section-head"><div><p class="ac-eyebrow">从这一件开始</p><h2>有依据的下一步</h2></div></div>${actionCards(false)}</section>`+chart()+upcoming()+subscriptions()+spending()+footer() : emptyPanel(loading ? '正在读取当前账户…' : failed ? '这次没有读到行动单' : '准备你的现金行动单',loading ? '核对最新账本、到期事项与取消回执。' : failed ? '请刷新重试。读取成功前，旧行动和旧报告均不可使用。' : '根据当前账户的服务端快照生成。'));
+      root.innerHTML=heading()+(current() ? healthSummary()+metrics()+hiddenCosts()+`<section class="ac-panel ac-priorities"><div class="ac-section-head"><div><p class="ac-eyebrow">从这一件开始</p><h2>有依据的下一步</h2></div></div>${actionCards(false)}</section>`+chart()+upcoming()+subscriptions()+spending()+glossary()+explainability()+footer() : emptyPanel(loading ? '正在读取当前账户…' : failed ? '这次没有读到体检结果' : '准备你的财务体检',loading ? '核对最新账本、到期事项与取消回执。' : failed ? '请刷新重试。读取成功前，旧结论和旧报告均不可使用。' : '根据当前账户的服务端快照生成。'));
     }
     renderPreview(null);
   }
@@ -165,10 +182,11 @@
     if (!current() || busy || loading) return;
     // 仅导出可阅读的规划字段；不序列化会话、adapter 或原始响应。
     const a=data.account,b=data.basis||{},l=data.liquidity||{},o=data.outcomes||{};
-    const text=[`# 我的现金行动单`, `账户：${a.name || a.persona}（${a.persona}）`, `服务端版本：${data.version || '未提供'}；账户修订：${a.revision}；生成时间：${data.generatedAt || '未提供'}`,`基准日：${b.baseDate || '2026-10-20'}；未来窗口：${b.horizonDays || 30} 天`,`观察范围：${b.historyLabel || '当前可见合成流水（非完整月报）'}`,`这是数据快照，不等于付款、转账或取消授权。${incomeNotice()}取消续费不是退款，不增加今天余额。`, `## 现金安排`, `当前余额 ${money(l.balance)}；现金底线 ${money(l.reserve)}；最低现金 ${money(l.minBalance)}（${dayLabel(l.minDay)}）；缺口 ${money(l.gap)}。`,`已取消 ${count(o.cancelledCount)} 项，本窗口预计少支出 ${money(o.avoidedUpcomingOutflow)}。`,`## 行动`, ...list(data.actions).map((v,i)=>`${i+1}. ${v.title}\n   原因：${v.reason}\n   来源：${actionSource(v)}\n   下一步：${actionButtonLabel(v)}`),`## 取消回执`,...list(o.receipts).map(r=>`- ${r.name || r.id}：本窗口预计避免 ${money(r.amount)}；回执标识 ${r.id || '未提供'}`),`## 假设`,...list(data.assumptions).map(v=>'- '+v),`## 未来到期事项`,...list(data.upcoming).map(e=>`- ${dayLabel(e.day)}：${eventText(e)}`)].join('\n\n');
+    const e=data.explainability||{},h=data.healthCheck||{};
+    const text=[`# 我的 AI 财务体检`, `账户：${a.name || a.persona}（${a.persona}）`, `结论：${h.headline||'未提供'}。${h.summary||''}`,`服务端版本：${data.version || '未提供'}；账户修订：${a.revision}；生成时间：${data.generatedAt || '未提供'}`,`基准日：${b.baseDate || '2026-10-20'}；未来窗口：${b.horizonDays || 30} 天`,`观察范围：${b.historyLabel || '当前可见合成流水（非完整月报）'}`,`这是数据快照，不等于付款、转账或取消授权。${incomeNotice()}取消续费不是退款，不增加今天余额。`, `## 现金安排`, `当前余额 ${money(l.balance)}；现金底线 ${money(l.reserve)}；最低现金 ${money(l.minBalance)}（${dayLabel(l.minDay)}）；缺口 ${money(l.gap)}。`,`已取消 ${count(o.cancelledCount)} 项，本窗口预计少支出 ${money(o.avoidedUpcomingOutflow)}。`,`## 行动`, ...list(data.actions).map((v,i)=>`${i+1}. ${v.title}\n   原因：${v.reason}\n   来源：${actionSource(v)}\n   下一步：${actionButtonLabel(v)}`),`## 用了哪些数据`,...list(e.dataUsed).map(v=>'- '+v),`## 用了哪些规则`,...list(e.rules).map(v=>'- '+v),`## 还有哪些不知道`,...list(e.uncertainties).map(v=>'- '+v),`## 决定权`,e.decisionBoundary||'所有账户操作仍须用户确认。',`## 取消回执`,...list(o.receipts).map(r=>`- ${r.name || r.id}：本窗口预计避免 ${money(r.amount)}；回执标识 ${r.id || '未提供'}`),`## 假设`,...list(data.assumptions).map(v=>'- '+v),`## 未来到期事项`,...list(data.upcoming).map(e=>`- ${dayLabel(e.day)}：${eventText(e)}`)].join('\n\n');
     const url=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'})), link=document.createElement('a');
-    link.href=url; link.download=`TROPOS-现金行动单-${String(a.persona).replace(/[^\w-]/g,'_')}-${String(a.revision).replace(/[^\w-]/g,'_')}.md`; document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-    if(adapter.notice) adapter.notice('已下载当前账户的现金行动单快照。');
+    link.href=url; link.download=`TROPOS-财务体检-${String(a.persona).replace(/[^\w-]/g,'_')}-${String(a.revision).replace(/[^\w-]/g,'_')}.md`; document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    if(adapter.notice) adapter.notice('已下载当前账户的财务体检快照。');
   }
   function scrollChart() { const el=mount() && mount().querySelector('#ac-cash-path'); if(el) el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',block:'start'}); }
   function click(event) {
@@ -188,8 +206,10 @@
     if(action==='action') { const a=list(data.actions).find(a=>String(a.id)===el.dataset.actionId); if(!a) return; if(a.subscriptionId) { if(el.closest('#actionPreview')) adapter.open('actions'); selectedSubscription=a.subscriptionId; render(false); scrollChart(); } else if(a.view==='profile') adapter.openProfile(); else adapter.open(['life','bills','transfer','console'].includes(a.view) ? a.view : 'actions'); }
   }
   function input(event) {
-    if(!event.target || typeof event.target.matches !== 'function' || !event.target.matches('[data-action-ui-day]') || !event.target.closest('#actionMount') || busy || loading) return;
+    if(!event.target || typeof event.target.matches !== 'function' || !event.target.closest('#actionMount') || busy || loading) return;
     if(resetForContext() || !current()) { render(); return; }
+    if(event.target.matches('[data-action-ui-glossary]')) { glossaryQuery=event.target.value||''; const old=mount().querySelector('.ac-glossary'), holder=document.createElement('div'); holder.innerHTML=glossary(); const next=holder.querySelector('.ac-glossary'); if(old&&next)old.replaceWith(next); const tag=mount().querySelector('[data-action-ui-glossary]')?.closest('.ac-panel')?.querySelector('.ac-tag'), incoming=holder.querySelector('.ac-tag'); if(tag&&incoming)tag.textContent=incoming.textContent; return; }
+    if(!event.target.matches('[data-action-ui-day]')) return;
     selectedDay=Number(event.target.value)||0;
     // 保留正在拖动的滑块节点，更新图和依据，兼容键盘连续调节。
     const holder=document.createElement('div'); holder.innerHTML=chart();

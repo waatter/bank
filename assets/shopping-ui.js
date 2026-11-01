@@ -2,7 +2,9 @@
 (function(){
   'use strict';
   let adapter=null,providers=[],search=null,checkout=null,orders=[],busy=false,message='';
-  let paotui={installed:false,connected:false,authPending:false},addresses=[],preview=null,realOrders=[],authUrl='',payments={};
+  let paotui={installed:false,connected:false,authPending:false},addresses=[],addressIssue=null,preview=null,realOrders=[],authUrl='',payments={};
+  let manualAddressOpen=false,manualAddress=null;
+  let authTimer=null,authPollInFlight=false;
   const mount=()=>document.getElementById('shoppingMount');
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money=value=>'¥'+Number(value||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -10,6 +12,11 @@
   const context=()=>adapter?.context?.()||{};
   const disabled=()=>busy?' disabled':'';
   const safeLink=value=>{try{const url=new URL(value);return url.protocol==='https:'&&(url.hostname==='dpurl.cn'||url.hostname==='meituan.com'||url.hostname.endsWith('.meituan.com'))?url.href:'';}catch(_){return '';}};
+  function keepAuthLink(status,fallback=''){
+    const link=safeLink(status?.authUrl)||safeLink(fallback);
+    if(link)authUrl=link;else if(status&&!status.authPending)authUrl='';
+    return authUrl;
+  }
 
   function frame(content){
     const c=context(),official=providers.find(item=>item.mode==='official_paotui');
@@ -18,15 +25,27 @@
   }
   function checks(rows){return `<ul class="shop-checks">${(rows||[]).map(row=>`<li class="${row.ok?'ok':'bad'}"><b>${row.ok?'✓':'!'}</b><span><strong>${esc(row.name)}</strong><small>${esc(row.detail)}</small></span></li>`).join('')}</ul>`;}
 
+  function manualAddressFields(){
+    if(!manualAddressOpen)return '';
+    const value=(key)=>esc(manualAddress?.[key]||'');
+    return `<fieldset class="shop-manual-address"><legend>本次使用的临时送达地址</legend><div class="shop-manual-grid"><label>城市<input name="manualCity" maxlength="40" required placeholder="例如：上海市" value="${value('city')}"></label><label>联系人<input name="manualName" maxlength="50" required autocomplete="name" placeholder="收货人姓名" value="${value('name')}"></label><label class="shop-manual-wide">街道、小区或建筑<input name="manualStreet" maxlength="160" required placeholder="例如：浦东新区世纪大道 100 号某小区" value="${value('address')}"></label><label>楼栋、门牌号<input name="manualHouse" maxlength="80" required placeholder="例如：2 栋 301 室" value="${value('houseNumber')}"></label><label>手机号<input name="manualPhone" inputmode="tel" autocomplete="tel" maxlength="20" required placeholder="用于骑手联系" value="${value('phone')}"></label></div><p class="shop-manual-privacy">该地址只用于本次美团定位、询价和确认，不写入 TROPOS 地址簿或数据库；关闭或刷新页面后清除。</p>${addresses.length?'<button type="button" class="shop-manual-cancel" data-shop="manual-address-cancel">改回美团地址簿</button>':''}</fieldset>`;
+  }
+
   function officialPanel(){
-    if(!paotui.installed)return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>官方跑腿组件尚未就绪</h2></div><span class="shop-badge blocked">不可用</span></div><p>本机缺少官方 Skill、授权工具或 Node 运行环境。Mock 功能不受影响。</p></section>`;
-    if(paotui.ownedByAnother)return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>本机美团账号已被另一个演示账户使用</h2></div><span class="shop-badge blocked">已隔离</span></div><p>请切回原演示账户断开授权，再在当前账户连接。真实订单不会跨账户显示。</p></section>`;
+    if(!paotui.installed){const names={node:'Node 运行环境',skill:'官方 Skill',passport:'授权工具',storage:'私有授权存储'},components=paotui.components||{},missing=Object.keys(names).filter(key=>components[key]===false).map(key=>names[key]);return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>官方跑腿组件尚未就绪</h2></div><span class="shop-badge blocked">不可用</span></div><p>${esc(missing.length?`服务端尚缺少：${missing.join('、')}。`:'服务端尚未完成官方连接器部署。')} Mock 功能不受影响。</p></section>`;}
     if(!paotui.connected){
-      const link=safeLink(authUrl);
-      return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>连接本人的美团账号</h2></div><span class="shop-badge">${paotui.authPending?'等待授权':'未连接'}</span></div><p>授权只用于读取你的美团地址簿和创建你确认的跑腿订单。令牌留在服务端，不进入网页或模拟银行数据库。</p>${link?`<div class="shop-auth"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">打开美团官方授权页</a><button type="button" data-shop="auth-complete" ${disabled()}>我已授权，检查连接</button><small>授权入口约 10 分钟有效；若过期请重新生成。</small></div>`:`<button type="button" class="shop-primary" data-shop="auth-start" ${disabled()}>连接美团账号</button>`}</section>`;
+      const link=safeLink(authUrl)||safeLink(paotui.authUrl);
+      const reconnect=paotui.requiresReauthorization?'检测到旧版单账号授权记录。为防止串号，请为当前用户重新授权一次。':'每位 TROPOS 用户都拥有独立授权空间。这里只读取你的美团地址簿并创建由你确认的跑腿订单；其他用户无法读取或使用。';
+      const waiting=paotui.authPending;
+      const failed=['failed','expired'].includes(paotui.authState);
+      const stateMessage=paotui.authMessage||'美团确认授权后，令牌同步可能需要几秒钟；本页会自动检查，不需要重复扫码。';
+      const authControls=waiting?`<div class="shop-auth">${link?`<a class="shop-auth-open" data-auth-link href="${esc(link)}" target="_blank" rel="noopener noreferrer">打开美团官方授权</a>`:''}<div class="shop-auth-actions"><button type="button" data-shop="auth-refresh" ${disabled()}>刷新授权状态</button></div><small>${link?'手机端点击“打开美团官方授权”，确认后返回本页；本页也会自动检查。':'正在恢复授权状态；可以点击刷新。若本次授权过期，页面会提供重新授权入口。'} ${esc(stateMessage)}</small></div>`:failed?`<div class="shop-auth shop-auth-retry"><button type="button" class="shop-primary" data-shop="auth-start" ${disabled()}>重新授权</button><button type="button" data-shop="auth-refresh" ${disabled()}>刷新状态</button><small>${esc(stateMessage)}</small></div>`:`<div class="shop-auth-start"><button type="button" class="shop-primary" data-shop="auth-start" ${disabled()}>连接并打开美团官方授权</button><button type="button" data-shop="auth-refresh" ${disabled()}>刷新状态</button></div>`;
+      return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>连接本人的美团账号</h2></div><span class="shop-badge ${failed?'blocked':''}">${waiting?'正在同步':paotui.authState==='expired'?'已过期':paotui.authState==='failed'?'授权失败':'未连接'}</span></div><p>${esc(reconnect)} 令牌留在服务端，不进入网页或模拟银行数据库。</p>${paotui.authMessage&&!waiting?`<p class="shop-note">${esc(paotui.authMessage)}</p>`:''}${authControls}</section>`;
     }
     const options=addresses.map(item=>`<option value="${esc(item.id)}">${esc(item.address)} ${esc(item.houseNumber)} · ${esc(item.name)} ${esc(item.phone)}</option>`).join('');
-    return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>真实跑腿 · 帮我买</h2><p>适合“帮我买一束花、买一杯咖啡”等自由描述；不是餐厅菜单搜索。</p></div><div class="shop-connect"><span class="shop-badge">已连接</span><button type="button" data-shop="logout" ${disabled()}>断开</button></div></div><form id="paotuiForm" class="shop-real-form"><label>要买什么<textarea name="purchaseDetail" maxlength="300" required placeholder="例如：去附近花店买一束粉色鲜花，不要百合">${esc(preview?.purchaseDetail||'')}</textarea></label><div class="shop-form-row"><label>商品最高预算（元）<input name="maxItemBudget" type="number" min="0.01" max="5000" step="0.01" required placeholder="150"></label><label>送达地址<select name="addressId" required>${options||'<option value="">没有可用地址</option>'}</select></label></div><label>给骑手的备注（可选）<input name="remark" maxlength="120" placeholder="例如：到店后先电话联系"></label><p class="shop-note">预算不是商品预扣款。美团询价只返回配送费，商品实际价格由骑手沟通并以收银台为准。</p><button type="submit" class="shop-primary" ${busy||!addresses.length?'disabled':''}>获取美团实时配送费</button></form></section>`;
+    const addressNotice=addresses.length?'':addressIssue?`<div class="shop-empty shop-address-error" role="alert"><strong>美团地址接口暂时不可用</strong><p>${esc(addressIssue.message||'本次没有取得有效地址数据；这不代表你的地址簿为空。')}</p><div class="shop-empty-actions"><button type="button" data-shop="refresh-addresses" ${disabled()}>重新读取地址</button><button type="button" data-shop="manual-address" ${disabled()}>手动添加临时地址</button><button type="button" data-shop="reauthorize" ${disabled()}>重新授权美团</button></div></div>`:`<div class="shop-empty"><p>美团本次没有返回地址。你可以在美团 App 中完善地址后重试，也可以为这一次跑腿手动填写临时地址。</p><div class="shop-empty-actions"><button type="button" data-shop="refresh-addresses" ${disabled()}>重新读取地址</button><button type="button" data-shop="manual-address" ${disabled()}>手动添加临时地址</button></div></div>`;
+    const addressSelect=manualAddressOpen?'<option value="manual" selected>手动填写的临时地址（仅本次）</option>':options;
+    return `<section class="shop-panel shop-official"><div class="shop-section-head"><div><p class="shop-eyebrow">美团跑腿 · 官方</p><h2>真实跑腿 · 帮我买</h2><p>适合“帮我买一束花、买一杯咖啡”等自由描述；不是餐厅菜单搜索。</p></div><div class="shop-connect"><span class="shop-badge">已连接</span><button type="button" data-shop="logout" ${disabled()}>断开</button></div></div>${addressNotice}<form id="paotuiForm" class="shop-real-form"><label>要买什么<textarea name="purchaseDetail" maxlength="300" required placeholder="例如：去附近花店买一束粉色鲜花，不要百合">${esc(preview?.purchaseDetail||'')}</textarea></label><div class="shop-form-row"><label>商品最高预算（元）<input name="maxItemBudget" type="number" min="0.01" max="5000" step="0.01" required placeholder="150"></label><label>送达地址<select name="addressId" required>${addressSelect||'<option value="manual" selected>请在下方填写临时地址</option>'}</select></label></div>${addresses.length&&!manualAddressOpen?`<button type="button" class="shop-manual-open" data-shop="manual-address" ${disabled()}>不用地址簿，手动填写本次地址</button>`:''}${manualAddressFields()}<label>给骑手的备注（可选）<input name="remark" maxlength="120" placeholder="例如：到店后先电话联系"></label><p class="shop-note">预算不是商品预扣款。美团询价只返回配送费，商品实际价格由骑手沟通并以收银台为准。</p><button type="submit" class="shop-primary" ${busy||(!addresses.length&&!manualAddressOpen)?'disabled':''}>获取美团实时配送费</button></form></section>`;
   }
 
   function previewView(){
@@ -47,24 +66,64 @@
   function render(){const el=mount();if(el)el.innerHTML=frame(officialPanel()+previewView()+realOrdersView()+searchForm()+checkoutView()+offersView()+ordersView());}
 
   async function run(task,success){if(busy)return;busy=true;message='';render();try{const result=await task();if(result.snapshot)adapter.handleSnapshot?.(result.snapshot);await success(result);}catch(error){message=error.message||'操作未完成。';}finally{busy=false;render();}}
-  async function loadOfficial(status){paotui=status||paotui;if(paotui.connected){const [a,o]=await Promise.all([adapter.paotuiAddresses(),adapter.paotuiOrders()]);addresses=a.addresses||[];realOrders=o.orders||[];}else{addresses=[];realOrders=[];}}
-  async function refresh(){if(!adapter||!context().serverMode||!context().completed){render();return;}await run(async()=>{const [p,o,s]=await Promise.all([adapter.providers(),adapter.orders(),adapter.paotuiStatus()]);return {providers:p.providers,orders:o.orders,snapshot:o.snapshot,status:s};},async result=>{providers=result.providers||[];orders=result.orders||[];await loadOfficial(result.status);message='已读取 Mock 与官方跑腿状态。';});}
+  function stopAuthPoll(){if(authTimer){clearTimeout(authTimer);authTimer=null;}}
+  function scheduleAuthPoll(delay=2500){stopAuthPoll();if(paotui.authPending)authTimer=setTimeout(pollAuthorization,delay);}
+  async function pollAuthorization(){
+    if(authPollInFlight||!adapter||!context().serverMode)return;
+    authPollInFlight=true;
+    try{
+      const status=await adapter.paotuiStatus();
+      const wasConnected=paotui.connected;
+      keepAuthLink(status);
+      paotui=status||paotui;
+      if(paotui.connected){
+        stopAuthPoll();authUrl='';await loadOfficial(paotui);
+        providers=(await adapter.providers()).providers||providers;
+        if(!wasConnected)message=addresses.length?'美团授权已同步，地址簿读取成功。':'美团授权已同步；请在美团 App 中补充地址后重新读取。';
+      }else if(paotui.authPending){message='美团授权正在同步令牌，本页会自动检查，请勿重复授权。';scheduleAuthPoll();}
+      else{stopAuthPoll();authUrl='';if(paotui.authMessage)message=paotui.authMessage;}
+      render();
+    }catch(error){message=error.message||'暂时无法检查美团授权状态。';scheduleAuthPoll(4000);render();}
+    finally{authPollInFlight=false;}
+  }
+  async function loadOfficial(status){
+    keepAuthLink(status);
+    paotui=status||paotui;
+    if(!paotui.connected){addresses=[];addressIssue=null;realOrders=[];scheduleAuthPoll();return;}
+    stopAuthPoll();
+    const [a,o]=await Promise.allSettled([adapter.paotuiAddresses(),adapter.paotuiOrders()]);
+    if(a.status==='fulfilled'){addresses=a.value.addresses||[];addressIssue=null;}else{addresses=[];addressIssue={code:a.reason?.code||'MEITUAN_ADDRESS_UNAVAILABLE',message:a.reason?.message||'美团地址暂时读取失败，可以稍后重新读取。'};message=addressIssue.message;}
+    if(o.status==='fulfilled')realOrders=o.value.orders||[];else{realOrders=[];if(!message)message=o.reason?.message||'美团订单暂时读取失败。';}
+  }
+  async function refresh(){if(!adapter||!context().serverMode||!context().completed){render();return;}await run(async()=>{const [p,o,s]=await Promise.all([adapter.providers(),adapter.orders(),adapter.paotuiStatus()]);return {providers:p.providers,orders:o.orders,snapshot:o.snapshot,status:s};},async result=>{providers=result.providers||[];orders=result.orders||[];await loadOfficial(result.status);if(!message)message=result.status?.authPending?'美团授权正在同步令牌，本页会自动检查。':'已读取 Mock 与官方跑腿状态。';});}
 
   function updateRealConfirm(){const button=document.getElementById('paotuiConfirm'),normal=document.getElementById('paotuiConsent'),high=document.getElementById('paotuiHighConsent');if(button)button.disabled=busy||!normal?.checked||(high&&!high.checked);}
   function onSubmit(event){
     if(event.target?.id==='shoppingSearchForm'){event.preventDefault();const value=document.getElementById('shoppingQuery')?.value?.trim();if(value)run(()=>adapter.search({message:value}),async result=>{search=result.search;checkout=null;message=`找到 ${(search.offers||[]).length} 个合成候选，尚未下单。`;});}
-    if(event.target?.id==='paotuiForm'){event.preventDefault();const form=new FormData(event.target);run(()=>adapter.paotuiPreview({purchaseDetail:String(form.get('purchaseDetail')||'').trim(),maxItemBudget:String(form.get('maxItemBudget')||''),addressId:String(form.get('addressId')||''),remark:String(form.get('remark')||'').trim()}),async result=>{preview=result.preview;message='已获得美团实时配送费，尚未创建订单。';});}
+    if(event.target?.id==='paotuiForm'){
+      event.preventDefault();const form=new FormData(event.target),addressId=String(form.get('addressId')||'');
+      const body={purchaseDetail:String(form.get('purchaseDetail')||'').trim(),maxItemBudget:String(form.get('maxItemBudget')||''),remark:String(form.get('remark')||'').trim()};
+      if(addressId==='manual'){
+        manualAddress={city:String(form.get('manualCity')||'').trim(),address:String(form.get('manualStreet')||'').trim(),houseNumber:String(form.get('manualHouse')||'').trim(),name:String(form.get('manualName')||'').trim(),phone:String(form.get('manualPhone')||'').trim()};
+        body.manualAddress=manualAddress;
+      }else body.addressId=addressId;
+      run(()=>adapter.paotuiPreview(body),async result=>{preview=result.preview;message='已获得美团实时配送费，尚未创建订单。';});
+    }
   }
   function onChange(event){if(event.target?.id==='shoppingConsent'){const button=document.getElementById('shoppingConfirm');if(button)button.disabled=!event.target.checked||busy;}if(['paotuiConsent','paotuiHighConsent'].includes(event.target?.id))updateRealConfirm();}
   function onClick(event){
     const button=event.target?.closest?.('[data-shop]');if(!button||busy)return;const action=button.dataset.shop;
     if(action==='refresh')return refresh();
-    if(action==='auth-start')return run(()=>adapter.paotuiAuthStart(),async result=>{authUrl=result.authUrl||'';await loadOfficial(result.status);message=result.status?.connected?'已使用本机现有授权连接美团官方跑腿。':'授权入口已生成，请在美团页面完成授权。';});
-    if(action==='auth-complete')return run(()=>adapter.paotuiAuthComplete(),async result=>{authUrl='';await loadOfficial(result.status);providers=(await adapter.providers()).providers||providers;message='美团官方跑腿已连接。';});
-    if(action==='logout')return run(()=>adapter.paotuiLogout(),async result=>{paotui=result.status;addresses=[];realOrders=[];preview=null;authUrl='';message='已断开美团账号。';});
+    if(action==='auth-start')return run(()=>adapter.paotuiAuthStart(),async result=>{keepAuthLink(result.status,result.authUrl);await loadOfficial(result.status);message=result.status?.connected?'已复用当前用户自己的授权连接美团官方跑腿。':'授权入口已生成；手机端请点击“打开美团官方授权”，确认后返回本页。';scheduleAuthPoll(1500);});
+    if(action==='auth-refresh'||action==='auth-complete')return run(()=>paotui.authPending?adapter.paotuiAuthComplete():adapter.paotuiStatus(),async result=>{const status=result.status||result;keepAuthLink(status);await loadOfficial(status);providers=(await adapter.providers()).providers||providers;message=status?.connected?'美团官方跑腿已连接。':status?.authPending?'已刷新：仍在等待美团完成授权，本页会继续自动检查。':status?.authMessage||'已刷新授权状态；当前尚未连接。';scheduleAuthPoll(1000);});
+    if(action==='logout')return run(()=>adapter.paotuiLogout(),async result=>{paotui=result.status;addresses=[];addressIssue=null;realOrders=[];preview=null;manualAddress=null;manualAddressOpen=false;authUrl='';message='已断开美团账号。';});
     if(action==='refresh-real')return run(()=>adapter.paotuiOrders(),async result=>{realOrders=result.orders||[];message='已刷新真实跑腿订单列表。';});
+    if(action==='refresh-addresses')return run(async()=>{try{return {result:await adapter.paotuiAddresses()};}catch(error){return {error};}},async outcome=>{if(outcome.error){addresses=[];addressIssue={code:outcome.error.code||'MEITUAN_ADDRESS_UNAVAILABLE',message:outcome.error.message||'美团地址暂时读取失败。'};message=addressIssue.message;}else{addresses=outcome.result.addresses||[];addressIssue=null;message=addresses.length?'已重新读取美团地址簿。':'美团已明确返回空地址簿，请在美团 App 中添加或完善收货地址。';}});
+    if(action==='reauthorize')return run(async()=>{await adapter.paotuiLogout();return adapter.paotuiAuthStart();},async result=>{addresses=[];addressIssue=null;preview=null;keepAuthLink(result.status,result.authUrl);await loadOfficial(result.status);message=result.status?.connected?'已重新连接美团账号。':'已生成新的美团授权入口，请打开并完成授权。';scheduleAuthPoll(1500);});
+    if(action==='manual-address'){manualAddressOpen=true;message='请填写本次跑腿使用的临时送达地址。';return render();}
+    if(action==='manual-address-cancel'){manualAddressOpen=false;manualAddress=null;message='已改回使用美团地址簿。';return render();}
     if(action==='cancel-real'){preview=null;message='已取消本次确认，没有创建真实订单。';return render();}
-    if(action==='confirm-real')return run(()=>adapter.paotuiConfirm(preview,'paotui_'+crypto.randomUUID().replaceAll('-',''),Boolean(document.getElementById('paotuiHighConsent')?.checked)),async result=>{realOrders=[result.order,...realOrders.filter(item=>item.id!==result.order.id)];if(result.order.payment)payments[result.order.id]=result.order.payment;preview=null;message='真实跑腿订单已创建；请在美团收银台自行核对并支付。';adapter.notice?.(message);});
+    if(action==='confirm-real')return run(()=>adapter.paotuiConfirm(preview,'paotui_'+crypto.randomUUID().replaceAll('-',''),Boolean(document.getElementById('paotuiHighConsent')?.checked)),async result=>{realOrders=[result.order,...realOrders.filter(item=>item.id!==result.order.id)];if(result.order.payment)payments[result.order.id]=result.order.payment;preview=null;manualAddress=null;manualAddressOpen=false;message='真实跑腿订单已创建；请在美团收银台自行核对并支付。';adapter.notice?.(message);});
     if(action==='payment')return run(()=>adapter.paotuiPayment(button.dataset.order),async result=>{if(result.order.payment)payments[result.order.id]=result.order.payment;realOrders=realOrders.map(item=>item.id===result.order.id?{...item,...result.order}:item);message='已生成美团官方收银台链接，TROPOS 未代扣款。';});
     if(action==='real-status')return run(()=>adapter.paotuiOrderStatus(button.dataset.order),async result=>{realOrders=realOrders.map(item=>item.id===result.order.id?result.order:item);message='已按美团接口返回内容更新状态。';});
     if(action==='back'){checkout=null;message='已返回候选，没有创建订单。';return render();}
@@ -72,6 +131,6 @@
     if(action==='confirm')return run(()=>adapter.confirm(checkout,'shop_'+crypto.randomUUID().replaceAll('-','')),async result=>{orders=[result.order,...orders.filter(item=>item.id!==result.order.id)];checkout=null;search=null;message='Mock 订单已创建，并已写入模拟账本。';adapter.notice?.(message);});
     if(action==='advance')return run(()=>adapter.advance(button.dataset.order),async result=>{orders=orders.map(item=>item.id===result.order.id?result.order:item);message='已推进一次 Mock 履约状态。';});
   }
-  function init(value){adapter=value;document.addEventListener('submit',onSubmit);document.addEventListener('change',onChange);document.addEventListener('click',onClick);render();refresh();}
+  function init(value){adapter=value;document.addEventListener('submit',onSubmit);document.addEventListener('change',onChange);document.addEventListener('click',onClick);window.addEventListener('focus',()=>{if(paotui.authPending)pollAuthorization();});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&paotui.authPending)pollAuthorization();});render();refresh();}
   window.TroposShopping={init,refresh,render};
 })();

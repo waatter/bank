@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import json
+import base64
 import hashlib
+import hmac
 import re
 import secrets
+import threading
 import time
 from abc import ABC, abstractmethod
 
@@ -124,6 +127,16 @@ class OfficialMeituanConnector(CommerceConnector):
     def configured(self):
         return self.runner.available
 
+    @property
+    def readiness(self):
+        value = getattr(self.runner, "readiness", None)
+        return value if isinstance(value, dict) else {
+            "node": bool(self.runner.available),
+            "skill": bool(self.runner.available),
+            "passport": bool(self.runner.available),
+            "storage": bool(self.runner.available),
+        }
+
     def _unavailable(self):
         raise BankError(503, "OFFICIAL_CONNECTOR_NOT_ENABLED", "美团官方跑腿 Skill 尚未安装完整。")
 
@@ -140,25 +153,156 @@ class OfficialMeituanConnector(CommerceConnector):
 class ShoppingService:
     ORDER_STATES = ("paid", "merchant_confirmed", "preparing", "delivering", "delivered")
     ADDRESS_LABELS = {"A": "常用地址 · 尾号 1024（模拟）", "B": "公司地址 · 尾号 3381（模拟）", "C": "家庭地址 · 尾号 5560（模拟）"}
+    MEITUAN_CREDENTIAL_SCOPE = "per_user_v1"
 
     def __init__(self, bank_service, mock=None, official=None):
         self.bank = bank_service
         self.mock = mock or MockMeituanConnector()
         self.official = official or OfficialMeituanConnector()
+        self._auth_tasks_guard = threading.Lock()
+        self._auth_tasks = {}
+        # Authorization links are short lived and user scoped.  Keep them only
+        # in server memory so a browser refresh (especially on mobile) can
+        # reopen the official page without persisting the link or any token in
+        # the application database.
+        self._auth_links = {}
+
+    def _remember_auth_link(self, user_id, attempt_id, auth_url, expires_at):
+        with self._auth_tasks_guard:
+            self._auth_links[user_id] = {
+                "attemptId": attempt_id,
+                "authUrl": auth_url,
+                "expiresAt": float(expires_at),
+            }
+
+    def _pending_auth_link(self, user_id, attempt_id):
+        with self._auth_tasks_guard:
+            entry = self._auth_links.get(user_id)
+            if not entry or entry.get("attemptId") != attempt_id:
+                return None
+            if float(entry.get("expiresAt") or 0) <= time.time():
+                self._auth_links.pop(user_id, None)
+                return None
+            return dict(entry)
+
+    def _forget_auth_link(self, user_id, attempt_id=None):
+        with self._auth_tasks_guard:
+            entry = self._auth_links.get(user_id)
+            if entry and (attempt_id is None or entry.get("attemptId") == attempt_id):
+                self._auth_links.pop(user_id, None)
+
+    def _auth_task(self, user_id):
+        with self._auth_tasks_guard:
+            task = self._auth_tasks.get(user_id)
+            if task and task["thread"].is_alive():
+                return task
+            if task:
+                self._auth_tasks.pop(user_id, None)
+            return None
+
+    def _start_auth_poll(self, user_id, attempt_id, *, immediate=False):
+        """Start at most one provider poll for this TROPOS user.
+
+        The official helper can take several seconds after the user confirms the
+        authorization.  Keep that wait out of the HTTP request and only commit a
+        result when it still belongs to the same authorization attempt.
+        """
+        with self._auth_tasks_guard:
+            current = self._auth_tasks.get(user_id)
+            if current and current["thread"].is_alive():
+                if current["attemptId"] == attempt_id and immediate:
+                    current["wake"].set()
+                return
+            wake = threading.Event()
+            task = {"attemptId": attempt_id, "wake": wake}
+
+            def poll():
+                try:
+                    # Let the auth-start response reach the browser before the
+                    # provider process begins its long poll.  A manual check or
+                    # a status refresh wakes it immediately.
+                    wake.wait(0 if immediate else 0.5)
+                    self.official.runner.auth_complete(user_id)
+                    state = {"status": "connected", "connectedAt": now(),
+                             "credentialScope": self.MEITUAN_CREDENTIAL_SCOPE}
+                    with self.bank._db(True) as db:
+                        binding = self._binding(db, user_id)
+                        if not binding or binding.get("status") != "pending" or \
+                                binding.get("attemptId") != attempt_id:
+                            return
+                        db.execute("UPDATE shopping_provider_bindings SET content=? "
+                                   "WHERE provider='meituan_paotui' AND user_id=?",
+                                   (json.dumps(state, ensure_ascii=False), user_id))
+                        self.bank._audit(
+                            db, user_id, "ARGOS", "美团官方跑腿已连接",
+                            "本人授权及令牌同步成功；令牌由官方授权工具保管，未写入 TROPOS 数据库。")
+                except BankError as error:
+                    expired = error.code in {"MEITUAN_TIMEOUT", "MEITUAN_AUTH_TIMEOUT",
+                                             "MEITUAN_AUTH_SESSION_MISSING"}
+                    failure = {
+                        "status": "expired" if expired else "failed",
+                        "attemptId": attempt_id,
+                        "credentialScope": self.MEITUAN_CREDENTIAL_SCOPE,
+                        "authErrorCode": error.code,
+                        "authMessage": ("美团授权入口已过期，请重新连接。" if expired else
+                                        error.message),
+                        "failedAt": now(),
+                    }
+                    with self.bank._db(True) as db:
+                        binding = self._binding(db, user_id)
+                        if not binding or binding.get("status") != "pending" or \
+                                binding.get("attemptId") != attempt_id:
+                            return
+                        db.execute("UPDATE shopping_provider_bindings SET content=? "
+                                   "WHERE provider='meituan_paotui' AND user_id=?",
+                                   (json.dumps(failure, ensure_ascii=False), user_id))
+                        self.bank._audit(db, user_id, "ARGOS", "美团授权未完成",
+                                         failure["authMessage"])
+                except Exception:
+                    failure = {
+                        "status": "failed", "attemptId": attempt_id,
+                        "credentialScope": self.MEITUAN_CREDENTIAL_SCOPE,
+                        "authErrorCode": "MEITUAN_AUTH_SYNC_FAILED",
+                        "authMessage": "美团授权同步服务暂时不可用，请稍后重新连接。",
+                        "failedAt": now(),
+                    }
+                    with self.bank._db(True) as db:
+                        binding = self._binding(db, user_id)
+                        if binding and binding.get("status") == "pending" and \
+                                binding.get("attemptId") == attempt_id:
+                            db.execute("UPDATE shopping_provider_bindings SET content=? "
+                                       "WHERE provider='meituan_paotui' AND user_id=?",
+                                       (json.dumps(failure, ensure_ascii=False), user_id))
+                            self.bank._audit(db, user_id, "ARGOS", "美团授权同步异常",
+                                             failure["authMessage"])
+                finally:
+                    with self._auth_tasks_guard:
+                        if self._auth_tasks.get(user_id) is task:
+                            self._auth_tasks.pop(user_id, None)
+                        link = self._auth_links.get(user_id)
+                        if link and link.get("attemptId") == attempt_id:
+                            self._auth_links.pop(user_id, None)
+
+            thread = threading.Thread(target=poll, name="tropos-meituan-auth", daemon=True)
+            task["thread"] = thread
+            self._auth_tasks[user_id] = task
+            thread.start()
 
     def providers(self, user_id):
         with self.bank._db() as db:
             self.bank._user(db, user_id)
-            binding = db.execute("SELECT user_id,content FROM shopping_provider_bindings WHERE provider='meituan_paotui'").fetchone()
-            bound_here = bool(binding and binding["user_id"] == user_id)
-            binding_state = json.loads(binding["content"]) if bound_here else {}
+            binding = db.execute(
+                "SELECT content FROM shopping_provider_bindings WHERE provider='meituan_paotui' AND user_id=?",
+                (user_id,)).fetchone()
+            binding_state = json.loads(binding["content"]) if binding else {}
         return {"providers": [
             {"id": "meituan_mock", "provider": "meituan", "mode": "mock", "ready": True,
              "label": "美团 Mock", "synthetic": True},
             {"id": "meituan_paotui", "provider": "meituan", "mode": "official_paotui",
-             "ready": self.official.configured, "connected": bound_here and binding_state.get("status") == "connected",
-             "authPending": bound_here and binding_state.get("status") == "pending",
-             "ownedByAnother": bool(binding and not bound_here),
+             "ready": self.official.configured,
+             "connected": binding_state.get("status") == "connected" and
+                          binding_state.get("credentialScope") == self.MEITUAN_CREDENTIAL_SCOPE,
+             "authPending": binding_state.get("status") == "pending", "ownedByAnother": False,
              "label": "美团官方跑腿 Skill", "synthetic": False,
              "capabilities": ["帮买", "帮取送", "询价", "下单", "支付跳转", "状态查询"]},
         ]}
@@ -362,6 +506,106 @@ class ShoppingService:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     @staticmethod
+    def _manual_text(value, label, minimum, maximum):
+        if not isinstance(value, str):
+            raise BankError(400, "INVALID_MANUAL_ADDRESS", f"{label}格式不正确。")
+        text = re.sub(r"\s+", " ", value).strip()
+        if not minimum <= len(text) <= maximum or any(ord(ch) < 32 for ch in text):
+            raise BankError(400, "INVALID_MANUAL_ADDRESS", f"请填写有效的{label}。")
+        return text
+
+    @staticmethod
+    def _poi_coordinate(candidate, primary, alternate):
+        containers = [candidate]
+        if isinstance(candidate, dict) and isinstance(candidate.get("location"), dict):
+            containers.append(candidate["location"])
+        value = None
+        for container in containers:
+            if not isinstance(container, dict):
+                continue
+            value = container.get(primary)
+            if value is None:
+                value = container.get(alternate)
+            if value is not None:
+                break
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        if abs(number) < 1000:
+            number *= 1_000_000
+        return int(round(number))
+
+    def _manual_recipient(self, user_id, payload):
+        if not isinstance(payload, dict) or set(payload) != {"city", "address", "houseNumber", "name", "phone"}:
+            raise BankError(400, "INVALID_MANUAL_ADDRESS", "临时地址格式不正确。")
+        city = self._manual_text(payload.get("city"), "城市", 2, 40)
+        address = self._manual_text(payload.get("address"), "收货地址", 4, 160)
+        house = self._manual_text(payload.get("houseNumber"), "门牌号", 1, 80)
+        name = self._manual_text(payload.get("name"), "联系人", 1, 50)
+        raw_phone = self._manual_text(payload.get("phone"), "手机号", 11, 20)
+        phone = re.sub(r"[\s-]", "", raw_phone)
+        if not re.fullmatch(r"1\d{10}", phone):
+            raise BankError(400, "INVALID_MANUAL_ADDRESS", "请填写有效的中国大陆手机号。")
+
+        candidates = self.official.runner.search_poi(user_id, f"{address} {house}", city)
+        selected = None
+        lat = lng = None
+        for candidate in candidates[:20]:
+            if not isinstance(candidate, dict):
+                continue
+            lat = self._poi_coordinate(candidate, "lat", "latitude")
+            lng = self._poi_coordinate(candidate, "lng", "longitude")
+            if lat is not None and lng is not None:
+                selected = candidate
+                break
+        if selected is None:
+            raise BankError(422, "MEITUAN_POI_NOT_FOUND",
+                            "美团没有定位到该地址，请补充区县、街道、小区或楼号后重试。")
+        recipient = {
+            "address": address, "houseNumber": house, "lat": lat, "lng": lng,
+            "name": name, "phone": phone,
+        }
+        if selected.get("cityId") not in (None, ""):
+            recipient["cityId"] = selected["cityId"]
+        public = {
+            "id": "manual", "source": "manual", "address": address,
+            "houseNumber": house, "name": name, "phone": self._masked_phone(phone),
+            "isDefault": False, "lastUseTime": None,
+        }
+        return recipient, public
+
+    def _manual_token(self, user_id, recipient, expires_at):
+        payload = json.dumps({"userId": user_id, "recipient": recipient, "expiresAt": expires_at},
+                             ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        body = base64.urlsafe_b64encode(payload).rstrip(b"=")
+        signature = hmac.new(self.bank.auth_master_key, b"tropos-manual-address\0" + body,
+                             hashlib.sha256).digest()
+        return (body + b"." + base64.urlsafe_b64encode(signature).rstrip(b"=")).decode("ascii")
+
+    def _recipient_from_manual_token(self, user_id, token, fingerprint):
+        if not isinstance(token, str) or not 40 <= len(token) <= 4096 or token.count(".") != 1:
+            raise BankError(403, "INVALID_MANUAL_ADDRESS_TOKEN", "临时地址凭证无效，请重新询价。")
+        body_text, signature_text = token.split(".", 1)
+        try:
+            body = body_text.encode("ascii")
+            signature = base64.urlsafe_b64decode(signature_text + "=" * (-len(signature_text) % 4))
+            expected = hmac.new(self.bank.auth_master_key, b"tropos-manual-address\0" + body,
+                                hashlib.sha256).digest()
+            if not hmac.compare_digest(signature, expected):
+                raise ValueError
+            decoded = base64.urlsafe_b64decode(body_text + "=" * (-len(body_text) % 4))
+            data = json.loads(decoded.decode("utf-8"))
+        except (UnicodeError, ValueError, TypeError, json.JSONDecodeError):
+            raise BankError(403, "INVALID_MANUAL_ADDRESS_TOKEN", "临时地址凭证无效，请重新询价。") from None
+        if data.get("userId") != user_id or float(data.get("expiresAt") or 0) < time.time():
+            raise BankError(403, "INVALID_MANUAL_ADDRESS_TOKEN", "临时地址凭证已过期，请重新询价。")
+        recipient = data.get("recipient")
+        if not isinstance(recipient, dict) or self._recipient_fingerprint(recipient) != fingerprint:
+            raise BankError(403, "INVALID_MANUAL_ADDRESS_TOKEN", "临时地址与询价不匹配，请重新询价。")
+        return recipient
+
+    @staticmethod
     def _delivery_yuan(quote):
         display = str(quote.get("feeDisplay", ""))
         match = re.search(r"(\d+(?:\.\d{1,2})?)", display.replace(",", ""))
@@ -374,64 +618,94 @@ class ShoppingService:
         raise BankError(502, "MEITUAN_INVALID_RESPONSE", "美团没有返回可验证的配送费用。")
 
     def _binding(self, db, user_id, *, required=False):
-        row = db.execute("SELECT user_id,content FROM shopping_provider_bindings WHERE provider='meituan_paotui'").fetchone()
+        row = db.execute(
+            "SELECT content FROM shopping_provider_bindings WHERE provider='meituan_paotui' AND user_id=?",
+            (user_id,)).fetchone()
         if not row:
             if required:
                 raise BankError(401, "MEITUAN_AUTH_REQUIRED", "请先连接美团账号。")
             return None
-        if row["user_id"] != user_id:
-            raise BankError(409, "MEITUAN_ACCOUNT_IN_USE", "本机美团授权已经绑定到另一个演示账户，请先在原账户断开。")
         content = json.loads(row["content"])
-        if required and content.get("status") != "connected":
+        if required and (content.get("status") != "connected" or
+                         content.get("credentialScope") != self.MEITUAN_CREDENTIAL_SCOPE):
             raise BankError(401, "MEITUAN_AUTH_REQUIRED", "请先完成美团账号授权。")
         return content
 
     def paotui_status(self, user_id):
         with self.bank._db() as db:
             self.bank._user(db, user_id)
-            try:
-                binding = self._binding(db, user_id)
-                owned_elsewhere = False
-            except BankError as error:
-                if error.code != "MEITUAN_ACCOUNT_IN_USE":
-                    raise
-                binding, owned_elsewhere = None, True
-            return {
+            binding = self._binding(db, user_id)
+            scoped = bool(binding and binding.get("credentialScope") == self.MEITUAN_CREDENTIAL_SCOPE)
+            status = binding.get("status") if binding else None
+            result = {
                 "provider": "meituan", "mode": "official_paotui", "installed": self.official.configured,
-                "connected": bool(binding and binding.get("status") == "connected"),
-                "authPending": bool(binding and binding.get("status") == "pending"),
-                "ownedByAnother": owned_elsewhere,
-                "localOnly": True,
+                "components": self.official.readiness,
+                "connected": bool(binding and status == "connected" and scoped),
+                "authPending": bool(binding and status == "pending"),
+                "authState": ("connected" if status == "connected" and scoped else
+                              "waiting_token" if status == "pending" else
+                              status if status in {"expired", "failed"} else "disconnected"),
+                "authMessage": binding.get("authMessage") if status in {"expired", "failed"} else None,
+                "requiresReauthorization": bool(binding and status == "connected" and not scoped),
+                "ownedByAnother": False,
+                "accountScoped": True,
+                "localOnly": False,
             }
+            attempt_id = binding.get("attemptId") if status == "pending" else None
+            pending_link = self._pending_auth_link(user_id, attempt_id) if attempt_id else None
+            if pending_link:
+                result["authUrl"] = pending_link["authUrl"]
+                result["authExpiresAt"] = pending_link["expiresAt"]
+        if attempt_id and self.official.configured:
+            self._start_auth_poll(user_id, attempt_id)
+        return result
 
     def paotui_auth_start(self, user_id):
         if not self.official.configured:
             self.official._unavailable()
         already_connected = False
+        pending_attempt = None
         with self.bank._db() as db:
             self.bank._consent(db, user_id)
             current = self._binding(db, user_id)
-            if current and current.get("status") == "connected":
+            if (current and current.get("status") == "connected" and
+                    current.get("credentialScope") == self.MEITUAN_CREDENTIAL_SCOPE):
                 already_connected = True
+            elif current and current.get("status") == "pending" and \
+                    float(current.get("expiresAt") or 0) > time.time():
+                pending_attempt = current.get("attemptId")
         if already_connected:
             return {"status": self.paotui_status(user_id)}
-        authorization = self.official.runner.auth_start()
+        if pending_attempt:
+            self._start_auth_poll(user_id, pending_attempt, immediate=True)
+            return {"status": self.paotui_status(user_id), "authorizationPending": True}
+        authorization = self.official.runner.auth_start(user_id)
         if authorization.get("alreadyConnected") is True:
-            state = {"status": "connected", "connectedAt": now(), "authorizationSource": "cached"}
+            state = {"status": "connected", "connectedAt": now(), "authorizationSource": "cached",
+                     "credentialScope": self.MEITUAN_CREDENTIAL_SCOPE}
             with self.bank._db(True) as db:
                 self._binding(db, user_id)
-                db.execute("INSERT OR REPLACE INTO shopping_provider_bindings VALUES('meituan_paotui',?,?)",
+                db.execute("INSERT INTO shopping_provider_bindings(provider,user_id,content) VALUES('meituan_paotui',?,?) "
+                           "ON CONFLICT(provider,user_id) DO UPDATE SET content=excluded.content",
                            (user_id, json.dumps(state, ensure_ascii=False)))
                 self.bank._audit(db, user_id, "ARGOS", "美团官方跑腿已连接",
-                                 "已复用本机仍有效的官方授权；令牌由官方授权工具保管，未写入 TROPOS 数据库。")
+                                 "已复用当前用户仍有效的独立官方授权；令牌由官方授权工具保管，未写入 TROPOS 数据库。")
             return {"status": self.paotui_status(user_id), "reusedAuthorization": True}
-        state = {"status": "pending", "startedAt": now(), "expiresAt": time.time() + authorization["expiresInSeconds"]}
+        attempt_id = secrets.token_urlsafe(18)
+        expires_at = time.time() + authorization["expiresInSeconds"]
+        state = {"status": "pending", "startedAt": now(), "expiresAt": expires_at,
+                 "attemptId": attempt_id,
+                 "credentialScope": self.MEITUAN_CREDENTIAL_SCOPE}
         with self.bank._db(True) as db:
             self._binding(db, user_id)
-            db.execute("INSERT OR REPLACE INTO shopping_provider_bindings VALUES('meituan_paotui',?,?)",
+            db.execute("INSERT INTO shopping_provider_bindings(provider,user_id,content) VALUES('meituan_paotui',?,?) "
+                       "ON CONFLICT(provider,user_id) DO UPDATE SET content=excluded.content",
                        (user_id, json.dumps(state, ensure_ascii=False)))
             self.bank._audit(db, user_id, "ARGOS", "等待美团账号授权", "已生成十分钟有效的官方授权入口；尚未读取地址或创建订单。")
-        return {"status": self.paotui_status(user_id), **authorization}
+        self._remember_auth_link(user_id, attempt_id, authorization["authUrl"], expires_at)
+        result = {"status": self.paotui_status(user_id), **authorization}
+        self._start_auth_poll(user_id, attempt_id)
+        return result
 
     def paotui_auth_complete(self, user_id):
         with self.bank._db() as db:
@@ -439,30 +713,26 @@ class ShoppingService:
             current = self._binding(db, user_id, required=False)
             if not current or current.get("status") not in {"pending", "connected"}:
                 raise BankError(409, "MEITUAN_AUTH_NOT_STARTED", "请先生成美团授权链接。")
-        self.official.runner.auth_complete()
-        state = {"status": "connected", "connectedAt": now()}
-        with self.bank._db(True) as db:
-            self._binding(db, user_id)
-            db.execute("UPDATE shopping_provider_bindings SET content=? WHERE provider='meituan_paotui'",
-                       (json.dumps(state, ensure_ascii=False),))
-            self.bank._audit(db, user_id, "ARGOS", "美团官方跑腿已连接", "本人扫码授权成功；令牌由官方授权工具保管，未写入 TROPOS 数据库。")
+        if current.get("status") == "pending":
+            self._start_auth_poll(user_id, current.get("attemptId"), immediate=True)
         return {"status": self.paotui_status(user_id)}
 
     def paotui_logout(self, user_id, payload):
         self.bank._confirm(payload)
         with self.bank._db() as db:
             self._binding(db, user_id, required=False)
-        self.official.runner.logout()
+        self.official.runner.logout(user_id)
         with self.bank._db(True) as db:
             db.execute("DELETE FROM shopping_provider_bindings WHERE provider='meituan_paotui' AND user_id=?", (user_id,))
-            self.bank._audit(db, user_id, "ARGOS", "已断开美团官方跑腿", "本机授权已清除；历史真实订单引用仍保留用于审计。")
+            self.bank._audit(db, user_id, "ARGOS", "已断开美团官方跑腿", "当前用户的独立授权已清除；历史真实订单引用仍保留用于审计。")
+        self._forget_auth_link(user_id)
         return {"status": self.paotui_status(user_id)}
 
     def _official_addresses(self, user_id):
         with self.bank._db() as db:
             self.bank._consent(db, user_id)
             self._binding(db, user_id, required=True)
-        addresses = self.official.runner.addresses()
+        addresses = self.official.runner.addresses(user_id)
         result = [self._address_public(item) for item in addresses[:50] if item.get("addressId")]
         return addresses, result
 
@@ -475,7 +745,7 @@ class ShoppingService:
         item = next((item for item in addresses if str(item.get("addressId")) == address_id), None)
         if not item:
             raise BankError(404, "MEITUAN_ADDRESS_NOT_FOUND", "请选择当前美团地址簿中的地址。")
-        detail = self.official.runner.address_info(address_id)
+        detail = self.official.runner.address_info(user_id, address_id)
         public_item = next(entry for entry in public if entry["id"] == address_id)
         return self._recipient(item, detail), public_item
 
@@ -485,7 +755,7 @@ class ShoppingService:
         exposure = item_budget + delivery_fee
         cash = self.bank._cash(db, user_id, exposure)
         return [
-            {"name": "本人美团账号", "ok": True, "detail": "真实订单仅使用当前本机扫码授权的美团账号。"},
+            {"name": "本人美团账号", "ok": True, "detail": "真实订单仅使用当前用户独立授权的美团账号。"},
             {"name": "商品最高预算", "ok": item_budget > 0, "detail": f"已把商品代购上限按 ¥{yuan(item_budget):,.2f} 计入风险敞口。"},
             {"name": "美团实时配送费", "ok": delivery_fee > 0, "detail": f"官方询价配送费为 ¥{yuan(delivery_fee):,.2f}。"},
             {"name": "已到账余额", "ok": balance >= exposure, "detail": "商品预算加配送费不得超过当前模拟账户已到账余额。"},
@@ -507,11 +777,14 @@ class ShoppingService:
         }
 
     def paotui_preview(self, user_id, payload):
-        if not isinstance(payload, dict) or set(payload) - {"purchaseDetail", "addressId", "maxItemBudget", "remark"}:
+        if not isinstance(payload, dict) or set(payload) - {"purchaseDetail", "addressId", "manualAddress", "maxItemBudget", "remark"}:
             raise BankError(400, "INVALID_PAOTUI_REQUEST", "跑腿需求格式不正确。")
         detail = self._message(payload.get("purchaseDetail"))
         address_id = payload.get("addressId")
-        if not isinstance(address_id, str) or not 1 <= len(address_id) <= 128:
+        manual_address = payload.get("manualAddress")
+        if bool(address_id) == bool(manual_address):
+            raise BankError(400, "INVALID_PAOTUI_REQUEST", "请选择一个美团地址或填写一个临时地址。")
+        if address_id and (not isinstance(address_id, str) or not 1 <= len(address_id) <= 128):
             raise BankError(400, "INVALID_PAOTUI_REQUEST", "请选择美团地址簿中的送达地址。")
         item_budget = cents(payload.get("maxItemBudget"), True)
         if item_budget > 500_000:
@@ -519,9 +792,14 @@ class ShoppingService:
         remark = payload.get("remark", "")
         if not isinstance(remark, str) or len(remark) > 120:
             raise BankError(400, "INVALID_PAOTUI_REQUEST", "备注不能超过 120 字。")
-        recipient, address = self._official_recipient(user_id, address_id)
+        if manual_address:
+            recipient, address = self._manual_recipient(user_id, manual_address)
+            address_source = "manual"
+        else:
+            recipient, address = self._official_recipient(user_id, address_id)
+            address_source = "official"
         provider_detail = detail + f"；商品最高预算 ¥{yuan(item_budget):.2f}"
-        quote = self.official.runner.preview_buy(recipient, provider_detail)
+        quote = self.official.runner.preview_buy(user_id, recipient, provider_detail)
         delivery_yuan = self._delivery_yuan(quote)
         delivery_fee = cents(delivery_yuan, True)
         with self.bank._db(True) as db:
@@ -531,6 +809,7 @@ class ShoppingService:
             checks = self._official_checks(db, user_id, item_budget, delivery_fee)
             preview = {
                 "id": uid("paotui_preview"), "addressId": address_id,
+                "addressSource": address_source,
                 "recipientFingerprint": self._recipient_fingerprint(recipient),
                 "purchaseDetail": detail, "providerPurchaseDetail": provider_detail,
                 "maxItemBudgetCents": item_budget, "maxItemBudget": yuan(item_budget),
@@ -552,7 +831,11 @@ class ShoppingService:
             self.bank._audit(db, user_id, "ARGOS", "美团真实跑腿待确认",
                              f"代购物品：{detail}；商品预算上限 ¥{yuan(item_budget):,.2f}；官方配送费 ¥{yuan(delivery_fee):,.2f}；尚未下单或支付。")
             snapshot = self.bank._snapshot(db, user_id)
-        return {"preview": self._official_preview_public(preview, address), "snapshot": snapshot}
+        public_preview = self._official_preview_public(preview, address)
+        if address_source == "manual":
+            public_preview["manualAddressToken"] = self._manual_token(user_id, recipient, preview["expiresAt"])
+            public_preview["notice"] += " 临时地址仅保留在当前页面至本次确认结束，不写入 TROPOS 地址簿或数据库。"
+        return {"preview": public_preview, "snapshot": snapshot}
 
     @staticmethod
     def _official_order_public(order, payment=None):
@@ -571,7 +854,7 @@ class ShoppingService:
 
     def paotui_confirm(self, user_id, preview_id, payload):
         self.bank._confirm(payload)
-        if not isinstance(payload, dict) or set(payload) - {"confirmation", "confirmationToken", "requestKey", "highAmountConfirmation"}:
+        if not isinstance(payload, dict) or set(payload) - {"confirmation", "confirmationToken", "requestKey", "highAmountConfirmation", "manualAddressToken"}:
             raise BankError(400, "INVALID_CONFIRMATION", "跑腿订单确认格式不正确。")
         request_key = payload.get("requestKey")
         if not isinstance(request_key, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", request_key):
@@ -611,11 +894,15 @@ class ShoppingService:
             db.execute("INSERT INTO shopping_official_orders VALUES(?,?,?,?)",
                        (placeholder["id"], user_id, request_key, json.dumps(placeholder, ensure_ascii=False)))
         try:
-            recipient, _ = self._official_recipient(user_id, preview["addressId"])
+            if preview.get("addressSource") == "manual":
+                recipient = self._recipient_from_manual_token(
+                    user_id, payload.get("manualAddressToken"), preview["recipientFingerprint"])
+            else:
+                recipient, _ = self._official_recipient(user_id, preview["addressId"])
             if self._recipient_fingerprint(recipient) != preview["recipientFingerprint"]:
                 raise BankError(409, "MEITUAN_ADDRESS_CHANGED", "美团地址或联系方式已变化，请重新询价并确认。")
             provider_order = self.official.runner.submit_buy(
-                recipient, preview["providerPurchaseDetail"], preview["providerQuote"], preview.get("remark", ""))
+                user_id, recipient, preview["providerPurchaseDetail"], preview["providerQuote"], preview.get("remark", ""))
         except BankError as error:
             with self.bank._db(True) as db:
                 if error.code in {"MEITUAN_TIMEOUT", "MEITUAN_ORDER_UNKNOWN"}:
@@ -631,7 +918,7 @@ class ShoppingService:
                  "estimateTime": preview.get("estimateTime"), "statusText": "等待用户完成美团支付"}
         payment = None
         try:
-            payment = self.official.runner.pay_url(provider_order)
+            payment = self.official.runner.pay_url(user_id, provider_order)
         except BankError:
             order["status"] = "payment_link_error"
             order["statusText"] = "订单已创建，收银台链接暂未生成"
@@ -667,7 +954,7 @@ class ShoppingService:
             order = self._official_order(db, user_id, order_id)
         if not order.get("providerOrder"):
             raise BankError(409, "MEITUAN_ORDER_UNKNOWN", "订单结果尚未明确，不能生成支付链接。")
-        payment = self.official.runner.pay_url(order["providerOrder"])
+        payment = self.official.runner.pay_url(user_id, order["providerOrder"])
         return {"order": self._official_order_public(order, payment)}
 
     def paotui_order_status(self, user_id, order_id):
@@ -677,7 +964,7 @@ class ShoppingService:
         provider = order.get("providerOrder") or {}
         if not provider.get("orderId"):
             raise BankError(409, "MEITUAN_ORDER_UNKNOWN", "订单结果尚未明确，暂时无法查询状态。")
-        status = self.official.runner.order_status(provider["orderId"])
+        status = self.official.runner.order_status(user_id, provider["orderId"])
         order_status = status.get("orderStatus") if isinstance(status.get("orderStatus"), dict) else {}
         audit_status = status.get("auditStatus") if isinstance(status.get("auditStatus"), dict) else {}
         order["status"] = "provider_status"

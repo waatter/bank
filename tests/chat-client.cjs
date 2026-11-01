@@ -125,6 +125,22 @@ test('network-unknown retry preserves original message, key and conversation ver
   assert.equal(h.persisted().pendingTurns.A, undefined);
 });
 
+test('personal model test timeout is reported as a read-only failure', async t => {
+  const h = harness(t);
+  await h.client.select('A');
+  h.queue(new Error('provider timeout'));
+  await assert.rejects(
+    h.client.testPersonalModel('qwen'),
+    error => error.code === 'NETWORK_ERROR'
+      && /只读服务连接中断/.test(error.message)
+      && !/原交易状态/.test(error.message),
+  );
+  assert.deepEqual(h.posts()[0], {
+    url: '/api/model-center/personal/providers/qwen/test', method: 'POST',
+    token: 'Bearer A-live', body: {confirmation: true},
+  });
+});
+
 test('a different message is blocked by TURN_UNRESOLVED without another request or key', async t => {
   const h = harness(t);
   await h.client.select('A');

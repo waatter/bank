@@ -42,11 +42,110 @@ class LifeApiTests(unittest.TestCase):
 
     def test_health_version_and_auth_consent(self):
         status,health=self.call('GET','/api/health')
-        self.assertEqual((status,health['version']),(200,'3.1.0'))
+        self.assertEqual((status,health['version']),(200,'3.2.9'))
         self.assertEqual(self.call('GET','/api/life')[0],401)
         token,_=self.login(consent=False)
         self.assertEqual(self.call('GET','/api/life',token=token)[0],403)
         self.assertEqual(self.call('POST','/api/life/analyze',{},token)[0],403)
+
+    def test_financial_health_and_plain_language_terms_are_read_only(self):
+        self.assertEqual(self.call('GET','/api/financial-glossary')[0],401)
+        token,snapshot=self.login()
+        before=self.call('GET','/api/state',token=token)[1]
+        status,insights=self.call('GET','/api/insights',token=token)
+        self.assertEqual(status,200)
+        self.assertEqual(insights['version'],'TROPOS-INSIGHTS-2')
+        self.assertIn(insights['healthCheck']['level'],{'urgent','attention','steady'})
+        self.assertGreaterEqual(insights['hiddenCosts']['smallOutflowCount'],0)
+        self.assertIn('逐项确认',insights['explainability']['decisionBoundary'])
+        self.assertNotIn('confirmationToken',json.dumps(insights,ensure_ascii=False))
+        status,glossary=self.call('GET','/api/financial-glossary',token=token)
+        self.assertEqual(status,200)
+        self.assertEqual(glossary['version'],'TROPOS-GLOSSARY-1')
+        terms={item['term'] for item in glossary['terms']}
+        self.assertTrue({'手续费','自动续费','非保本'}.issubset(terms))
+        self.assertEqual(self.call('GET','/api/state',token=token)[1],before)
+
+    def test_model_center_is_private_scoped_and_does_not_mutate_money(self):
+        self.assertEqual(self.call('GET','/api/model-center')[0],401)
+        first,before=self.login('A'); second,_=self.login('C')
+        status,center=self.call('GET','/api/model-center',token=first)
+        self.assertEqual(status,200)
+        self.assertEqual(center['version'],'TROPOS-MODEL-CENTER-1')
+        self.assertEqual((center['selectedProvider'],center['effectiveProvider']),('rules','rules'))
+        providers={provider['id']:provider for provider in center['providers']}
+        self.assertTrue(providers['rules']['configured'])
+        self.assertFalse(providers['openai']['configured'])
+        self.assertIn('qwen',providers)
+        self.assertIn('mine-qwen',providers)
+        self.assertFalse(providers['qwen']['configured'])
+        self.assertFalse(providers['mine-qwen']['configured'])
+        self.assertFalse(center['canConfigure'])
+        self.assertTrue(center['canConfigurePersonal'])
+        self.assertFalse(providers['mine-openai']['configured'])
+        public=json.dumps(center,ensure_ascii=False).lower()
+        self.assertNotIn('api_key',public); self.assertNotIn('secret',public)
+        status,reply=self.call('POST','/api/agent',{'message':'查看本月账单'},first)
+        self.assertEqual(status,200)
+        self.assertEqual(reply['modelRuntime']['effectiveProvider'],'rules')
+        self.assertFalse(reply['modelRuntime']['usedForThisMessage'])
+        status,error=self.call('PUT','/api/model-center/selection',{'provider':'openai'},first)
+        self.assertEqual(status,409); self.assertEqual(error['error']['code'],'MODEL_PROVIDER_NOT_CONFIGURED')
+        config={'apiKey':'UNIT_TEST_SECRET','baseUrl':'https://models.invalid/v1','model':'test-model','timeout':3,'confirmation':True}
+        status,error=self.call('PUT','/api/model-center/providers/custom',config,first)
+        self.assertEqual(status,403); self.assertEqual(error['error']['code'],'MODEL_ADMIN_DISABLED')
+        status,personal=self.call('PUT','/api/model-center/personal/providers/custom',config,first)
+        self.assertEqual(status,200)
+        mine={provider['id']:provider for provider in personal['providers']}['mine-custom']
+        self.assertTrue(mine['configured']); self.assertEqual(mine['scope'],'personal')
+        self.assertEqual(mine['billing'],'user'); self.assertNotIn('UNIT_TEST_SECRET',json.dumps(personal))
+        other=self.call('GET','/api/model-center',token=second)[1]
+        self.assertFalse({provider['id']:provider for provider in other['providers']}['mine-custom']['configured'])
+        status,personal_selected=self.call('PUT','/api/model-center/selection',{'provider':'mine-custom'},first)
+        self.assertEqual(status,200); self.assertEqual(personal_selected['effectiveProvider'],'mine-custom')
+        first_uid=self.server.service.authenticate(first); second_uid=self.server.service.authenticate(second)
+        self.assertIsNot(self.server.model_center.planner_for(first_uid),self.server.model_center.planner_for(second_uid))
+        class PersonalFakePlanner:
+            mode='llm'
+            config=ModelConfig('UNIT_TEST_SECRET','https://models.invalid/v1','personal-test-model',3)
+            def understand(self,_message):
+                return {'mode':'llm','intent':{'action':'bills'},
+                        'trace':[{'engine':'METIS','detail':'个人模型已返回结构化意图。'}]}
+            def decompose(self,_message):
+                return {'mode':'llm','steps':None,'reason':None}
+        self.server.model_center._personal_provider(first_uid,'custom')['planner']=PersonalFakePlanner()
+        status,personal_reply=self.call('POST','/api/agent',{'message':'查看本月账单'},first)
+        self.assertEqual(status,200); self.assertEqual(personal_reply['modelRuntime']['scope'],'personal')
+        self.assertTrue(personal_reply['modelRuntime']['usedForThisMessage'])
+        status,removed=self.call('DELETE','/api/model-center/personal/providers/custom',{'confirmation':True},first)
+        self.assertEqual(status,200); self.assertEqual(removed['effectiveProvider'],'rules')
+        self.assertFalse({provider['id']:provider for provider in removed['providers']}['mine-custom']['configured'])
+        self.server.model_center.allow_runtime_config=True
+        status,configured=self.call('PUT','/api/model-center/providers/custom',config,first)
+        self.assertEqual(status,200); self.assertTrue(configured['canConfigure'])
+        self.assertTrue(next(p for p in configured['providers'] if p['id']=='custom')['configured'])
+        self.assertNotIn('UNIT_TEST_SECRET',json.dumps(configured))
+        status,selected=self.call('PUT','/api/model-center/selection',{'provider':'custom'},first)
+        self.assertEqual(status,200); self.assertEqual(selected['effectiveProvider'],'custom')
+        self.assertNotIn('UNIT_TEST_SECRET',json.dumps(selected))
+        self.assertEqual(selected['snapshot']['balance'],before['balance'])
+        self.assertEqual(selected['snapshot']['user']['revision'],before['user']['revision'])
+        other=self.call('GET','/api/model-center',token=second)[1]
+        self.assertEqual(other['selectedProvider'],'rules')
+        class FakePlanner:
+            mode='llm'
+            config=ModelConfig('UNIT_TEST_SECRET','https://models.invalid/v1','test-model',3)
+            def understand(self,_message):
+                return {'mode':'llm','intent':{'action':'bills'},
+                        'trace':[{'engine':'METIS','detail':'测试模型已返回结构化意图。'}]}
+            def decompose(self,_message):
+                return {'mode':'llm','steps':None,'reason':None}
+        self.server.model_center._install('custom',FakePlanner(),source='runtime')
+        status,model_reply=self.call('POST','/api/agent',{'message':'查看本月账单'},first)
+        self.assertEqual(status,200)
+        self.assertEqual(model_reply['mode'],'llm')
+        self.assertTrue(model_reply['modelRuntime']['usedForThisMessage'])
+        self.assertEqual(model_reply['modelRuntime']['effectiveProvider'],'custom')
 
     def test_life_settings_scenes_and_read_only_projection(self):
         token,snapshot=self.login()

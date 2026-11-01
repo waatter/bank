@@ -58,6 +58,12 @@ class PackageTests(unittest.TestCase):
             "reports/evaluation.json", "deploy/README.md", "deploy/prepare.sh", "deploy/Caddyfile",
             "deploy/docker-compose.yml", "deploy/build-context.dockerignore", "deploy/.dockerignore",
             "deploy/.env.example", "deploy/env.production.example",
+            "deploy/docker-compose.update-3.2.3.yml", "deploy/docker-compose.update-3.2.4.yml",
+            "deploy/docker-compose.update-3.2.5.yml",
+            "deploy/docker-compose.update-3.2.6.yml",
+            "deploy/docker-compose.update-3.2.7.yml",
+            "deploy/docker-compose.update-3.2.8.yml",
+            "deploy/prepare-meituan-connector.sh",
         }
         for name in allowed - {"VERSION"}:
             self.put(name)
@@ -66,10 +72,13 @@ class PackageTests(unittest.TestCase):
             self.put(name)
         executable = self.root / "deploy/prepare.sh"
         executable.chmod(0o755)
+        meituan_prepare = self.root / "deploy/prepare-meituan-connector.sh"
+        meituan_prepare.chmod(0o755)
         self.assertEqual(self.build(), self.output)
         with zipfile.ZipFile(self.output) as archive:
             self.assertEqual(set(archive.namelist()), allowed | {package.MANIFEST_NAME})
             self.assertTrue(archive.getinfo("deploy/prepare.sh").external_attr >> 16 & 0o111)
+            self.assertTrue(archive.getinfo("deploy/prepare-meituan-connector.sh").external_attr >> 16 & 0o111)
         manifest = self.manifest()
         self.assertEqual(manifest["source_version"], "3.0.0")
         self.assertIn("docs/3.0_手机与部署验收.md", manifest["deployment"]["instructions"])

@@ -12,6 +12,8 @@ import re
 BASE_DATE = '2026-10-20'
 HORIZON_DAYS = 30
 REVIEW_OUTFLOW_CENTS = 200_000
+SMALL_OUTFLOW_CENTS = 10_000
+NON_CONSUMPTION_CATEGORIES = {'账户调拨（目标储蓄）', '账户调拨（转账）', '还款', '贷款', '分期'}
 INSTRUCTION_MEMO = re.compile(r'忽略.{0,20}指令|system\s*[:：]|无需.{0,8}确认|立即.{0,12}转账', re.I)
 
 
@@ -56,7 +58,8 @@ def build_insights(snapshot):
     rows = snapshot['transactions']
     grouped = defaultdict(lambda: {'amount': 0, 'count': 0})
     outflow = inflow = 0
-    largest, review = [], []
+    largest, review, small_outflows = [], [], []
+    consumption_outflow = 0
     for row in rows:
         amount = _cents(row['amount'])
         category = _category(row)
@@ -65,6 +68,12 @@ def build_insights(snapshot):
             outflow += debit
             grouped[category]['amount'] += debit
             grouped[category]['count'] += 1
+            if category not in NON_CONSUMPTION_CATEGORIES:
+                consumption_outflow += debit
+                if debit <= SMALL_OUTFLOW_CENTS:
+                    small_outflows.append({'id': row['id'], 'merchant': row.get('merchant', ''),
+                                           'amount': _yuan(debit), 'category': category,
+                                           'time': row.get('time', '')})
             largest.append({'id': row['id'], 'merchant': row.get('merchant', ''),
                             'amount': _yuan(debit), 'category': category,
                             'time': row.get('time', '')})
@@ -91,6 +100,7 @@ def build_insights(snapshot):
                              'source': 'bill', 'status': 'scheduled'})
 
     subscriptions, cancelled_receipts = [], []
+    flagged_subscriptions = []
     cancelled_count = avoided = 0
     for sub in snapshot['subscriptions']:
         fee = _cents(sub['fee'])
@@ -108,6 +118,11 @@ def build_insights(snapshot):
                                          'minImprovement': _yuan(min_after - minimum),
                                          'remainingGap': _yuan(max(0, reserve - min_after)),
                                          'points': [_yuan(balance) for balance in after]}})
+        if active and sub.get('flag') in {'低使用', '重复'}:
+            flagged_subscriptions.append({'id': sub['id'], 'name': sub['name'],
+                                          'fee': _yuan(fee), 'next': sub['next'],
+                                          'reason': sub['flag'],
+                                          'inWindow': in_window})
         if active and in_window:
             upcoming.append({'id': 'subscription_' + sub['id'], 'day': sub['next'],
                              'label': sub['name'] + '续费', 'amount': _yuan(-fee), 'kind': '订阅',
@@ -168,8 +183,34 @@ def build_insights(snapshot):
                         'view': 'console'})
     actions.sort(key=lambda row: row['priority'] != 'high')
 
+    hidden_amount = sum(_cents(row['amount']) for row in small_outflows)
+    flagged_renewal = sum(_cents(row['fee']) for row in flagged_subscriptions if row['inWindow'])
+    if gap:
+        health_level = 'urgent'
+        health_headline = '未来现金可能低于你设定的底线'
+        health_summary = f'按当前登记事项，最低点距现金底线还差 ¥{_yuan(gap):,.2f}。'
+    elif flagged_subscriptions or review:
+        health_level = 'attention'
+        health_headline = '现金底线暂时守住，但有几项值得复核'
+        health_summary = '系统发现可复核续费或较大出账；它们是规则提示，不是风险定论。'
+    else:
+        health_level = 'steady'
+        health_headline = '按当前可见信息，未来现金暂时高于底线'
+        health_summary = '仍需留意尚未记录的消费和预计收入是否真实到账。'
+
+    health_signals = [
+        {'id': 'liquidity', 'label': '未来现金最低点', 'value': _yuan(minimum),
+         'evidence': f'服务端按第 0–{HORIZON_DAYS} 天逐日现金路径计算'},
+        {'id': 'hidden_costs', 'label': '可复核隐性支出',
+         'value': _yuan(hidden_amount + flagged_renewal),
+         'evidence': f'{len(small_outflows)} 笔不超过 ¥100 的可见消费，'
+                     f'{len(flagged_subscriptions)} 项低使用或重复订阅'},
+        {'id': 'review', 'label': '需亲自核对的流水', 'value': len(review),
+         'evidence': '按备注指令型文本或单笔出账达到 ¥2,000 的公开规则筛选'},
+    ]
+
     return {
-        'version': 'TROPOS-INSIGHTS-1', 'generatedAt': datetime.now(timezone.utc).isoformat(),
+        'version': 'TROPOS-INSIGHTS-2', 'generatedAt': datetime.now(timezone.utc).isoformat(),
         'account': {key: user[key] for key in ('persona', 'name', 'revision')},
         'basis': {'baseDate': BASE_DATE, 'horizonDays': HORIZON_DAYS, 'historyScope': 'available_rows',
                   'historyLabel': '当前可见合成流水（非完整月报）'},
@@ -177,10 +218,42 @@ def build_insights(snapshot):
                       'minBalance': _yuan(minimum), 'minDay': points.index(minimum),
                       'breachDays': len(breaches), 'firstBreachDay': breaches[0] if breaches else None,
                       'gap': _yuan(gap), 'points': [_yuan(balance) for balance in points]},
-        'spending': {'rowCount': len(rows), 'outflow': _yuan(outflow), 'inflow': _yuan(inflow),
+        'spending': {'rowCount': len(rows), 'outflow': _yuan(outflow),
+                     'consumptionOutflow': _yuan(consumption_outflow), 'inflow': _yuan(inflow),
                      'net': _yuan(inflow - outflow), 'categories': categories,
                      'largest': largest[:5], 'review': review},
         'upcoming': upcoming, 'subscriptions': subscriptions, 'actions': actions,
+        'healthCheck': {'level': health_level, 'headline': health_headline,
+                        'summary': health_summary, 'signals': health_signals},
+        'hiddenCosts': {
+            'smallOutflowThreshold': _yuan(SMALL_OUTFLOW_CENTS),
+            'smallOutflowCount': len(small_outflows),
+            'smallOutflowAmount': _yuan(hidden_amount),
+            'smallOutflows': small_outflows[:8],
+            'flaggedRenewalAmount': _yuan(flagged_renewal),
+            'flaggedSubscriptions': flagged_subscriptions,
+        },
+        'explainability': {
+            'dataUsed': [
+                f'{len(rows)} 笔当前可见合成流水',
+                f'{len(snapshot["bills"])} 项已登记账单',
+                f'{sum(1 for sub in snapshot["subscriptions"] if sub["status"] == "active")} 项有效订阅',
+                f'{len(points)} 个逐日现金节点',
+            ],
+            'rules': [
+                '现金体检比较未来最低现金与用户自己设定的现金底线。',
+                '小额支出只统计当前可见、单笔不超过 ¥100 且不属于账户调拨或还款的出账。',
+                '隐性续费只列出服务端已标记为低使用或重复的有效订阅。',
+                '流水核对只按指令型备注或单笔出账达到 ¥2,000 的确定性规则触发。',
+            ],
+            'uncertainties': [
+                '当前流水不是完整银行月报，无法代表所有现实支出。',
+                '尚未记录的现金消费、其他账户和临时账单不会自动出现在结果中。',
+                '预计工资和未来到账都不是到账保证。',
+                '规则提醒不是欺诈、信用或投资风险的最终判断。',
+            ],
+            'decisionBoundary': 'TROPOS 负责发现、计算和解释；转账、取消续费、付款和画像变更仍由用户逐项确认。',
+        },
         'outcomes': {'cancelledCount': cancelled_count, 'avoidedUpcomingOutflow': _yuan(avoided),
                      'receipts': cancelled_receipts},
         'assumptions': [

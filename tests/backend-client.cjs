@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {spawn}=require('node:child_process'),os=require('node:os');
 const root=path.resolve(__dirname,'..'),tmp=fs.mkdtempSync(path.join(os.tmpdir(),'tropos-client-'));
 const env={...process.env};delete env.DEEPSEEK_API_KEY;delete env.TROPOS_LLM_API_KEY;
-const python=fs.existsSync(path.join(root,'.venv/bin/python'))?path.join(root,'.venv/bin/python'):'python3';
+const python=fs.existsSync(path.join(root,'.venv/bin/python'))?path.join(root,'.venv/bin/python'):(process.env.PYTHON||(process.platform==='win32'?'python':'python3'));
 const child=spawn(python,['-m','backend.server','--port','0','--db',path.join(tmp,'bank.sqlite')],{cwd:root,env,stdio:['ignore','pipe','pipe']});
 let errors='';child.stderr.on('data',data=>errors+=data.toString());
 const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Server did not start: '+errors)),10000);let out='';child.stdout.on('data',data=>{out+=data;const match=out.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0])}});child.on('exit',code=>{clearTimeout(timer);reject(new Error('Server exited '+code+': '+errors))})});

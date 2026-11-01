@@ -31,7 +31,12 @@ ROOT_FILES = frozenset({"README.md", "VERSION", "index.html", "demo.html", "stud
                         "Dockerfile", ".env.example", "requirements.txt"})
 DEPLOY_FILES = frozenset({"README.md", "prepare.sh", "docker-compose.yml", "docker-compose.yaml",
                           "compose.yml", "compose.yaml", "Caddyfile", "Dockerfile", "nginx.conf",
-                          "build-context.dockerignore", ".dockerignore", ".env.example", "env.production.example"})
+                          "build-context.dockerignore", ".dockerignore", ".env.example", "env.production.example",
+                          "docker-compose.update-3.2.3.yml", "docker-compose.update-3.2.4.yml",
+                          "docker-compose.update-3.2.5.yml", "docker-compose.update-3.2.6.yml",
+                          "docker-compose.update-3.2.7.yml", "docker-compose.update-3.2.8.yml",
+                          "docker-compose.update-3.2.9.yml",
+                          "prepare-meituan-connector.sh"})
 PUBLIC_SUFFIXES = frozenset({".py", ".js", ".mjs", ".cjs", ".html", ".css", ".json", ".md",
                              ".txt", ".svg", ".ico", ".png", ".jpg", ".jpeg", ".webp",
                              ".gif", ".avif", ".woff", ".woff2", ".ttf", ".otf", ".sh",

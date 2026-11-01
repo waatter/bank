@@ -1,0 +1,15 @@
+services:
+  tropos:
+    image: tropos-candidate:3.2.9-20261101
+    env_file:
+      - .env.production
+    environment:
+      TROPOS_MEITUAN_NODE_BIN: /usr/local/bin/node
+      TROPOS_MEITUAN_SKILL_DIR: /opt/tropos-meituan/skill
+      TROPOS_MEITUAN_PASSPORT_JS: /opt/tropos-meituan/runtime/package/dist/index.js
+      TROPOS_MEITUAN_STATE_DIR: /opt/tropos-meituan/runtime/state
+    volumes:
+      - ./data:/data
+      - ./meituan/skill:/opt/tropos-meituan/skill:ro
+      - ./meituan/runtime/package:/opt/tropos-meituan/runtime/package:ro
+      - ./meituan/runtime/state:/opt/tropos-meituan/runtime/state

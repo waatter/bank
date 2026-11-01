@@ -469,7 +469,10 @@ def deployment_checks(root):
         return checks
     add('docker_version', bool(re.search(r'^COPY\s+VERSION\s+index.html\s+demo.html\s+study.html\s+\./\s*$', docker, re.M)), 'Dockerfile 包含 VERSION 和页面')
     add('docker_user_health', 'USER tropos' in docker and '--uid 10001' in docker and
-        'HEALTHCHECK' in docker and "127.0.0.1:8765/api/health" in docker, '非 root 用户及回环 health 声明')
+        'HEALTHCHECK' in docker and "127.0.0.1:8765/api/health" in docker and
+        'FROM node:22-bookworm-slim AS node_runtime' in docker and
+        'COPY --from=node_runtime /usr/local/bin/node /usr/local/bin/node' in docker,
+        '非 root 用户、回环 health 及 Node 运行时声明')
     app = compose.split('  caddy:', 1)[0]
     add('readonly_sqlite_tmpfs', all(item in app for item in (
         'read_only: true', 'tmpfs:', '/tmp:size=64m,mode=1777', './data:/data', '/data/tropos.sqlite3',
@@ -481,6 +484,13 @@ def deployment_checks(root):
     add('build_context', 'context: ./build-context' in compose and
         (ignore.splitlines() or [None])[0] == '**' and all('!' + item in ignore for item in ('Dockerfile', 'VERSION', 'study.html', 'backend/*.py', 'backend/fixtures.json', 'assets/*.css', 'assets/fonts/*.woff2', 'reports/evaluation.json', 'reports/intent-rules.json')),
         '模板使用隔离 build-context 和默认拒绝的打包清单；上传前仍需实物检查')
+    add('meituan_connector_mounts', all(item in app for item in (
+        'TROPOS_MEITUAN_NODE_BIN: /usr/local/bin/node',
+        'TROPOS_MEITUAN_STATE_DIR: /opt/tropos-meituan/runtime/state',
+        './meituan/skill:/opt/tropos-meituan/skill:ro',
+        './meituan/runtime/package:/opt/tropos-meituan/runtime/package:ro',
+        './meituan/runtime/state:/opt/tropos-meituan/runtime/state')),
+        '官方程序只读挂载；按用户隔离的授权状态使用独立持久化目录')
     try:
         sources = context_manifest(root)
         add('context_sources', True, '白名单源文件齐全且无符号链接；含运行必需的两份 backend JSON 与字体许可')

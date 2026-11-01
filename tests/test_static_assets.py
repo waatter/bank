@@ -26,6 +26,22 @@ class AssetParser(HTMLParser):
 
 
 class StaticAssetsTests(unittest.TestCase):
+    def test_async_auth_forms_keep_a_stable_form_reference(self):
+        source = (ROOT / 'assets' / 'demo.js').read_text(encoding='utf-8')
+        self.assertNotIn('event.currentTarget.reset()', source)
+        auth_forms = (
+            'loginForm', 'mfaLoginForm', 'registerForm', 'forgotPasswordForm',
+            'resetPasswordForm', 'bindEmailForm', 'mfaEnableForm', 'mfaDisableForm',
+        )
+        for form_id in auth_forms:
+            with self.subTest(form=form_id):
+                marker = "$('#" + form_id + "').addEventListener('submit',async event=>{"
+                start = source.index(marker)
+                end = source.index("\n});", start)
+                handler = source[start:end]
+                self.assertIn('const form=event.currentTarget,data=new FormData(form)', handler)
+                self.assertIn('form.reset()', handler)
+
     def test_every_runtime_asset_is_local_and_served_with_correct_type(self):
         with tempfile.TemporaryDirectory() as directory:
             server = create_server(port=0, db_path=Path(directory) / 'bank.sqlite',
@@ -66,6 +82,67 @@ class StaticAssetsTests(unittest.TestCase):
                 server.shutdown()
                 server.server_close()
                 thread.join()
+
+
+class StaticQueryTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.server = create_server(
+            port=0,
+            db_path=Path(self.directory.name) / 'bank.sqlite',
+            planner=IntentPlanner(ModelConfig()),
+        )
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+        self.directory.cleanup()
+
+    def request(self, target, method='GET'):
+        connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=10)
+        connection.request(method, target)
+        response = connection.getresponse()
+        body = response.read()
+        connection.close()
+        return response.status, body
+
+    def test_email_verification_and_reset_links_can_bootstrap_demo(self):
+        token = 'trp_' + 'a' * 44
+        for key in ('verify', 'reset'):
+            with self.subTest(key=key):
+                status, body = self.request('/demo.html?' + key + '=' + token)
+                self.assertEqual(status, 200)
+                self.assertIn(b'<!doctype html>', body.lower())
+        status, body = self.request('/demo.html?verify=' + token, method='HEAD')
+        self.assertEqual(status, 200)
+        self.assertEqual(body, b'')
+
+    def test_other_expected_demo_bootstrap_parameters_remain_bounded(self):
+        access = 'trp_' + 'b' * 28
+        for query in ('access=' + access, 'director=1', 'access=' + access + '&director=1'):
+            with self.subTest(query=query):
+                status, _ = self.request('/demo.html?' + query)
+                self.assertEqual(status, 200)
+
+    def test_unrecognised_repeated_or_ambiguous_queries_stay_rejected(self):
+        token = 'trp_' + 'a' * 44
+        rejected = (
+            '/demo.html?unknown=1',
+            '/demo.html?verify=short',
+            '/demo.html?verify=' + token + '&verify=' + token,
+            '/demo.html?verify=' + token + '&reset=' + token,
+            '/demo.html?ver%69fy=' + token,
+            '/index.html?verify=' + token,
+            '/api/health?verify=' + token,
+        )
+        for target in rejected:
+            with self.subTest(target=target):
+                status, body = self.request(target)
+                self.assertEqual(status, 400)
+                self.assertIn(b'INVALID_PATH', body)
 
 
 if __name__ == '__main__':

@@ -1,14 +1,11 @@
 @echo off
-cd /d "%~dp0.."
-curl.exe --noproxy "*" -sSf "http://127.0.0.1:8765/api/health" >nul 2>&1
+setlocal
+chcp 65001 >nul
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0start_tropos.ps1"
 if errorlevel 1 (
-  start "" /b pythonw "%~dp0run_windows.py"
-  timeout /t 2 /nobreak >nul
+  echo.
+  echo TROPOS 启动失败。请查看上面的原因，或打开 .local\server.err.log。
+  pause
+  exit /b 1
 )
-set "TROPOS_ACCESS="
-for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command "$p='.local\lan-access.json'; if(Test-Path -LiteralPath $p){(Get-Content -Raw -LiteralPath $p|ConvertFrom-Json).accessToken}"`) do set "TROPOS_ACCESS=%%T"
-if defined TROPOS_ACCESS (
-  start "" "http://127.0.0.1:8765/demo.html?access=%TROPOS_ACCESS%"
-) else (
-  start "" "http://127.0.0.1:8765/demo.html"
-)
+endlocal

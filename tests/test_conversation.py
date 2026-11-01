@@ -139,6 +139,21 @@ class ConversationTests(unittest.TestCase):
                 self.assertNotIn('subscriptionProposal', result)
         self.assertEqual(self.finances(user=self.a), before)
 
+    def test_birthday_and_monthly_advice_are_personalized_read_only_plans(self):
+        before = self.finances()
+        for text, kind in (("这个月是我的生日，可以结合财务情况给我一个生日安排吗？", "life_event"),
+                           ("根据我的财务情况，给出本月和下月的支出建议", "monthly_spending"),
+                           ("给我一个双十一购买方案", "shopping_festival")):
+            with self.subTest(text=text):
+                result = self.turn(text)
+                advice = result['financialAdvice']
+                self.assertEqual(advice['kind'], kind)
+                self.assertLessEqual(advice['recommendedBudget'], advice['safeCap'])
+                self.assertLessEqual(sum(step['amount'] or 0 for step in advice['steps']), advice['safeCap'])
+                self.assertNotIn('proposal', result)
+                self.assertNotIn('transaction', result)
+        self.assertEqual(self.finances(), before)
+
     def test_quoted_subscription_id_must_match_in_full(self):
         for text in ('取消订阅「cs1」', '取消订阅「s10」'):
             with self.subTest(text=text):

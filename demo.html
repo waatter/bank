@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TROPOS 3.1 · 一句话办完一串事</title>
+  <title>TROPOS 3.2 · 会解释的 AI 财务体检</title>
   <link rel="icon" href="assets/tropos-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/demo.css">
   <link rel="stylesheet" href="assets/profile-ui.css">
@@ -45,9 +45,10 @@
 </svg>
 
 <header class="top">
-  <a class="brand" href="index.html" title="回到项目介绍"><img class="brand-mark" src="assets/tropos-mark.svg" alt=""><span class="brand-name">TROPOS<small class="version-mark">3.1</small></span></a>
+  <a class="brand" href="index.html" title="回到项目介绍"><img class="brand-mark" src="assets/tropos-mark.svg" alt=""><span class="brand-name">TROPOS<small class="version-mark">3.2</small></span></a>
   <span class="pill" id="runtimeStatus">演示沙箱 · 合成数据</span>
   <button type="button" class="btn sm dr-open" data-dr="open">3 分钟演示</button>
+  <button type="button" class="btn sm simple-mode-toggle" id="simpleModeToggle" aria-pressed="false">长辈友好</button>
   <nav class="tabs" aria-label="页面">
     <button class="active" data-view="personal" data-group="me"><svg class="ic"><use href="#i-users"/></svg>我的安排</button>
     <button data-view="console" data-group="home"><svg class="ic"><use href="#i-window"/></svg>银行助手</button>
@@ -56,8 +57,64 @@
     <button data-view="bills" data-group="book"><svg class="ic"><use href="#i-book"/></svg>账本<em class="count" id="auditCount">0</em></button>
     <button data-view="guard" data-group="safe"><svg class="ic"><use href="#i-shield"/></svg>安全</button>
   </nav>
-  <div class="windows"><span>演示账户</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
+  <div class="windows"><span id="accountModeLabel">演示账户</span><div id="personaSwitch" style="display:flex;gap:4px" role="tablist" aria-label="切换示例用户"></div></div>
+  <button type="button" class="btn sm account-button" id="accountButton">注册 / 登录</button>
 </header>
+
+<div class="auth-overlay" id="authOverlay" hidden>
+  <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <button type="button" class="auth-close" id="authClose" aria-label="关闭">×</button>
+    <div id="authForms">
+      <span class="pill">独立用户空间</span><h1 id="authTitle">登录或创建你的账户</h1>
+      <p>每个账户都有唯一用户 ID、独立合成账本、独立模型密钥和服务授权。密码不会以明文保存。</p>
+      <div class="auth-grid">
+        <form id="loginForm" class="auth-form">
+          <h2>登录</h2>
+          <label>用户名（仅英文、数字或下划线）<input name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" title="请输入 3–32 位英文字母、数字或下划线" placeholder="例如：beijideqie"></label>
+          <label>密码<input name="password" type="password" autocomplete="current-password" required minlength="10" maxlength="128"></label>
+          <button class="btn solid" type="submit">登录我的账户</button>
+          <button class="btn quiet" type="button" id="forgotPasswordButton">忘记密码</button>
+        </form>
+        <form id="registerForm" class="auth-form">
+          <h2>注册</h2>
+          <label>显示名称<input name="displayName" autocomplete="name" required maxlength="30"></label>
+          <label>用户名（仅英文、数字或下划线）<input name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" title="请输入 3–32 位英文字母、数字或下划线" placeholder="例如：beijideqie"></label>
+          <label>邮箱<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+          <label>密码（至少 10 位）<input name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="128"></label>
+          <label>初始合成财务样例<select name="templatePersona"><option value="A">灵活收入</option><option value="B">固定支出较高</option><option value="C" selected>稳健积累</option></select></label>
+          <button class="btn solid" type="submit">创建独立账户</button>
+        </form>
+      </div>
+      <form id="mfaLoginForm" class="auth-form auth-single" hidden>
+        <h2>完成第二步验证</h2><p>输入验证器中的 6 位动态验证码，或一条未使用的恢复码。</p>
+        <label>验证码或恢复码<input name="code" autocomplete="one-time-code" required maxlength="32"></label>
+        <button class="btn solid" type="submit">完成登录</button>
+      </form>
+      <form id="forgotPasswordForm" class="auth-form auth-single" hidden>
+        <h2>找回密码</h2><p>填写用户名或已验证邮箱。无论账户是否存在，页面都会返回相同提示。</p>
+        <label>用户名或邮箱<input name="identifier" autocomplete="username" required maxlength="254"></label>
+        <button class="btn solid" type="submit">发送重置邮件</button>
+      </form>
+      <form id="resetPasswordForm" class="auth-form auth-single" hidden>
+        <h2>设置新密码</h2>
+        <label>新密码（至少 10 位）<input name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="128"></label>
+        <button class="btn solid" type="submit">重置密码并撤销旧会话</button>
+      </form>
+    </div>
+    <div id="memberPanel" hidden>
+      <span class="pill">已登录</span><h1 id="memberName">我的账户</h1>
+      <p id="memberIdentity"></p><p>当前账本、模型 API Key 与美团授权都只属于这个用户 ID。</p>
+      <div class="security-status"><div><strong>邮箱</strong><span id="memberEmailStatus"></span></div><div><strong>多因素认证</strong><span id="memberMfaStatus"></span></div></div>
+      <div class="auth-actions"><button type="button" class="btn" id="bindEmailButton">绑定／更换邮箱</button><button type="button" class="btn" id="resendEmailButton">重新发送验证邮件</button><button type="button" class="btn" id="setupMfaButton">开启 MFA</button><button type="button" class="btn" id="disableMfaButton">关闭 MFA</button></div>
+      <form id="bindEmailForm" class="auth-form auth-single" hidden><h2>绑定或更换邮箱</h2><label>新邮箱<input name="email" type="email" autocomplete="email" required maxlength="254"></label><label>当前密码<input name="password" type="password" autocomplete="current-password" required></label><label>MFA 验证码（未开启可留空）<input name="code" autocomplete="one-time-code" maxlength="32"></label><button class="btn solid" type="submit">确认并发送验证邮件</button></form>
+      <div id="mfaSetupPanel" class="auth-form auth-single" hidden><h2>绑定验证器</h2><p>在验证器 App 中选择“手动输入密钥”。密钥只显示在这次设置过程中。</p><code id="mfaSecret"></code><form id="mfaEnableForm"><label>6 位动态验证码<input name="code" autocomplete="one-time-code" required maxlength="6"></label><button class="btn solid" type="submit">验证并开启</button></form></div>
+      <form id="mfaDisableForm" class="auth-form auth-single" hidden><h2>关闭 MFA</h2><label>当前密码<input name="password" type="password" autocomplete="current-password" required></label><label>动态验证码或恢复码<input name="code" autocomplete="one-time-code" required></label><button class="btn solid" type="submit">确认关闭</button></form>
+      <div id="recoveryCodesPanel" class="auth-form auth-single" hidden><h2>保存恢复码</h2><p>每条只能使用一次。请立即保存，不会再次显示。</p><pre id="recoveryCodes"></pre></div>
+      <button type="button" class="btn solid" id="logoutButton">退出登录并返回演示账户</button>
+    </div>
+    <p class="auth-message" id="authMessage" aria-live="polite"></p>
+  </div>
+</div>
 
 <main class="content">
   <nav class="subtabs" id="subtabs" aria-label="子页面" hidden></nav>
@@ -66,6 +123,7 @@
   <section class="view" id="view-shopping"><div id="shoppingMount"></div></section>
   <section class="view" id="view-wallet"><div id="walletMount"></div></section>
   <section class="view" id="view-guard"><div id="guardMount"></div></section>
+  <section class="view" id="view-models"><div id="modelCenterMount"></div></section>
   <section class="view" id="view-family"><div id="familyMount"></div></section>
   <section class="view" id="view-budget"><div id="budgetMount"></div></section>
   <section class="view" id="view-life"><div id="lifeMount"></div></section>
@@ -89,6 +147,7 @@
     <div class="desk">
       <article class="panel chat">
         <div class="block-head"><div><h2>说说你想安排的事</h2><p id="chatHint"></p></div><button class="btn sm" data-act="recoverChat">恢复办理记录</button></div>
+        <div class="chat-model-bar"><span id="assistantModelStatus">当前理解服务：正在读取…</span><button class="btn sm quiet" data-act="go" data-view="models">模型中心</button></div>
         <div class="chat-log" id="chatLog" aria-live="polite"></div>
         <div class="suggest" id="suggest"></div>
         <form class="composer" id="composer">
@@ -184,7 +243,7 @@
     <div class="figures" id="billKpis"></div>
     <div class="ledger-grid">
       <article class="panel">
-        <div class="block-head"><div><h2>当前可见流水</h2></div><button class="btn sm" data-act="go" data-view="actions">查看现金行动</button></div>
+        <div class="block-head"><div><h2>当前可见流水</h2></div><button class="btn sm" data-act="go" data-view="actions">查看财务体检</button></div>
         <div class="ribbon" id="catbar"></div>
         <div class="ribbon-legend" id="catlegend"></div>
         <div style="overflow-x:auto"><table class="table"><thead><tr><th>交易</th><th>分类</th><th>时间</th><th class="amt">金额</th></tr></thead><tbody id="txBody"></tbody></table></div>

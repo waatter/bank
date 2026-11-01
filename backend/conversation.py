@@ -10,7 +10,9 @@ import re
 import threading
 
 from .insights import build_insights
-from .model import agent_response, deterministic_plan, rule_intent, _money, _safety_guard, _TRANSFER_LANGUAGE
+from .model import (advice_request_kind, advice_response, agent_response, deterministic_plan,
+                    financial_advice_context, rule_intent, web_search_requested,
+                    _money, _safety_guard, _TRANSFER_LANGUAGE)
 from .service import BankError, cents, now, uid
 
 
@@ -19,8 +21,9 @@ UNSAFE = re.compile(r'(?:不用|无需|不必|跳过|绕过|自动|直接).{0,12
 
 
 class ConversationService:
-    def __init__(self, bank, planner, subscriptions, ops=None):
+    def __init__(self, bank, planner, subscriptions, ops=None, planner_for_user=None):
         self.bank, self.planner, self.subscriptions, self.ops = bank, planner, subscriptions, ops
+        self.planner_for_user = planner_for_user or (lambda _user_id: self.planner)
         self._locks, self._lock_guard = {}, threading.Lock()
         with bank._db(True) as db:
             db.execute('CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,version INTEGER NOT NULL,content TEXT NOT NULL)')
@@ -79,6 +82,13 @@ class ConversationService:
                 result.pop('mission', None)
         snapshot = result['snapshot']
         if snapshot['profile'].get('readConsent'):
+            if result.get('financialAdvice'):
+                advice = result['financialAdvice']
+                if advice.get('accountRevision') != snapshot['user']['revision']:
+                    advice['stale'] = True
+                    warning = '账户或画像已经变化，这份方案只保留为历史记录；请重新提问后按最新账本生成。'
+                    if warning not in advice.setdefault('warnings', []):
+                        advice['warnings'].insert(0, warning)
             if result.get('insights') or result.get('subscriptionOptions') is not None or result.get('subscriptionFocus'):
                 insights = build_insights(snapshot)
                 result['insights'] = insights
@@ -90,7 +100,7 @@ class ConversationService:
             if result.get('plan'):
                 result['plan'] = deterministic_plan(snapshot)
         else:
-            for field in ('plan', 'insights', 'subscriptionOptions', 'subscriptionFocus', 'billDetail'):
+            for field in ('plan', 'financialAdvice', 'insights', 'subscriptionOptions', 'subscriptionFocus', 'billDetail'):
                 result.pop(field, None)
         return result
 
@@ -133,19 +143,29 @@ class ConversationService:
                 result.update(conversation={'id': replay['conversation_id'], 'version': current_version}, replayed=True)
                 return result
             context = content['context']
+            planner = self.planner_for_user(user_id)
             # Any provider request happens before acquiring the atomic write lock.
             # Typed context handlers remain rules even when a model is configured.
             compact = re.sub(r'\s+', '', message)
             contextual = (UNSAFE.search(message) or re.search(r'订阅|会员|续费|取消|回执|改成|改为|更正|确认', message)
                           or (context.get('topic') == 'transfer' and not _TRANSFER_LANGUAGE.search(message)))
-            consent = self.bank.snapshot(user_id)['profile'].get('readConsent')
-            if (consent and self.ops is not None and _safety_guard(message, strict=True) is None
+            advice_snapshot = self.bank.snapshot(user_id)
+            consent = advice_snapshot['profile'].get('readConsent')
+            if consent and advice_request_kind(message) and _safety_guard(message, strict=True) is None:
+                planned = planner.advise(message, financial_advice_context(advice_snapshot, message))
+            elif (consent and self.ops is not None and _safety_guard(message, strict=True) is None
                     and self.ops.wants_mission(message, self.ops.split(message))):
                 # Compound and card/wealth/family requests become a task list; the optional
                 # model split also runs here, before the write lock.
-                planned = {'mode': 'mission', 'split': self.planner.decompose(message)}
+                planned = {'mode': 'mission', 'split': planner.decompose(message)}
             elif not contextual and consent:
-                planned = self.planner.understand(message)
+                local = rule_intent(message)
+                if web_search_requested(message):
+                    planned = planner.answer_with_web(message)
+                elif local["action"] == "clarify":
+                    planned = planner.answer_conversation(message, content["messages"])
+                else:
+                    planned = planner.understand(message)
             else:
                 planned = {'mode': 'rules', 'intent': rule_intent(message), 'trace': [
                     {'engine': 'METIS', 'detail': '由当前消息与明确的服务端办理对象进行规则处理。'}]}
@@ -364,6 +384,10 @@ class ConversationService:
         compact = re.sub(r'\s+', '', text).rstrip('。！!')
         if UNSAFE.search(text):
             return self._response('每个变更操作都需要你单独核对并确认。请说明具体事项，当前没有执行或代确认。')
+        if planned.get('financialAdvice'):
+            context.clear()
+            context['topic'] = 'advice'
+            return advice_response(self.bank, user_id, text, planner, prepared=planned)
         # Follow-ups are deliberately narrow and typed. General prose cannot
         # synthesize an executable action from the earlier conversation.
         if context.get('topic') == 'mission' and re.search(r'改成|改为|更正|换成|不是.+是', compact):
@@ -524,7 +548,7 @@ class ConversationService:
                 return self._response('以下是已登记账单的金额和到期日；尚未支付。它们已纳入 30 天现金路径。', 'bills', insights=insights,
                                       billDetail={'title': '核对这几笔待付账单', 'items': matching,
                                                   'summary': f'当前最低预计余额 ¥{snapshot["cash"]["min"]:,.2f}，现金底线缺口 ¥{insights["liquidity"]["gap"]:,.2f}。'})
-        result = agent_response(self.bank, user_id, text, planner)
+        result = agent_response(self.bank, user_id, text, planner, prepared=planned)
         context['topic'] = result['intent']['action']
         context['activeKind'] = None
         return result

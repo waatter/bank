@@ -24,6 +24,8 @@ from .life_service import LifeService
 from .shopping import ShoppingService
 from .subscription_service import SubscriptionService
 from .conversation import ConversationService
+from .financial_glossary import glossary
+from .model_center import ModelCenter
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -51,6 +53,8 @@ STATIC_FILES = {
     "/study.html": "study.html", "/assets/study.js": "assets/study.js", "/assets/study.css": "assets/study.css",
 }
 IDENTIFIER = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+QUERY_TOKEN = re.compile(r"^[A-Za-z0-9_-]{20,200}$")
+ACCESS_TOKEN = re.compile(r"^[A-Za-z0-9_-]{24,128}$")
 
 
 class HttpError(Exception):
@@ -86,7 +90,7 @@ class TroposServer(ThreadingHTTPServer):
     request_queue_size = 64
 
     def __init__(self, address, service, planner=None, root=ROOT, *, access_token=None,
-                 allowed_hosts=(), allow_unauthenticated_lan=False):
+                 allowed_hosts=(), allow_unauthenticated_lan=False, model_admin=False):
         host = address[0]
         try:
             loopback = host == "localhost" or ipaddress.ip_address(host).is_loopback
@@ -119,8 +123,10 @@ class TroposServer(ThreadingHTTPServer):
         self.shopping = ShoppingService(service)
         self.ops = AgentOps(service)
         self.planner = planner if planner is not None else IntentPlanner()
+        self.model_center = ModelCenter(service, self.planner, allow_runtime_config=model_admin)
         self.subscriptions = SubscriptionService(service)
-        self.conversations = ConversationService(service, self.planner, self.subscriptions, self.ops)
+        self.conversations = ConversationService(service, self.planner, self.subscriptions, self.ops,
+                                                 planner_for_user=self.model_center.planner_for)
         self.root = Path(root).resolve()
         if ":" in host:
             self.address_family = socket.AF_INET6
@@ -194,7 +200,7 @@ class TroposHandler(BaseHTTPRequestHandler):
             parsed = urllib.parse.urlsplit(self.path)
         except ValueError:
             raise HttpError(400, "INVALID_PATH", "请求路径格式不正确。") from None
-        if parsed.scheme or parsed.netloc or parsed.query or parsed.fragment or not parsed.path.startswith("/"):
+        if parsed.scheme or parsed.netloc or parsed.fragment or not parsed.path.startswith("/"):
             raise HttpError(400, "INVALID_PATH", "请求路径格式不正确。")
         if re.search(r"%(?![0-9a-fA-F]{2})", parsed.path):
             raise HttpError(400, "INVALID_PATH", "请求路径格式不正确。")
@@ -204,7 +210,40 @@ class TroposHandler(BaseHTTPRequestHandler):
             raise HttpError(400, "INVALID_PATH", "请求路径编码不正确。") from None
         if "\\" in path or "\x00" in path or any(part in {".", ".."} for part in path.split("/")):
             raise HttpError(400, "INVALID_PATH", "不允许目录路径。")
+        if parsed.query and not self._allowed_static_query(path, parsed.query):
+            raise HttpError(400, "INVALID_PATH", "请求路径格式不正确。")
         return path
+
+    def _allowed_static_query(self, path, query):
+        """Allow only the browser bootstrap parameters consumed by demo.html.
+
+        API routes and all other static files remain query-free.  Reject encoded,
+        repeated or ambiguous fields before the page sees them so credentials and
+        one-time account tokens cannot be smuggled through alternate spellings.
+        """
+        if self.command not in {"GET", "HEAD"} or path != "/demo.html" or len(query) > 1024 or "%" in query:
+            return False
+        try:
+            fields = urllib.parse.parse_qsl(
+                query, keep_blank_values=True, strict_parsing=True, max_num_fields=4
+            )
+        except ValueError:
+            return False
+        if not fields or len(fields) != len({key for key, _ in fields}):
+            return False
+        values = dict(fields)
+        if set(values) - {"verify", "reset", "access", "director"}:
+            return False
+        if "verify" in values and "reset" in values:
+            return False
+        for key in {"verify", "reset"} & set(values):
+            if not QUERY_TOKEN.fullmatch(values[key]):
+                return False
+        if "access" in values and not ACCESS_TOKEN.fullmatch(values["access"]):
+            return False
+        if "director" in values and values["director"] != "1":
+            return False
+        return True
 
     def _body(self):
         if self.headers.get("Transfer-Encoding"):
@@ -228,14 +267,17 @@ class TroposHandler(BaseHTTPRequestHandler):
             raise HttpError(400, "INVALID_JSON", "请求正文必须是 JSON 对象。")
         return value
 
-    def _user(self):
+    def _bearer(self):
         headers = self.headers.get_all("Authorization", [])
         if len(headers) != 1 or not headers[0].startswith("Bearer ") or len(headers[0]) > 512:
-            raise HttpError(401, "AUTH_REQUIRED", "请先选择模拟账户登录。")
+            raise HttpError(401, "AUTH_REQUIRED", "请先登录账户。")
         token = headers[0][7:]
         if not token or any(c.isspace() for c in token):
-            raise HttpError(401, "AUTH_REQUIRED", "模拟登录已失效，请重新登录。")
-        return self.server.service.authenticate(token)
+            raise HttpError(401, "AUTH_REQUIRED", "登录已失效，请重新登录。")
+        return token
+
+    def _user(self):
+        return self.server.service.authenticate(self._bearer())
 
     def _static(self, path):
         relative = STATIC_FILES.get(path)
@@ -268,15 +310,59 @@ class TroposHandler(BaseHTTPRequestHandler):
             return self._static(path)
         if method == "GET" and path == "/api/health":
             return self._json(200, {"ok": True, "sandbox": True, "authentication": "simulated-persona-session",
+                                    "memberAuthentication": "password-session",
                                     "version": APP_VERSION,
                                     "modelMode": self.server.planner.mode, "service": "TROPOS synthetic bank"})
+        if method == "POST" and path == "/api/auth/register":
+            body = _object(self._body(), {"username", "password", "email", "displayName", "templatePersona"},
+                           {"username", "password", "email", "displayName", "templatePersona"})
+            return self._json(201, service.register(body))
+        if method == "POST" and path == "/api/auth/login":
+            body = _object(self._body(), {"username", "password"}, {"username", "password"})
+            return self._json(200, service.login(body))
+        if method == "POST" and path == "/api/auth/email/verify":
+            body = _object(self._body(), {"token"}, {"token"})
+            return self._json(200, service.verify_email(body["token"]))
+        if method == "POST" and path == "/api/auth/password/forgot":
+            body = _object(self._body(), {"identifier"}, {"identifier"})
+            return self._json(200, service.request_password_reset(body["identifier"]))
+        if method == "POST" and path == "/api/auth/password/reset":
+            body = _object(self._body(), {"token", "password"}, {"token", "password"})
+            return self._json(200, service.reset_password(body["token"], body["password"]))
+        if method == "POST" and path == "/api/auth/mfa/complete":
+            body = _object(self._body(), {"challengeToken", "code"}, {"challengeToken", "code"})
+            return self._json(200, service.complete_mfa_login(body["challengeToken"], body["code"]))
         if method == "POST" and path == "/api/sessions":
             body = _object(self._body(), {"persona"}, {"persona"})
             if not isinstance(body["persona"], str) or body["persona"] not in {"A", "B", "C"}:
                 raise HttpError(400, "INVALID_PERSONA", "请选择 A、B 或 C 模拟账户。")
             return self._json(201, service.session(body["persona"]))
+        if method == "POST" and path == "/api/auth/logout":
+            token = self._bearer()
+            service.authenticate(token)
+            _object(self._body(), set())
+            service.logout(token)
+            return self._json(200, {"ok": True})
         uid = self._user()
-        body = self._body() if method in {"POST", "PUT"} else None
+        body = self._body() if method in {"POST", "PUT", "DELETE"} else None
+        if method == "POST" and path == "/api/auth/email/resend":
+            _object(body, set())
+            return self._json(200, service.resend_email_verification(uid))
+        if method == "POST" and path == "/api/auth/email/bind":
+            _object(body, {"email", "password", "code", "confirmation"},
+                    {"email", "password", "code", "confirmation"})
+            _confirmed(body)
+            return self._json(200, service.bind_email(uid, body["email"], body["password"], body["code"]))
+        if method == "POST" and path == "/api/auth/mfa/setup":
+            _object(body, set())
+            return self._json(200, service.setup_mfa(uid))
+        if method == "POST" and path == "/api/auth/mfa/enable":
+            _object(body, {"code"}, {"code"})
+            return self._json(200, service.enable_mfa(uid, body["code"]))
+        if method == "POST" and path == "/api/auth/mfa/disable":
+            _object(body, {"password", "code", "confirmation"}, {"password", "code", "confirmation"})
+            _confirmed(body)
+            return self._json(200, service.disable_mfa(uid, body["password"], body["code"]))
         if method == "GET" and path == "/api/life":
             return self._json(200, self.server.life.get(uid))
         if method == "POST" and path == "/api/life/settings":
@@ -308,6 +394,40 @@ class TroposHandler(BaseHTTPRequestHandler):
             return self._json(200, service.snapshot(uid))
         if method == "GET" and path == "/api/insights":
             return self._json(200, service.insights(uid))
+        if method == "GET" and path == "/api/financial-glossary":
+            return self._json(200, glossary())
+        if method == "GET" and path == "/api/model-center":
+            return self._json(200, self.server.model_center.status(uid))
+        if method == "PUT" and path == "/api/model-center/selection":
+            body = _object(body, {"provider"}, {"provider"})
+            return self._json(200, self.server.model_center.select(uid, body["provider"]))
+        personal_match = re.fullmatch(r"/api/model-center/personal/providers/([^/]+)(?:/(test))?", path)
+        if personal_match and method == "PUT" and personal_match[2] is None:
+            body = _object(body, {"apiKey", "baseUrl", "model", "timeout", "confirmation"},
+                           {"apiKey", "baseUrl", "model", "timeout", "confirmation"})
+            _confirmed(body)
+            return self._json(200, self.server.model_center.configure_personal(
+                uid, _identifier(personal_match[1]), body))
+        if personal_match and method == "POST" and personal_match[2] == "test":
+            body = _object(body, {"confirmation"}, {"confirmation"})
+            _confirmed(body)
+            return self._json(200, self.server.model_center.test_personal(
+                uid, _identifier(personal_match[1])))
+        if personal_match and method == "DELETE" and personal_match[2] is None:
+            body = _object(body, {"confirmation"}, {"confirmation"})
+            _confirmed(body)
+            return self._json(200, self.server.model_center.delete_personal(
+                uid, _identifier(personal_match[1])))
+        match = re.fullmatch(r"/api/model-center/providers/([^/]+)(?:/(test))?", path)
+        if match and method == "PUT" and match[2] is None:
+            body = _object(body, {"apiKey", "baseUrl", "model", "timeout", "confirmation"},
+                           {"apiKey", "baseUrl", "model", "timeout", "confirmation"})
+            _confirmed(body)
+            return self._json(200, self.server.model_center.configure(uid, _identifier(match[1]), body))
+        if match and method == "POST" and match[2] == "test":
+            body = _object(body, {"confirmation"}, {"confirmation"})
+            _confirmed(body)
+            return self._json(200, self.server.model_center.test(uid, _identifier(match[1])))
         if method == "GET" and path == "/api/shopping/providers":
             return self._json(200, self.server.shopping.providers(uid))
         if method == "GET" and path == "/api/shopping/paotui":
@@ -325,15 +445,16 @@ class TroposHandler(BaseHTTPRequestHandler):
         if method == "GET" and path == "/api/shopping/paotui/addresses":
             return self._json(200, self.server.shopping.paotui_addresses(uid))
         if method == "POST" and path == "/api/shopping/paotui/preview":
-            body = _object(body, {"purchaseDetail", "addressId", "maxItemBudget", "remark"},
-                           {"purchaseDetail", "addressId", "maxItemBudget"})
+            body = _object(body, {"purchaseDetail", "addressId", "manualAddress", "maxItemBudget", "remark"},
+                           {"purchaseDetail", "maxItemBudget"})
             return self._json(201, self.server.shopping.paotui_preview(uid, body))
         if method == "GET" and path == "/api/shopping/paotui/orders":
             return self._json(200, self.server.shopping.paotui_orders(uid))
         paotui_preview = re.fullmatch(r"/api/shopping/paotui/previews/([^/]+)/confirm", path)
         if method == "POST" and paotui_preview:
             preview_id = _identifier(paotui_preview[1])
-            body = _object(body, {"confirmation", "confirmationToken", "requestKey", "highAmountConfirmation"},
+            body = _object(body, {"confirmation", "confirmationToken", "requestKey", "highAmountConfirmation",
+                                  "manualAddressToken"},
                            {"confirmation", "confirmationToken", "requestKey"})
             _confirmed(body)
             _identifier(body["requestKey"])
@@ -383,13 +504,19 @@ class TroposHandler(BaseHTTPRequestHandler):
             if set(body) - {"message"}:
                 if "requestKey" not in body:
                     raise HttpError(400, "TURN_KEY_REQUIRED", "请保留本条消息凭证后再继续办理。")
-                return self._json(200, self.server.conversations.turn(uid, body["message"],
-                                  conversation_id=body.get("conversationId"), request_key=body["requestKey"],
-                                  version=body.get("conversationVersion")))
-            return self._json(200, agent_response(service, uid, body["message"], self.server.planner, self.server.ops))
+                result = self.server.conversations.turn(uid, body["message"],
+                            conversation_id=body.get("conversationId"), request_key=body["requestKey"],
+                            version=body.get("conversationVersion"))
+                return self._json(200, self.server.model_center.decorate(uid, result))
+            result = agent_response(service, uid, body["message"],
+                                    self.server.model_center.planner_for(uid), self.server.ops)
+            return self._json(200, self.server.model_center.decorate(uid, result))
         match = re.fullmatch(r"/api/conversations/([^/]+)", path)
         if method == "GET" and match:
-            return self._json(200, self.server.conversations.get(uid, _identifier(match[1])))
+            result = self.server.conversations.get(uid, _identifier(match[1]))
+            if result.get("currentResult"):
+                self.server.model_center.decorate(uid, result["currentResult"])
+            return self._json(200, result)
         match = re.fullmatch(r"/api/subscription-proposals/([^/]+)(?:/(confirm|revoke))?", path)
         if match:
             proposal_id, action = _identifier(match[1]), match[2]
@@ -504,7 +631,7 @@ class TroposHandler(BaseHTTPRequestHandler):
 
 
 def create_server(host="127.0.0.1", port=8765, db_path=None, fixtures_path=None, *, service=None, planner=None, root=ROOT,
-                  access_token=None, allowed_hosts=(), allow_unauthenticated_lan=False):
+                  access_token=None, allowed_hosts=(), allow_unauthenticated_lan=False, model_admin=False):
     if service is None:
         from .service import BankService
         db_path = Path(db_path) if db_path else ROOT / ".local" / "tropos.sqlite3"
@@ -512,7 +639,7 @@ def create_server(host="127.0.0.1", port=8765, db_path=None, fixtures_path=None,
         service = BankService(str(db_path), str(fixtures_path) if fixtures_path else None)
     return TroposServer((host, port), service, planner=planner, root=root,
                         access_token=access_token, allowed_hosts=allowed_hosts,
-                        allow_unauthenticated_lan=allow_unauthenticated_lan)
+                        allow_unauthenticated_lan=allow_unauthenticated_lan, model_admin=model_admin)
 
 
 def main(argv=None):
@@ -521,6 +648,8 @@ def main(argv=None):
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--db", default=str(ROOT / ".local" / "tropos.sqlite3"))
     parser.add_argument("--lan-config", help="JSON file containing allowedHost and a LAN access mode")
+    parser.add_argument("--model-admin", action="store_true",
+                        help="allow runtime provider configuration in this process; use only for a trusted local demo")
     args = parser.parse_args(argv)
     access_token, allowed_hosts, allow_unauthenticated_lan = None, (), False
     if args.lan_config:
@@ -543,11 +672,14 @@ def main(argv=None):
     try:
         server = create_server(args.host, args.port, args.db, access_token=access_token,
                                allowed_hosts=allowed_hosts,
-                               allow_unauthenticated_lan=allow_unauthenticated_lan)
+                               allow_unauthenticated_lan=allow_unauthenticated_lan,
+                               model_admin=args.model_admin)
     except ValueError as error:
         parser.error(str(error))
     print(f"TROPOS 合成银行沙箱：http://{args.host}:{server.server_port}/demo.html", flush=True)
     print(f"理解模式：{server.planner.mode}；仅合成数据，模拟账户登录。", flush=True)
+    if args.model_admin:
+        print("本机模型管理员模式：允许在网页中配置当前服务进程；请勿用于公开免登录站点。", flush=True)
     if allow_unauthenticated_lan:
         print("局域网免口令模式：同一网络内拿到地址的设备均可访问模拟数据。", flush=True)
     try:
