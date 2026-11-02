@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-02",
+  "pages": 22,
+  "style": "kit native Chinese wp",
+  "class_matches_kit": true,
+  "logo_matches_supplied_svg": true,
+  "visible_fdu_content": false,
+  "overfull_boxes": false,
+  "missing_characters": false,
+  "all_pages_visually_reviewed": true,
+  "figures": 3,
+  "tables": 12,
+  "source_unchanged_after_final_render": true
+}

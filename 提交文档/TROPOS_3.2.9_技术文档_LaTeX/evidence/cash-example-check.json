@@ -1,0 +1,22 @@
+{
+  "salary_day_10_transfer_0": {
+    "minimum_yuan": 6100.0,
+    "first_minimum_day": 9
+  },
+  "salary_day_10_transfer_2000": {
+    "minimum_yuan": 4100.0,
+    "first_minimum_day": 9
+  },
+  "salary_day_10_transfer_2500": {
+    "minimum_yuan": 3600.0,
+    "first_minimum_day": 9
+  },
+  "salary_day_25_transfer_0": {
+    "minimum_yuan": 4500.0,
+    "first_minimum_day": 24
+  },
+  "salary_day_25_transfer_2000": {
+    "minimum_yuan": 2500.0,
+    "first_minimum_day": 24
+  }
+}

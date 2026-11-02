@@ -23,16 +23,35 @@
 后端以模块而非独立模型进程组织职责：\code{server.py} 提供接入，\code{service.py} 管理账户、身份和账本，\code{conversation.py} 与 \code{agent_ops.py} 编排任务，\code{model.py} 适配模型，\code{life_planner.py} 执行有限期规划。四引擎是贯穿这些模块的逻辑职责，不要求四个大模型分别驻留，也不暗示存在未实现的自主协商网络。
 
 \subsection{职责到工程模块的映射}
-\begin{table}[htbp]\centering\small
-\caption{四引擎职责及其可观察产物}
-\begin{tabularx}{\textwidth}{@{}L{2cm}YY@{}}\toprule
-职责 & 输入与判断 & 实现位置与产物 \\\midrule
-ETHOS 知己 & 目标、期限、风险声明、现金状态、用户更正 & 画像规则与 \code{service.py}；版本化画像、当前任务侧重及原因 \\
-METIS 善谋 & 账单、现金约束、允许的行动与候选方案 & \code{model.py}、\code{life_planner.py}、\code{agent_ops.py}；可核验方案与有序任务 \\
-KAIROS 择时 & 显式收入事件、当前日期条件、计划有效期与账户版本 & \code{service.py}、\code{life_service.py}、\code{conversation.py}；等待、失效、复核与重新生成 \\
-ARGOS 守诺 & 身份、授权、对象、金额、计划版本、确认与回执 & \code{server.py}、\code{service.py}、\code{agent_ops.py}；拒绝、澄清、二次核验及原子记账 \\\bottomrule
-\end{tabularx}
-\end{table}
+\begin{figure}[htbp]\centering
+\caption{四种职责围绕同一份用户状态协作}
+\begin{tikzpicture}[every node/.style={text=wpblue}]
+\foreach \x/\g/\en/\cn in {0/知/ETHOS/理解处境,4.1/谋/METIS/形成安排,8.2/时/KAIROS/复核变化}{
+  \node[draw=wpblue,circle,fill=wpcream,minimum size=15mm,line width=.8pt] (r\en) at (\x,0) {\Large\paperkaiti \g};
+  \node[align=center,font=\small] at (\x,-1.22) {\en\\\cn};
+}
+\draw[-{Latex[length=2mm]},wpblue] (rETHOS.east)--(rMETIS.west);
+\draw[-{Latex[length=2mm]},wpblue] (rMETIS.east)--(rKAIROS.west);
+\node[draw=wprust,circle,fill=wpcream,minimum size=15mm,line width=.8pt,text=wprust] (guard) at (4.1,-3.1) {\Large\paperkaiti 守};
+\node[align=center,font=\small,text=wprust] at (4.1,-4.3) {ARGOS 守诺\\授权、金额、版本与回执的跨层核验};
+\draw[wprust,dashed] (0,-1.65)--(0,-1.85)--(8.2,-1.85)--(8.2,-1.65);
+\draw[wprust,dashed] (guard.north)--(4.1,-1.85);
+\end{tikzpicture}
+\fignote{四者表示逻辑职责，并非四个独立大模型。守诺贯穿理解、规划和执行，不排在最后才介入。}
+\end{figure}
+
+\paragraph{ETHOS 知己}
+以用户目标、期限、风险声明、当前现金与更正信息形成版本化画像，并解释当前任务侧重。实现位于画像规则及 \code{service.py}，长期声明与账本状态分别保存。
+
+\paragraph{METIS 善谋}
+结合账单、现金约束和允许的行动，生成候选方案与有序任务。实现分布在 \code{model.py}、\code{life_planner.py} 与 \code{agent_ops.py}；候选必须经过确定性核验。
+
+\paragraph{KAIROS 择时}
+检查收入事件、日期条件、有效期与版本变化，产出等待、失效和重新生成的状态。实现位于 \code{service.py}、\code{life_service.py} 与对话恢复流程。
+
+\paragraph{ARGOS 守诺}
+核对身份、授权、对象、金额、版本和回执，必要时拒绝推进。接入、业务服务和任务执行共同承担这项职责，最终状态变更受服务端约束。
+
 
 ARGOS 的作用贯穿生成与执行：草案阶段检查可行性，确认阶段复核当前事实，执行阶段检查幂等与账本一致性。它拥有停止推进的业务效果，而不是在流程末尾补一句安全提示。KAIROS 的现有触发来自明确请求、演示事件与确认时检查；没有后台常驻事件执行器，条件满足后仍须重新核验与确认。
 

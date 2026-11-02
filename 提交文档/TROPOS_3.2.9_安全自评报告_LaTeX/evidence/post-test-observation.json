@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-02",
+  "changes_since_fingerprint": [
+    "assets/typography.css",
+    "assets/demo.css"
+  ],
+  "note": "The CSS files are being edited in a parallel design session. Backend and JavaScript fingerprints were unchanged at this observation. Test results apply to the test-time workspace, not later design edits."
+}

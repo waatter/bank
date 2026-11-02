@@ -1,0 +1,14 @@
+..............................................................................................................................................................................................................................................s............................................................................................................................................................................usage: python3 -m unittest [-h] --suite SUITE --source-root SOURCE_ROOT
+                           --output OUTPUT [--max-calls MAX_CALLS]
+                           [--live-model]
+python3 -m unittest: error: report path already exists; choose a new first-run path
+.......................usage: python3 -m unittest [-h] --suite SUITE --source-root SOURCE_ROOT
+                           --output OUTPUT
+python3 -m unittest: error: output or sibling Markdown already exists; refusing overwrite
+..s.................................
+----------------------------------------------------------------------
+Ran 470 tests in 69.507s
+
+OK (skipped=2)
+Created /var/folders/kr/w11d0gcx5y12qk_tmjqryb380000gn/T/tmpmbu3e08m/connector.zip
+SHA256 bcb945c2705132029ed321e7cd246b8f0a71649a573cafabab0bacc480cc63c9

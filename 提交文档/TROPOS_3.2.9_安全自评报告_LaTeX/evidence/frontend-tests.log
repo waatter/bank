@@ -1,0 +1,180 @@
+PASS HTTP session and persisted account snapshot reach the workbench
+PASS Profile confirmation is stored by the server
+PASS Confirmation displays cents exactly before any debit
+PASS A cleared browser cache recovers a persisted pending proposal with an explicit confirmation
+PASS Expired confirmations are not rendered even before another server query
+PASS Timeout confirmation queries the committed original transaction
+PASS UI replay returns original receipt with no second debit
+PASS Reload recovery exposes an executed original receipt without a fresh confirm button
+PASS Recovered approvals become stale after a profile edit and lose their confirmation token
+PASS Profile edit invalidates an old server proposal even if UI keeps its id
+PASS Merchant receipt and cash prediction update from the same response
+PASS Account switching changes server session and does not reuse C balance
+PASS Switching back restores C ledger and profile from SQLite
+PASS Local shopping preference cannot fabricate a server profile revision
+PASS Plan response contains server-calculated steps and the actual personal goal
+PASS An in-flight account event locks account switching
+PASS Event response keeps matching UI and client account identities
+PASS Merchant confirmation holds the origin account throughout the dialog
+PASS Confirmed merchant operation updates only the bound account
+PASS A late recovery response from C cannot populate A or reinstall an old account
+PASS Evaluation screen reads saved measured results
+PASS Intent evaluation reads fixed-case results without presenting a live model score
+PASS V2 bridge reads eight scenario templates and current bank revision
+PASS V2 analysis compares four stresses and three policies without moving cash
+PASS Hypothetical life arrangements cannot silently become an actionable goal transfer
+PASS Choosing an actual plan records its chosen amount and date but does not pay it
+PASS A repeated plan confirmation returns its original receipt with one obligation
+PASS Committed life obligations are not counted again as hypothetical expenses
+PASS A goal draft is refused when another tab changed the plan after the analysis, even with the ledger revision unchanged
+PASS Accepted life planning generates a genuine pending goal draft for separate confirmation
+PASS The V2 goal action uses the existing timeout-query and single-debit bank chain
+31 HTTP/workbench integration checks passed; DOM is stubbed, no browser visual verification.
+✔ tests/backend-client.cjs (3799.75575ms)
+✔ a validated account choice persists across reload for dialogue recovery (21.177166ms)
+✔ agent generates a request key, persists it before POST and continues exact conversation ID/version (5.666042ms)
+✔ network-unknown retry preserves original message, key and conversation version (17.632833ms)
+✔ personal model test timeout is reported as a read-only failure (0.808125ms)
+✔ a different message is blocked by TURN_UNRESOLVED without another request or key (1.422167ms)
+✔ a refreshed VM restores pending POST and retries its original key without generating one (3.316708ms)
+✔ HTTP 400 clears only this account's pending POST and propagates the server error (1.635292ms)
+✔ HTTP 401 clears only this account's pending POST and propagates the server error (2.111916ms)
+✔ HTTP 403 clears only this account's pending POST and propagates the server error (0.845291ms)
+✔ HTTP 404 clears only this account's pending POST and propagates the server error (1.45925ms)
+✔ HTTP 409 clears only this account's pending POST and propagates the server error (0.724875ms)
+✔ HTTP 422 clears only this account's pending POST and propagates the server error (1.537917ms)
+✔ HTTP 429 clears only this account's pending POST and propagates the server error (0.503125ms)
+✔ HTTP 500 preserves the original pending POST instead of treating it as rejected (0.607875ms)
+✔ HTTP 502 preserves the original pending POST instead of treating it as rejected (0.859416ms)
+✔ HTTP 503 preserves the original pending POST instead of treating it as rejected (0.379542ms)
+✔ a malformed success response remains unresolved and retains the original POST (0.639042ms)
+✔ recoverConversation uses GET only and does not clear or rewrite an unresolved POST (0.720834ms)
+✔ recoverConversation without a known ID performs no request and preserves pending state (1.792125ms)
+✔ a late A POST after switching to B cannot install A conversation or change B identity (0.661458ms)
+✔ a late A history read after switching to B cannot replace B current conversation (0.474542ms)
+✔ an incorrectly identified agent result is rejected and leaves the original POST unresolved (0.43875ms)
+✔ persistent conversations and unresolved keys are isolated across accounts and refreshes (1.448042ms)
+✔ proposal replies and GET recovery never automatically confirm, cancel, or create another draft (0.880833ms)
+✔ explicit subscription confirmation uses original proposal ID and exact token; timeout recovers by GET (0.507584ms)
+✔ explicit revokeSubscription addresses the original ID without calling cancellation or confirmation (0.470958ms)
+✔ forgetConversation clears only the selected account and survives a fresh instance (0.967792ms)
+✔ late history GET must not roll back a newer successful conversation turn (0.457708ms)
+✔ late duplicate POST must not clear the newer unresolved turn (0.46125ms)
+✔ a late response after A to B to A must not overwrite the newer A conversation (0.658833ms)
+✔ a late old response must not resurrect a forgotten conversation over its replacement (2.318667ms)
+✔ public API returns only appended cards and does not modify unrelated root content (18.440417ms)
+✔ comparable options preserve per-occurrence fees and delegate the exact comparison prompt (162.149833ms)
+✔ focus shows the supplied impact, residual gap and no refund; prepare only asks (9.210792ms)
+✔ cancelled focus cannot prepare another cancellation or promise a new saving (5.350083ms)
+✔ pending proposal has one exact ID container; token is never serialized; confirmation is a callback only (30.334708ms)
+✔ every non-pending status, missing/invalid token or expired/invalid expiry suppresses confirmation (34.995042ms)
+✔ Unix seconds, milliseconds and ISO expiry are supported without weakening the deadline check (15.405625ms)
+✔ invalidated proposals can be prepared again only through onAsk and require separate confirmation (17.451292ms)
+✔ revoke and status query delegate proposal IDs and the actual buttons (9.936792ms)
+✔ executed proposals expose receipt details and cannot be revived by a pending replay (24.1685ms)
+✔ terminal status updates refresh every old occurrence and prevent resurrection of the same ID (16.744334ms)
+✔ expiry removes live confirmation controls, and checks at click time without waiting for a timer (2.931917ms)
+✔ a repeated click or duplicate card cannot open simultaneous confirmation flows (1.799791ms)
+✔ a parent refresh during confirmation keeps replacement controls busy, then available on dialog cancellation (1.953542ms)
+✔ a rejected parent callback releases controls without changing financial state (3.030875ms)
+✔ receipt displays actual record and latest cash gap without adding the fee to balance (2.184542ms)
+✔ gap is derived only from supplied cash facts; missing amounts never turn into invented zeros (1.054292ms)
+✔ empty options, empty bills and task explanations remain useful without creating actions (1.233959ms)
+✔ bill details preserve signed amounts and supplied dates without inventing totals (0.644833ms)
+✔ all dynamic text including IDs, JSON summaries and receipt fields is escaped (1.266958ms)
+✔ delegation ignores existing data-act, unknown actions, outside buttons and disabled controls (0.889292ms)
+✔ native buttons support nested targets and keyboard-generated click without duplicate listeners (0.828166ms)
+✔ root replacement removes old handlers and prevents old proposal IDs from authorizing a new root (0.83575ms)
+✔ CSS scopes styles, provides at least 44px hit areas and a single column at 390px (0.371708ms)
+✔ failed cached-account switch retains active token for later financial requests (25.024709ms)
+✔ in-flight switch leaves active account unchanged until the validated snapshot arrives (0.693917ms)
+✔ expired cached session renews only the intended account, then atomically installs identity (0.736334ms)
+✔ renewal network failure preserves previous identity and stored credentials (1.106166ms)
+✔ server errors do not silently replace a still potentially valid cached session (1.13475ms)
+✔ mismatched new-session identity is refused without installing its token (7.553333ms)
+✔ incorrect cached identity is renewed rather than reused for another account (2.238208ms)
+✔ an older concurrent account response cannot overwrite the latest chosen identity (3.447042ms)
+✔ explicit credential override does not mutate the active credential (2.240666ms)
+✔ malformed stored session containers do not break account selection (3.295458ms)
+✔ healthy startup adds one hidden notice without a network request (8.6845ms)
+✔ offline state shows stale-state wording and sends no financial or health request (1.525375ms)
+✔ recovery probe uses only uncached GET health and does not retry a POST (2.692042ms)
+✔ unavailable or wrong-version health never claims recovery (0.946459ms)
+✔ repeated probes are coalesced and the recovery button delegates to the read-only history control (6.511625ms)
+✔ a successful request after uncertainty still tells the user to check the original result (0.926417ms)
+✔ the client refuses an offline confirmation before sending and preserves unresolved message identity (8.686792ms)
+PASS consent and HTTP gates do not read the ledger
+PASS init, render, refresh, eight categories and escaped user strings
+PASS late load from a previous persona cannot overwrite the current account
+PASS late analysis from a previous persona is discarded
+PASS mismatched analysis versions expose no adoption or transfer action
+PASS failed recalculation clears an earlier valid result instead of retaining actionable controls
+PASS three policies and four stress tabs execute; target amount follows the selected policy
+PASS dirty settings remove old result actions and block stale handlers until save and recalculation
+PASS drafts block goal proposals even when the disabled button handler is invoked
+PASS cancelled confirmation does not call commitPlan; acceptance sends server policy and versions only
+PASS goal draft carries the analysed versions; a 409 clears the stale analysis
+11 Life UI behavior checks passed (controlled DOM; no visual acceptance).
+✔ tests/life-ui.cjs (524.074917ms)
+✔ opening a confirmation isolates background and focuses its confirm control (3.52975ms)
+✔ Tab and Shift+Tab remain inside the modal controls (6.970584ms)
+✔ Escape cancels without a second resolve and removes keyboard handling (5.397583ms)
+✔ confirm restores background and safely ignores a removed focus origin (0.819625ms)
+✔ missing declarations show onboarding and no financial values (4.315584ms)
+✔ the actual financial role changes the primary tasks and details (41.940791ms)
+✔ a cash event updates the dashboard without changing declared preferences (8.66975ms)
+✔ editable names are rendered as text, not executable markup (8.283709ms)
+✔ navigation only opens registered workbench views and does not perform financial operations (0.754667ms)
+✔ missing monetary values are shown as unknown rather than invented zeros (2.718292ms)
+PASS 画像读取同意不能默认授予
+PASS 负现金预留被拒绝
+PASS 同一画像的策略可随现金缺口变化，目标仍保留
+PASS 续费进入未来现金路径，取消后移除
+PASS 用户采纳建议不能单方更改账单日期
+PASS 本人目标账户也不能透支或绕开现金底线
+PASS 合法小额转账可以进入确认
+PASS 确认后改金额使旧批准失效
+PASS 确认转账只记一笔，余额与流水同时更新
+PASS 同一凭证重放不重复扣款
+PASS 新增账单更新现金状态，不改目标/底线/授权
+PASS 工资到账只加一次，并移除同笔预期收入
+PASS 画像、账本、幂等凭证可恢复
+PASS 目标改名保留原有已存资金
+PASS 目标类型变化不虚构另一位用户的资产和计划
+PASS 可编辑目标名称作为文字显示，不成为HTML
+16 invariant checks passed. These are business-logic checks, not browser or competition benchmark results.
+✔ tests/profile-invariants.cjs (305.301583ms)
+PASS R1 policy and defaults stay compatible; R2 has its own version
+PASS all seven roles and primary views
+PASS gap precedes debt; debt precedes instability and near goal
+PASS buffer and ability thresholds use strict less-than
+PASS risk caps respect term, liquidity, experience and knowledge
+PASS contradictions need clarification; no-loss always stays at one
+PASS unknown and inconsistent facts stay unknown; zero is valid
+PASS events, style and goal amount never rewrite declared preferences
+PASS strict assessment validation preserves answers without filling any
+9 risk-profile groups passed.
+✔ tests/risk-profile.cjs (105.378584ms)
+✔ six task slots begin with no timing, result, help count or success inference (31.839333ms)
+✔ LAN HTTP phones can create UUID without the secure-context randomUUID API (1.320458ms)
+✔ consent/device/label explicit; automated real labels forbidden (0.428208ms)
+✔ reject unstarted completion, parallel starts, second start and double end (0.418958ms)
+✔ raw seconds include waiting; no rounding or subtraction of help time (0.1675ms)
+✔ returned snapshots cannot rewrite locked original or earlier exports (0.173583ms)
+✔ invalid answers/counts/completion fail without partially ending task (0.568875ms)
+✔ DOM consent starts unchecked; untrusted checkbox/submit cannot create a trial (1.696458ms)
+✔ UI remains internal/emulated and starts without prefilled completion (2.889292ms)
+✔ UI rejects unstarted finish and untrusted task clicks; end locks input controls (1.370916ms)
+✔ feedback is rendered as text and never interpreted as markup (1.472667ms)
+✔ download is local Blob, missing fields remain null, and nothing uploads or persists (7.462667ms)
+✔ restart warns, can be cancelled, preserves export reminder, resets consent (20.908667ms)
+✔ restart before export never implies that a record has been saved (29.919792ms)
+✔ CSP forbids connections/forms; assets/fonts local and 390px styles responsive (0.293625ms)
+ℹ tests 101
+ℹ suites 0
+ℹ pass 101
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3835.55825

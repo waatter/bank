@@ -1,0 +1,687 @@
+TAP version 13
+# PASS HTTP session and persisted account snapshot reach the workbench
+# PASS Profile confirmation is stored by the server
+# PASS Confirmation displays cents exactly before any debit
+# PASS A cleared browser cache recovers a persisted pending proposal with an explicit confirmation
+# PASS Expired confirmations are not rendered even before another server query
+# PASS Timeout confirmation queries the committed original transaction
+# PASS UI replay returns original receipt with no second debit
+# PASS Reload recovery exposes an executed original receipt without a fresh confirm button
+# PASS Recovered approvals become stale after a profile edit and lose their confirmation token
+# PASS Profile edit invalidates an old server proposal even if UI keeps its id
+# PASS Merchant receipt and cash prediction update from the same response
+# PASS Account switching changes server session and does not reuse C balance
+# PASS Switching back restores C ledger and profile from SQLite
+# PASS Local shopping preference cannot fabricate a server profile revision
+# PASS Plan response contains server-calculated steps and the actual personal goal
+# PASS An in-flight account event locks account switching
+# PASS Event response keeps matching UI and client account identities
+# PASS Merchant confirmation holds the origin account throughout the dialog
+# PASS Confirmed merchant operation updates only the bound account
+# PASS A late recovery response from C cannot populate A or reinstall an old account
+# PASS Evaluation screen reads saved measured results
+# PASS Intent evaluation reads fixed-case results without presenting a live model score
+# PASS V2 bridge reads eight scenario templates and current bank revision
+# PASS V2 analysis compares four stresses and three policies without moving cash
+# PASS Hypothetical life arrangements cannot silently become an actionable goal transfer
+# PASS Choosing an actual plan records its chosen amount and date but does not pay it
+# PASS A repeated plan confirmation returns its original receipt with one obligation
+# PASS Committed life obligations are not counted again as hypothetical expenses
+# PASS A goal draft is refused when another tab changed the plan after the analysis, even with the ledger revision unchanged
+# PASS Accepted life planning generates a genuine pending goal draft for separate confirmation
+# PASS The V2 goal action uses the existing timeout-query and single-debit bank chain
+# 31 HTTP/workbench integration checks passed; DOM is stubbed, no browser visual verification.
+# Subtest: tests/backend-client.cjs
+ok 1 - tests/backend-client.cjs
+  ---
+  duration_ms: 985.364917
+  type: 'test'
+  ...
+# Subtest: a validated account choice persists across reload for dialogue recovery
+ok 2 - a validated account choice persists across reload for dialogue recovery
+  ---
+  duration_ms: 10.885583
+  type: 'test'
+  ...
+# Subtest: agent generates a request key, persists it before POST and continues exact conversation ID/version
+ok 3 - agent generates a request key, persists it before POST and continues exact conversation ID/version
+  ---
+  duration_ms: 1.347083
+  type: 'test'
+  ...
+# Subtest: network-unknown retry preserves original message, key and conversation version
+ok 4 - network-unknown retry preserves original message, key and conversation version
+  ---
+  duration_ms: 6.075416
+  type: 'test'
+  ...
+# Subtest: personal model test timeout is reported as a read-only failure
+ok 5 - personal model test timeout is reported as a read-only failure
+  ---
+  duration_ms: 1.901166
+  type: 'test'
+  ...
+# Subtest: a different message is blocked by TURN_UNRESOLVED without another request or key
+ok 6 - a different message is blocked by TURN_UNRESOLVED without another request or key
+  ---
+  duration_ms: 1.825167
+  type: 'test'
+  ...
+# Subtest: a refreshed VM restores pending POST and retries its original key without generating one
+ok 7 - a refreshed VM restores pending POST and retries its original key without generating one
+  ---
+  duration_ms: 3.187208
+  type: 'test'
+  ...
+# Subtest: HTTP 400 clears only this account's pending POST and propagates the server error
+ok 8 - HTTP 400 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 1.216959
+  type: 'test'
+  ...
+# Subtest: HTTP 401 clears only this account's pending POST and propagates the server error
+ok 9 - HTTP 401 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 0.856916
+  type: 'test'
+  ...
+# Subtest: HTTP 403 clears only this account's pending POST and propagates the server error
+ok 10 - HTTP 403 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 1.449417
+  type: 'test'
+  ...
+# Subtest: HTTP 404 clears only this account's pending POST and propagates the server error
+ok 11 - HTTP 404 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 21.413958
+  type: 'test'
+  ...
+# Subtest: HTTP 409 clears only this account's pending POST and propagates the server error
+ok 12 - HTTP 409 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 4.526708
+  type: 'test'
+  ...
+# Subtest: HTTP 422 clears only this account's pending POST and propagates the server error
+ok 13 - HTTP 422 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 2.070833
+  type: 'test'
+  ...
+# Subtest: HTTP 429 clears only this account's pending POST and propagates the server error
+ok 14 - HTTP 429 clears only this account's pending POST and propagates the server error
+  ---
+  duration_ms: 2.480667
+  type: 'test'
+  ...
+# Subtest: HTTP 500 preserves the original pending POST instead of treating it as rejected
+ok 15 - HTTP 500 preserves the original pending POST instead of treating it as rejected
+  ---
+  duration_ms: 2.11475
+  type: 'test'
+  ...
+# Subtest: HTTP 502 preserves the original pending POST instead of treating it as rejected
+ok 16 - HTTP 502 preserves the original pending POST instead of treating it as rejected
+  ---
+  duration_ms: 0.845375
+  type: 'test'
+  ...
+# Subtest: HTTP 503 preserves the original pending POST instead of treating it as rejected
+ok 17 - HTTP 503 preserves the original pending POST instead of treating it as rejected
+  ---
+  duration_ms: 2.006041
+  type: 'test'
+  ...
+# Subtest: a malformed success response remains unresolved and retains the original POST
+ok 18 - a malformed success response remains unresolved and retains the original POST
+  ---
+  duration_ms: 9.472375
+  type: 'test'
+  ...
+# Subtest: recoverConversation uses GET only and does not clear or rewrite an unresolved POST
+ok 19 - recoverConversation uses GET only and does not clear or rewrite an unresolved POST
+  ---
+  duration_ms: 1.776792
+  type: 'test'
+  ...
+# Subtest: recoverConversation without a known ID performs no request and preserves pending state
+ok 20 - recoverConversation without a known ID performs no request and preserves pending state
+  ---
+  duration_ms: 0.473292
+  type: 'test'
+  ...
+# Subtest: a late A POST after switching to B cannot install A conversation or change B identity
+ok 21 - a late A POST after switching to B cannot install A conversation or change B identity
+  ---
+  duration_ms: 1.298625
+  type: 'test'
+  ...
+# Subtest: a late A history read after switching to B cannot replace B current conversation
+ok 22 - a late A history read after switching to B cannot replace B current conversation
+  ---
+  duration_ms: 1.095041
+  type: 'test'
+  ...
+# Subtest: an incorrectly identified agent result is rejected and leaves the original POST unresolved
+ok 23 - an incorrectly identified agent result is rejected and leaves the original POST unresolved
+  ---
+  duration_ms: 1.102375
+  type: 'test'
+  ...
+# Subtest: persistent conversations and unresolved keys are isolated across accounts and refreshes
+ok 24 - persistent conversations and unresolved keys are isolated across accounts and refreshes
+  ---
+  duration_ms: 2.445167
+  type: 'test'
+  ...
+# Subtest: proposal replies and GET recovery never automatically confirm, cancel, or create another draft
+ok 25 - proposal replies and GET recovery never automatically confirm, cancel, or create another draft
+  ---
+  duration_ms: 0.643916
+  type: 'test'
+  ...
+# Subtest: explicit subscription confirmation uses original proposal ID and exact token; timeout recovers by GET
+ok 26 - explicit subscription confirmation uses original proposal ID and exact token; timeout recovers by GET
+  ---
+  duration_ms: 5.446416
+  type: 'test'
+  ...
+# Subtest: explicit revokeSubscription addresses the original ID without calling cancellation or confirmation
+ok 27 - explicit revokeSubscription addresses the original ID without calling cancellation or confirmation
+  ---
+  duration_ms: 1.740958
+  type: 'test'
+  ...
+# Subtest: forgetConversation clears only the selected account and survives a fresh instance
+ok 28 - forgetConversation clears only the selected account and survives a fresh instance
+  ---
+  duration_ms: 1.651708
+  type: 'test'
+  ...
+# Subtest: late history GET must not roll back a newer successful conversation turn
+ok 29 - late history GET must not roll back a newer successful conversation turn
+  ---
+  duration_ms: 1.294125
+  type: 'test'
+  ...
+# Subtest: late duplicate POST must not clear the newer unresolved turn
+ok 30 - late duplicate POST must not clear the newer unresolved turn
+  ---
+  duration_ms: 3.593416
+  type: 'test'
+  ...
+# Subtest: a late response after A to B to A must not overwrite the newer A conversation
+ok 31 - a late response after A to B to A must not overwrite the newer A conversation
+  ---
+  duration_ms: 2.021792
+  type: 'test'
+  ...
+# Subtest: a late old response must not resurrect a forgotten conversation over its replacement
+ok 32 - a late old response must not resurrect a forgotten conversation over its replacement
+  ---
+  duration_ms: 0.898
+  type: 'test'
+  ...
+# Subtest: public API returns only appended cards and does not modify unrelated root content
+ok 33 - public API returns only appended cards and does not modify unrelated root content
+  ---
+  duration_ms: 8.339209
+  type: 'test'
+  ...
+# Subtest: comparable options preserve per-occurrence fees and delegate the exact comparison prompt
+ok 34 - comparable options preserve per-occurrence fees and delegate the exact comparison prompt
+  ---
+  duration_ms: 78.446125
+  type: 'test'
+  ...
+# Subtest: focus shows the supplied impact, residual gap and no refund; prepare only asks
+ok 35 - focus shows the supplied impact, residual gap and no refund; prepare only asks
+  ---
+  duration_ms: 4.183292
+  type: 'test'
+  ...
+# Subtest: cancelled focus cannot prepare another cancellation or promise a new saving
+ok 36 - cancelled focus cannot prepare another cancellation or promise a new saving
+  ---
+  duration_ms: 1.054
+  type: 'test'
+  ...
+# Subtest: pending proposal has one exact ID container; token is never serialized; confirmation is a callback only
+ok 37 - pending proposal has one exact ID container; token is never serialized; confirmation is a callback only
+  ---
+  duration_ms: 26.149875
+  type: 'test'
+  ...
+# Subtest: every non-pending status, missing/invalid token or expired/invalid expiry suppresses confirmation
+ok 38 - every non-pending status, missing/invalid token or expired/invalid expiry suppresses confirmation
+  ---
+  duration_ms: 16.573333
+  type: 'test'
+  ...
+# Subtest: Unix seconds, milliseconds and ISO expiry are supported without weakening the deadline check
+ok 39 - Unix seconds, milliseconds and ISO expiry are supported without weakening the deadline check
+  ---
+  duration_ms: 1.40225
+  type: 'test'
+  ...
+# Subtest: invalidated proposals can be prepared again only through onAsk and require separate confirmation
+ok 40 - invalidated proposals can be prepared again only through onAsk and require separate confirmation
+  ---
+  duration_ms: 1.465542
+  type: 'test'
+  ...
+# Subtest: revoke and status query delegate proposal IDs and the actual buttons
+ok 41 - revoke and status query delegate proposal IDs and the actual buttons
+  ---
+  duration_ms: 6.654
+  type: 'test'
+  ...
+# Subtest: executed proposals expose receipt details and cannot be revived by a pending replay
+ok 42 - executed proposals expose receipt details and cannot be revived by a pending replay
+  ---
+  duration_ms: 5.947958
+  type: 'test'
+  ...
+# Subtest: terminal status updates refresh every old occurrence and prevent resurrection of the same ID
+ok 43 - terminal status updates refresh every old occurrence and prevent resurrection of the same ID
+  ---
+  duration_ms: 14.355583
+  type: 'test'
+  ...
+# Subtest: expiry removes live confirmation controls, and checks at click time without waiting for a timer
+ok 44 - expiry removes live confirmation controls, and checks at click time without waiting for a timer
+  ---
+  duration_ms: 5.048375
+  type: 'test'
+  ...
+# Subtest: a repeated click or duplicate card cannot open simultaneous confirmation flows
+ok 45 - a repeated click or duplicate card cannot open simultaneous confirmation flows
+  ---
+  duration_ms: 1.272583
+  type: 'test'
+  ...
+# Subtest: a parent refresh during confirmation keeps replacement controls busy, then available on dialog cancellation
+ok 46 - a parent refresh during confirmation keeps replacement controls busy, then available on dialog cancellation
+  ---
+  duration_ms: 3.394875
+  type: 'test'
+  ...
+# Subtest: a rejected parent callback releases controls without changing financial state
+ok 47 - a rejected parent callback releases controls without changing financial state
+  ---
+  duration_ms: 1.621666
+  type: 'test'
+  ...
+# Subtest: receipt displays actual record and latest cash gap without adding the fee to balance
+ok 48 - receipt displays actual record and latest cash gap without adding the fee to balance
+  ---
+  duration_ms: 6.670084
+  type: 'test'
+  ...
+# Subtest: gap is derived only from supplied cash facts; missing amounts never turn into invented zeros
+ok 49 - gap is derived only from supplied cash facts; missing amounts never turn into invented zeros
+  ---
+  duration_ms: 1.750167
+  type: 'test'
+  ...
+# Subtest: empty options, empty bills and task explanations remain useful without creating actions
+ok 50 - empty options, empty bills and task explanations remain useful without creating actions
+  ---
+  duration_ms: 1.02775
+  type: 'test'
+  ...
+# Subtest: bill details preserve signed amounts and supplied dates without inventing totals
+ok 51 - bill details preserve signed amounts and supplied dates without inventing totals
+  ---
+  duration_ms: 1.113417
+  type: 'test'
+  ...
+# Subtest: all dynamic text including IDs, JSON summaries and receipt fields is escaped
+ok 52 - all dynamic text including IDs, JSON summaries and receipt fields is escaped
+  ---
+  duration_ms: 2.263625
+  type: 'test'
+  ...
+# Subtest: delegation ignores existing data-act, unknown actions, outside buttons and disabled controls
+ok 53 - delegation ignores existing data-act, unknown actions, outside buttons and disabled controls
+  ---
+  duration_ms: 0.810792
+  type: 'test'
+  ...
+# Subtest: native buttons support nested targets and keyboard-generated click without duplicate listeners
+ok 54 - native buttons support nested targets and keyboard-generated click without duplicate listeners
+  ---
+  duration_ms: 1.511833
+  type: 'test'
+  ...
+# Subtest: root replacement removes old handlers and prevents old proposal IDs from authorizing a new root
+ok 55 - root replacement removes old handlers and prevents old proposal IDs from authorizing a new root
+  ---
+  duration_ms: 1.27975
+  type: 'test'
+  ...
+# Subtest: CSS scopes styles, provides at least 44px hit areas and a single column at 390px
+ok 56 - CSS scopes styles, provides at least 44px hit areas and a single column at 390px
+  ---
+  duration_ms: 0.159583
+  type: 'test'
+  ...
+# Subtest: failed cached-account switch retains active token for later financial requests
+ok 57 - failed cached-account switch retains active token for later financial requests
+  ---
+  duration_ms: 12.152625
+  type: 'test'
+  ...
+# Subtest: in-flight switch leaves active account unchanged until the validated snapshot arrives
+ok 58 - in-flight switch leaves active account unchanged until the validated snapshot arrives
+  ---
+  duration_ms: 0.666709
+  type: 'test'
+  ...
+# Subtest: expired cached session renews only the intended account, then atomically installs identity
+ok 59 - expired cached session renews only the intended account, then atomically installs identity
+  ---
+  duration_ms: 1.563667
+  type: 'test'
+  ...
+# Subtest: renewal network failure preserves previous identity and stored credentials
+ok 60 - renewal network failure preserves previous identity and stored credentials
+  ---
+  duration_ms: 1.1755
+  type: 'test'
+  ...
+# Subtest: server errors do not silently replace a still potentially valid cached session
+ok 61 - server errors do not silently replace a still potentially valid cached session
+  ---
+  duration_ms: 3.455333
+  type: 'test'
+  ...
+# Subtest: mismatched new-session identity is refused without installing its token
+ok 62 - mismatched new-session identity is refused without installing its token
+  ---
+  duration_ms: 2.589291
+  type: 'test'
+  ...
+# Subtest: incorrect cached identity is renewed rather than reused for another account
+ok 63 - incorrect cached identity is renewed rather than reused for another account
+  ---
+  duration_ms: 0.530916
+  type: 'test'
+  ...
+# Subtest: an older concurrent account response cannot overwrite the latest chosen identity
+ok 64 - an older concurrent account response cannot overwrite the latest chosen identity
+  ---
+  duration_ms: 4.00625
+  type: 'test'
+  ...
+# Subtest: explicit credential override does not mutate the active credential
+ok 65 - explicit credential override does not mutate the active credential
+  ---
+  duration_ms: 1.022792
+  type: 'test'
+  ...
+# Subtest: malformed stored session containers do not break account selection
+ok 66 - malformed stored session containers do not break account selection
+  ---
+  duration_ms: 6.807917
+  type: 'test'
+  ...
+# Subtest: healthy startup adds one hidden notice without a network request
+ok 67 - healthy startup adds one hidden notice without a network request
+  ---
+  duration_ms: 4.854292
+  type: 'test'
+  ...
+# Subtest: offline state shows stale-state wording and sends no financial or health request
+ok 68 - offline state shows stale-state wording and sends no financial or health request
+  ---
+  duration_ms: 1.066958
+  type: 'test'
+  ...
+# Subtest: recovery probe uses only uncached GET health and does not retry a POST
+ok 69 - recovery probe uses only uncached GET health and does not retry a POST
+  ---
+  duration_ms: 1.009375
+  type: 'test'
+  ...
+# Subtest: unavailable or wrong-version health never claims recovery
+ok 70 - unavailable or wrong-version health never claims recovery
+  ---
+  duration_ms: 2.704041
+  type: 'test'
+  ...
+# Subtest: repeated probes are coalesced and the recovery button delegates to the read-only history control
+ok 71 - repeated probes are coalesced and the recovery button delegates to the read-only history control
+  ---
+  duration_ms: 0.417708
+  type: 'test'
+  ...
+# Subtest: a successful request after uncertainty still tells the user to check the original result
+ok 72 - a successful request after uncertainty still tells the user to check the original result
+  ---
+  duration_ms: 1.713333
+  type: 'test'
+  ...
+# Subtest: the client refuses an offline confirmation before sending and preserves unresolved message identity
+ok 73 - the client refuses an offline confirmation before sending and preserves unresolved message identity
+  ---
+  duration_ms: 5.160792
+  type: 'test'
+  ...
+# PASS consent and HTTP gates do not read the ledger
+# PASS init, render, refresh, eight categories and escaped user strings
+# PASS late load from a previous persona cannot overwrite the current account
+# PASS late analysis from a previous persona is discarded
+# PASS mismatched analysis versions expose no adoption or transfer action
+# PASS failed recalculation clears an earlier valid result instead of retaining actionable controls
+# PASS three policies and four stress tabs execute; target amount follows the selected policy
+# PASS dirty settings remove old result actions and block stale handlers until save and recalculation
+# PASS drafts block goal proposals even when the disabled button handler is invoked
+# PASS cancelled confirmation does not call commitPlan; acceptance sends server policy and versions only
+# PASS goal draft carries the analysed versions; a 409 clears the stale analysis
+# 11 Life UI behavior checks passed (controlled DOM; no visual acceptance).
+# Subtest: tests/life-ui.cjs
+ok 6 - tests/life-ui.cjs
+  ---
+  duration_ms: 310.414209
+  type: 'test'
+  ...
+# Subtest: opening a confirmation isolates background and focuses its confirm control
+ok 75 - opening a confirmation isolates background and focuses its confirm control
+  ---
+  duration_ms: 2.7235
+  type: 'test'
+  ...
+# Subtest: Tab and Shift+Tab remain inside the modal controls
+ok 76 - Tab and Shift+Tab remain inside the modal controls
+  ---
+  duration_ms: 0.691459
+  type: 'test'
+  ...
+# Subtest: Escape cancels without a second resolve and removes keyboard handling
+ok 77 - Escape cancels without a second resolve and removes keyboard handling
+  ---
+  duration_ms: 1.091541
+  type: 'test'
+  ...
+# Subtest: confirm restores background and safely ignores a removed focus origin
+ok 78 - confirm restores background and safely ignores a removed focus origin
+  ---
+  duration_ms: 3.20475
+  type: 'test'
+  ...
+# Subtest: missing declarations show onboarding and no financial values
+ok 79 - missing declarations show onboarding and no financial values
+  ---
+  duration_ms: 3.146583
+  type: 'test'
+  ...
+# Subtest: the actual financial role changes the primary tasks and details
+ok 80 - the actual financial role changes the primary tasks and details
+  ---
+  duration_ms: 27.936291
+  type: 'test'
+  ...
+# Subtest: a cash event updates the dashboard without changing declared preferences
+ok 81 - a cash event updates the dashboard without changing declared preferences
+  ---
+  duration_ms: 2.924875
+  type: 'test'
+  ...
+# Subtest: editable names are rendered as text, not executable markup
+ok 82 - editable names are rendered as text, not executable markup
+  ---
+  duration_ms: 2.094542
+  type: 'test'
+  ...
+# Subtest: navigation only opens registered workbench views and does not perform financial operations
+ok 83 - navigation only opens registered workbench views and does not perform financial operations
+  ---
+  duration_ms: 3.906542
+  type: 'test'
+  ...
+# Subtest: missing monetary values are shown as unknown rather than invented zeros
+ok 84 - missing monetary values are shown as unknown rather than invented zeros
+  ---
+  duration_ms: 1.9415
+  type: 'test'
+  ...
+# PASS 画像读取同意不能默认授予
+# PASS 负现金预留被拒绝
+# PASS 同一画像的策略可随现金缺口变化，目标仍保留
+# PASS 续费进入未来现金路径，取消后移除
+# PASS 用户采纳建议不能单方更改账单日期
+# PASS 本人目标账户也不能透支或绕开现金底线
+# PASS 合法小额转账可以进入确认
+# PASS 确认后改金额使旧批准失效
+# PASS 确认转账只记一笔，余额与流水同时更新
+# PASS 同一凭证重放不重复扣款
+# PASS 新增账单更新现金状态，不改目标/底线/授权
+# PASS 工资到账只加一次，并移除同笔预期收入
+# PASS 画像、账本、幂等凭证可恢复
+# PASS 目标改名保留原有已存资金
+# PASS 目标类型变化不虚构另一位用户的资产和计划
+# PASS 可编辑目标名称作为文字显示，不成为HTML
+# 16 invariant checks passed. These are business-logic checks, not browser or competition benchmark results.
+# Subtest: tests/profile-invariants.cjs
+ok 9 - tests/profile-invariants.cjs
+  ---
+  duration_ms: 151.942625
+  type: 'test'
+  ...
+# PASS R1 policy and defaults stay compatible; R2 has its own version
+# PASS all seven roles and primary views
+# PASS gap precedes debt; debt precedes instability and near goal
+# PASS buffer and ability thresholds use strict less-than
+# PASS risk caps respect term, liquidity, experience and knowledge
+# PASS contradictions need clarification; no-loss always stays at one
+# PASS unknown and inconsistent facts stay unknown; zero is valid
+# PASS events, style and goal amount never rewrite declared preferences
+# PASS strict assessment validation preserves answers without filling any
+# 9 risk-profile groups passed.
+# Subtest: tests/risk-profile.cjs
+ok 10 - tests/risk-profile.cjs
+  ---
+  duration_ms: 120.032834
+  type: 'test'
+  ...
+# Subtest: six task slots begin with no timing, result, help count or success inference
+ok 87 - six task slots begin with no timing, result, help count or success inference
+  ---
+  duration_ms: 3.526708
+  type: 'test'
+  ...
+# Subtest: LAN HTTP phones can create UUID without the secure-context randomUUID API
+ok 88 - LAN HTTP phones can create UUID without the secure-context randomUUID API
+  ---
+  duration_ms: 0.216666
+  type: 'test'
+  ...
+# Subtest: consent/device/label explicit; automated real labels forbidden
+ok 89 - consent/device/label explicit; automated real labels forbidden
+  ---
+  duration_ms: 0.2865
+  type: 'test'
+  ...
+# Subtest: reject unstarted completion, parallel starts, second start and double end
+ok 90 - reject unstarted completion, parallel starts, second start and double end
+  ---
+  duration_ms: 0.628375
+  type: 'test'
+  ...
+# Subtest: raw seconds include waiting; no rounding or subtraction of help time
+ok 91 - raw seconds include waiting; no rounding or subtraction of help time
+  ---
+  duration_ms: 0.31825
+  type: 'test'
+  ...
+# Subtest: returned snapshots cannot rewrite locked original or earlier exports
+ok 92 - returned snapshots cannot rewrite locked original or earlier exports
+  ---
+  duration_ms: 0.708625
+  type: 'test'
+  ...
+# Subtest: invalid answers/counts/completion fail without partially ending task
+ok 93 - invalid answers/counts/completion fail without partially ending task
+  ---
+  duration_ms: 0.531667
+  type: 'test'
+  ...
+# Subtest: DOM consent starts unchecked; untrusted checkbox/submit cannot create a trial
+ok 94 - DOM consent starts unchecked; untrusted checkbox/submit cannot create a trial
+  ---
+  duration_ms: 1.30825
+  type: 'test'
+  ...
+# Subtest: UI remains internal/emulated and starts without prefilled completion
+ok 95 - UI remains internal/emulated and starts without prefilled completion
+  ---
+  duration_ms: 2.675
+  type: 'test'
+  ...
+# Subtest: UI rejects unstarted finish and untrusted task clicks; end locks input controls
+ok 96 - UI rejects unstarted finish and untrusted task clicks; end locks input controls
+  ---
+  duration_ms: 3.6035
+  type: 'test'
+  ...
+# Subtest: feedback is rendered as text and never interpreted as markup
+ok 97 - feedback is rendered as text and never interpreted as markup
+  ---
+  duration_ms: 0.617958
+  type: 'test'
+  ...
+# Subtest: download is local Blob, missing fields remain null, and nothing uploads or persists
+ok 98 - download is local Blob, missing fields remain null, and nothing uploads or persists
+  ---
+  duration_ms: 1.084708
+  type: 'test'
+  ...
+# Subtest: restart warns, can be cancelled, preserves export reminder, resets consent
+ok 99 - restart warns, can be cancelled, preserves export reminder, resets consent
+  ---
+  duration_ms: 0.502166
+  type: 'test'
+  ...
+# Subtest: restart before export never implies that a record has been saved
+ok 100 - restart before export never implies that a record has been saved
+  ---
+  duration_ms: 0.631083
+  type: 'test'
+  ...
+# Subtest: CSP forbids connections/forms; assets/fonts local and 390px styles responsive
+ok 101 - CSP forbids connections/forms; assets/fonts local and 390px styles responsive
+  ---
+  duration_ms: 0.28675
+  type: 'test'
+  ...
+1..101
+# tests 101
+# suites 0
+# pass 101
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1011.500125

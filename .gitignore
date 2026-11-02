@@ -11,3 +11,16 @@ __pycache__/
 *.sqlite*
 .DS_Store
 dist/
+
+# Local packaging, videos and TeX build intermediates
+/bank/
+/video.mp4
+/答辩PPT/
+*.aux
+*.fdb_latexmk
+*.fls
+*.xdv
+*.toc
+*.out
+/提交文档/**/*main.log
+/提交文档/**/assets/*.log

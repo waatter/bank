@@ -1,0 +1,10 @@
+\documentclass[tikz,border=1pt]{standalone}
+\usepackage{fontspec,graphicx}
+\setmainfont{Erewhon-Regular.otf}
+\begin{document}
+\special{pdf:minorversion 7}
+\begin{tikzpicture}
+\node[inner sep=0pt] (mark) at (0,0) {\includegraphics[width=19mm]{tropos-mark-ink.pdf}};
+\node[anchor=west,inner sep=0pt] at (1.3,0.05) {\fontsize{36}{40}\selectfont TROPOS};
+\end{tikzpicture}
+\end{document}

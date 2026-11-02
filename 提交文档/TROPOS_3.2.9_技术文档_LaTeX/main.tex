@@ -3,29 +3,34 @@
 \usepackage{longtable,needspace,listings,tikz,xurl,placeins}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
 % Preserve the kit class; all project-specific styling stays in this file.
-\definecolor{wpblue}{HTML}{211F1B}
-\definecolor{wprust}{HTML}{4E6158}
-\definecolor{wpclay}{HTML}{B27D45}
-\definecolor{wpcream}{HTML}{F7F6F1}
-\definecolor{papercite}{HTML}{315F5A}
-\definecolor{paperlink}{HTML}{315F5A}
-\definecolor{paperurl}{HTML}{315F5A}
 \definecolor{ink}{HTML}{211F1B}
 \definecolor{pine}{HTML}{315F5A}
 \definecolor{gold}{HTML}{B27D45}
 \definecolor{mist}{HTML}{F1F3EF}
 \definecolor{rulegray}{HTML}{BBC2BB}
-\hypersetup{pdftitle={TROPOS 3.2.9 自适应银行智能体技术文档},pdfauthor={TROPOS 项目组},pdfsubject={2026 FinTechathon 国内人工智能赛道 技术设计与实现},bookmarksnumbered=true,hypertexnames=false}
+\hypersetup{pdftitle={TROPOS 3.2.9 自适应银行智能体技术文档},pdfauthor={咪咪大王队：刘水、余冠辰},pdfsubject={2026 FinTechathon 国内人工智能赛道 技术设计与实现},bookmarksnumbered=true,hypertexnames=false}
 \doctype{技术文档}
 \assigntitle{TROPOS 自适应银行智能体}
-\assignsubtitle{技术设计与实现说明}
-\authorname{TROPOS 项目组}
-\affiliation{}
+\assignsubtitle{系统架构与关键技术说明}
+\authorname{\shortstack[l]{咪咪大王队\\刘水、余冠辰（复旦大学经济学院）}}
+\affiliation{TROPOS-TD-3.2.9}
 \submitdate{2026 年 11 月 2 日}
 \wpshorttitle{TROPOS 3.2.9 技术设计与实现}
-\fancyhead[C]{\footnotesize\paperkaiti\color{ink}TROPOS 3.2.9\quad 技术设计与实现}
-\renewcommand{\arraystretch}{1.18}
-\renewcommand{\paperlogofile}{assets/tropos-mark-ink.pdf}
+\fancyhead[C]{\footnotesize\paperkaiti\color{wprust}TROPOS 3.2.9\quad 技术设计与实现}
+\renewcommand{\arraystretch}{1.22}
+\renewcommand{\paperlogofile}{assets/brand-logotype.pdf}
+\renewcommand{\papernamelabel}{团队}
+\renewcommand{\paperidlabel}{编号}
+\renewcommand{\papercourselabel}{赛题}
+\renewcommand{\paperdatelabel}{日期}
+\course{AI 代人操作银行（安全与体验）}
+\wpnumber{技术文档\quad 系统版本 3.2.9\quad 修订版 2.0}
+\newcommand{\contestheading}{%
+  {\small\paperkaiti\color{wprust}
+  2026（第八届）FinTechathon 深圳国际金融科技大赛\\[.3em]
+  微众银行金融科技大学生挑战赛\quad 国内人工智能赛道\par}\vspace{.8cm}}
+\patchcmd{\makecover}{\vspace*{0.6cm}}{\contestheading\vspace*{0.6cm}}{}{\PackageError{tropos}{Cover patch failed}{}}
+
 \setcounter{tocdepth}{2}
 \setcounter{secnumdepth}{2}
 \emergencystretch=2em
@@ -36,61 +41,32 @@
 \setlist[itemize]{itemsep=.18em,topsep=.35em,parsep=0pt}
 \setlist[enumerate]{itemsep=.2em,topsep=.35em,parsep=0pt}
 \newcommand{\code}[1]{{\small\nolinkurl{#1}}}
-\newcommand{\source}[1]{\par\nopagebreak\vspace{.25em}{\footnotesize\color{pine}实现依据：\code{#1}。\par}}
+\newcommand{\source}[1]{\par\nopagebreak\vspace{.25em}{\footnotesize\color{wprust}实现依据：\code{#1}。\par}}
 \renewcommand{\tabnote}[1]{\par\vspace{.25em}{\footnotesize #1\par}}
 \newcommand{\sectionstart}{\FloatBarrier\par\Needspace{14\baselineskip}}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 \lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false,frame=none,aboveskip=.6em,belowskip=.6em,xleftmargin=.7em,backgroundcolor=\color{white}}
-\tikzset{box/.style={draw=rulegray,rounded corners=1pt,align=center,font=\small,inner sep=7pt,text=ink},arr/.style={-{Latex[length=2mm]},draw=pine,thick},domain/.style={draw=pine,dashed,rounded corners=3pt,inner sep=9pt}}
+\tikzset{box/.style={draw=wpblue,fill=wpcream,rounded corners=1pt,align=center,font=\small,inner sep=7pt,text=ink},arr/.style={-{Latex[length=2mm]},draw=wprust,thick},domain/.style={draw=wprust,dashed,rounded corners=3pt,inner sep=9pt}}
 \begin{document}
 \special{pdf:minorversion 7}
 \disablewatermark
-\begin{titlepage}
-\thispagestyle{empty}
-\begin{center}
-{\small\paperkaiti 2026（第八届）FinTechathon 深圳国际金融科技大赛\par}
-\vspace{.25em}
-{\small 微众银行金融科技大学生挑战赛\par}
-\vspace{.5em}
-{\small\color{pine}国内人工智能赛道\quad 银行 AI 智能体\par}
-\vspace{1.8cm}
-\includegraphics[width=2.35cm]{assets/tropos-mark-ink.pdf}\par
-\vspace{.55cm}
-{\fontsize{32}{39}\selectfont TROPOS\par}
-\vspace{.55cm}
-{\LARGE\paperkaiti 自适应银行智能体\par}
-\vspace{.4cm}
-{\Large\paperkaiti 技术设计与实现说明\par}
-\vspace{.55cm}
-{\normalsize 系统版本 3.2.9\quad 文档修订版 2.0\par}
-\vspace{.75cm}
-{\large\paperkaiti 千人千策，随境而变\par}
-\vfill
-\includegraphics[width=\textwidth]{assets/ink-landscape.pdf}\par
-\vspace{.5cm}
-{\small TROPOS 项目组\qquad 2026 年 11 月 2 日\par}
-\vspace{.6cm}
-{\footnotesize 赛题主题：AI 代人操作银行\quad 安全与体验\par}
-\end{center}
-\end{titlepage}
-\pagenumbering{roman}
-\section*{摘要}
-\addcontentsline{toc}{section}{摘要}
-TROPOS 面向自然语言办理银行事务这一场景，研究如何让智能体理解一个人的财务处境，并在可核验的约束下形成安排。项目将长期偏好与短期现金状态分别记录，以知己 ETHOS、善谋 METIS、择时 KAIROS、守诺 ARGOS 四种职责贯通画像、策略、计划、执行与反馈。相同请求可以因现金缓冲、到期义务和目标期限而产生不同安排；收入或账单变化后，未执行计划需要重新核验。
+\makecover
+\setcounter{page}{1}
+\makewptitle
+\begin{abstract}
+\hspace*{2em}TROPOS 面向自然语言办理银行事务，研究如何让智能体理解人的财务处境，并在可核验的约束下形成安排。项目将长期偏好与短期现金状态分别记录，通过知己、善谋、择时、守诺四种职责，连接画像、策略、计划、执行与反馈。相同需求因现金缓冲、到期义务与目标期限而产生不同安排；收入或账单变化后，未执行计划需要重新核验。
 
-当前 3.2.9 提供合成银行沙箱中的转账、账单与财务体检、订阅办理、卡片及理财演示、多步骤任务与生活规划。大模型参与语义理解、候选规划、只读问答和来源化检索；金额、账户事实、操作条件、授权和记账由服务端控制。转账草案与确认执行分离，利用事务、版本号、确认令牌和幂等记录处理过期、并发与重试。未来 30 天现金路径使用整数分计算，生活规划在用户允许的离散选项内比较安排，不把预计收入视为当前可支付余额。
+当前 3.2.9 实现合成银行沙箱中的财务体检、转账、订阅办理、卡片及理财演示、多步骤任务与生活规划。模型参与语义理解、候选规划和只读回答；金额、授权与记账事实由确定性服务端控制。银行账本与银行回执为合成数据；美团官方连接器可能涉及真实授权、地址和订单，实际支付在美团完成。系统未接入真实银行，也没有后台自动资金执行器。
 
-本文给出职责到代码的映射、核心算法、状态转换、接口与数据边界、部署方法和验证口径。银行账本及银行回执为合成数据；美团官方连接器可能涉及真实授权、地址和订单，实际支付由用户在美团完成，不写入合成银行账本。当前版本未接入真实银行，也没有后台自动资金执行器。
-
-\noindent\textbf{关键词：}银行智能体；动态金融画像；现金流约束；分级授权；可解释规划；幂等记账。
-
-\subsection*{版本与阅读说明}
-\noindent 核心代码基线为 \code{2a330635e1a9f05e29125324d1a7d74552b8a2e8}；界面采用 2026 年 11 月 2 日本地工作区的水墨风更新。文档所述实现以核心代码及本次核查为准，页面视觉更新不等于后端能力升级。代码快照、测试命令与证据文件见第~\ref{sec:validation}~节及附录。原稿中的历史测试成绩与本次复跑结果分别列示，不直接相加。
+本文说明系统架构、现金算法、确认状态机、数据与外部服务边界，并提供本次复跑结果及源码指纹，供评审与复现。
+\end{abstract}
+\vspace{.8em}
+\noindent{\small\textbf{关键词}\quad 动态金融画像；现金流约束；分级授权；可解释规划；幂等记账。\par}
+\vspace{1.2em}
+\noindent{\small\textbf{版本基线}\quad 后端 \code{2a33063}；界面采用 2026 年 11 月 2 日本地工作区水墨风更新。验证结果归属于测试运行时快照，详见第~\ref{sec:validation}~节与随附证据。\par}
 \clearpage
-\tableofcontents
-\clearpage
-\pagenumbering{arabic}
+\maketoc
 \input{sections/01_positioning}
 \input{sections/02_architecture}
 \input{sections/03_financial}
